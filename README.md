@@ -46,12 +46,11 @@ To run the app, follow these steps.
 
 6. Install Kendo-UI pro or eval libraries (we use their grids because they have a lot of features, but Periscope will work with anything). Simply drop the files into `local-packages/kendo` folder.
 
-7. To run the app, execute the following command:
+7. To build the app, execute the following command:
 
   ```shell
-  gulp watch
+  gulp build
   ```
-8. Browse to [http://localhost:9000](http://localhost:9000) to see the app. You can make changes in the code found under `src` and the browser should auto-refresh itself as you save files.
 
 > Note: At present there is a bug in the HTMLImports polyfill which only occurs on IE. We have submitted a pull request to the team with the fix. In the mean time, if you want to test on IE, you can work around the issue by explicitly adding a script tag before you load system.js. The script tag should look something like this (be sure to confirm the version number):
 
