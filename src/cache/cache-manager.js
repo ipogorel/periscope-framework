@@ -1,5 +1,5 @@
-export class CacheManager{
-  constructor(storage){
+export class CacheManager {
+  constructor(storage) {
     this._cacheStorage = storage;
     this._cleanInterval = 5000;
   }
@@ -8,7 +8,7 @@ export class CacheManager{
 
   startCleaner(){
     if (!this.cleaner) {
-      var self = this;
+      let self = this;
       this.cleaner = window.setInterval(()=> {
         self._cacheStorage.removeExpired();
       }, this._cleanInterval);

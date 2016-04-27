@@ -1,4 +1,4 @@
-var _dec, _class, _dec2, _class2, _class3, _dec3, _class4, _dec4, _class5, _dec5, _dec6, _class6, _dec7, _dec8, _class7;
+var _dec, _class, _dec2, _class2, _dec3, _class3, _class4, _dec4, _class5, _dec5, _dec6, _class6, _dec7, _dec8, _class7;
 
 import * as _ from 'lodash';
 import * as peg from 'pegjs';
@@ -21,7 +21,7 @@ export let CacheManager = class CacheManager {
 
   startCleaner() {
     if (!this.cleaner) {
-      var self = this;
+      let self = this;
       this.cleaner = window.setInterval(() => {
         self._cacheStorage.removeExpired();
       }, this._cleanInterval);
@@ -72,6 +72,10 @@ export let MemoryCacheStorage = class MemoryCacheStorage extends CacheStorage {
       }
     });
   }
+};
+
+export let DashboardConfiguration = class DashboardConfiguration {
+  invoke() {}
 };
 
 export let DataHolder = class DataHolder {
@@ -657,43 +661,6 @@ export let Grammar = class Grammar {
   }
 };
 
-export let DashboardManager = class DashboardManager {
-  constructor() {
-    this._dashboards = [];
-  }
-
-  get dashboards() {
-    return this._dashboards;
-  }
-
-  find(dashboardName) {
-    return _.find(this._dashboards, { name: dashboardName });
-  }
-
-  createDashboard(type, dashboardConfiguration) {
-    var dashboard = new type();
-    dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
-    return dashboard;
-  }
-};
-
-export let Factory = resolver(_class3 = class Factory {
-  constructor(Type) {
-    this.Type = Type;
-  }
-
-  get(container) {
-    return (...rest) => {
-      return container.invoke(this.Type, rest);
-    };
-  }
-
-  static of(Type) {
-    return new Factory(Type);
-  }
-}) || _class3;
-
 export let DataHelper = class DataHelper {
   static getNumericFields(fields) {
     return _.filter(fields, f => {
@@ -919,7 +886,7 @@ export let NavigationHistory = class NavigationHistory {
 
 };
 
-export let PeriscopeRouter = (_dec3 = inject(Router, EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec3(_class4 = class PeriscopeRouter {
+export let PeriscopeRouter = (_dec3 = inject(Router, EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec3(_class3 = class PeriscopeRouter {
   constructor(aureliaRouter, eventAggregator, userStateStorage, navigationHistory) {
     this._aureliaRouter = aureliaRouter;
     this._navigationHistory = navigationHistory;
@@ -958,7 +925,44 @@ export let PeriscopeRouter = (_dec3 = inject(Router, EventAggregator, UserStateS
     this._aureliaRouter.navigate(routeItem.route);
   }
 
-}) || _class4);
+}) || _class3);
+
+export let DashboardManager = class DashboardManager {
+  constructor() {
+    this._dashboards = [];
+  }
+
+  get dashboards() {
+    return this._dashboards;
+  }
+
+  find(dashboardName) {
+    return _.find(this._dashboards, { name: dashboardName });
+  }
+
+  createDashboard(type, dashboardConfiguration) {
+    var dashboard = new type();
+    dashboard.configure(dashboardConfiguration);
+    this._dashboards.push(dashboard);
+    return dashboard;
+  }
+};
+
+export let Factory = resolver(_class4 = class Factory {
+  constructor(Type) {
+    this.Type = Type;
+  }
+
+  get(container) {
+    return (...rest) => {
+      return container.invoke(this.Type, rest);
+    };
+  }
+
+  static of(Type) {
+    return new Factory(Type);
+  }
+}) || _class4;
 
 export let StateDiscriminator = class StateDiscriminator {
   static discriminate(widgetStates) {
@@ -1020,11 +1024,13 @@ export let Storage = class Storage {
   }
 };
 
-export let UserStateStorage = (_dec4 = inject(Storage, AppConfig), _dec4(_class5 = class UserStateStorage {
+const STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-  constructor(storage, config) {
-    this._storage = storage;
-    this._key = config.appStorageKey;
+export let UserStateStorage = (_dec4 = inject(Storage), _dec4(_class5 = class UserStateStorage {
+
+  constructor(storage) {
+    this._storage = STORAGE_KEY;
+    this._key = storageKey;
   }
 
   getAll(namespace) {
@@ -1351,6 +1357,50 @@ export let ReplaceWidgetBehavior = class ReplaceWidgetBehavior extends Dashboard
   }
 };
 
+export let WidgetEventMessage = class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName() {
+    return this._originatorName;
+  }
+
+};
+
+export let WidgetEvent = class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName() {
+    return this._originatorName;
+  }
+
+  attach(handler) {
+    if (this._handlers.some(e => e === handler)) {
+      return;
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if (idx < 0) {
+      return;
+    }
+    this.handler.splice(idx, 1);
+  }
+
+  raise() {
+    for (var i = 0; i < this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+};
+
 export let DataActivatedBehavior = class DataActivatedBehavior extends WidgetBehavior {
   constructor(chanel, eventAggregator) {
     super();
@@ -1557,50 +1607,6 @@ export let WidgetBehavior = class WidgetBehavior {
     }
   }
 
-};
-
-export let WidgetEventMessage = class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName() {
-    return this._originatorName;
-  }
-
-};
-
-export let WidgetEvent = class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName() {
-    return this._originatorName;
-  }
-
-  attach(handler) {
-    if (this._handlers.some(e => e === handler)) {
-      return;
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if (idx < 0) {
-      return;
-    }
-    this.handler.splice(idx, 1);
-  }
-
-  raise() {
-    for (var i = 0; i < this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
 };
 
 export let SchemaProvider = class SchemaProvider {

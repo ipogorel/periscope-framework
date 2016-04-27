@@ -7,8 +7,8 @@ import {HttpClient} from 'aurelia-fetch-client';
 import {EventAggregator} from 'aurelia-event-aggregator';
 import {Router} from 'aurelia-router';
 
-export class CacheManager{
-  constructor(storage){
+export class CacheManager {
+  constructor(storage) {
     this._cacheStorage = storage;
     this._cleanInterval = 5000;
   }
@@ -17,7 +17,7 @@ export class CacheManager{
 
   startCleaner(){
     if (!this.cleaner) {
-      var self = this;
+      let self = this;
       this.cleaner = window.setInterval(()=> {
         self._cacheStorage.removeExpired();
       }, this._cleanInterval);
@@ -72,6 +72,13 @@ export class MemoryCacheStorage extends CacheStorage{
     });
   }
 }
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
 
 
 export class DataHolder {
@@ -718,44 +725,6 @@ export class Grammar {
   }
 }
 
-export class DashboardManager {
-  constructor(){
-    this._dashboards = [];
-  }
-
-  get dashboards(){
-    return this._dashboards;
-  }
-
-  find(dashboardName){
-    return  _.find(this._dashboards, {name:dashboardName});
-  }
-  
-  createDashboard(type, dashboardConfiguration){
-    var dashboard = new type();
-    dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
-    return dashboard;
-  }
-}
-
-@resolver
-export class Factory{
-  constructor(Type){
-    this.Type = Type;
-  }
-
-  get(container){
-    return (...rest)=>{
-      return container.invoke(this.Type, rest);
-    };
-  }
-
-  static of(Type){
-    return new Factory(Type);
-  }
-}
-
 export class DataHelper {
   static getNumericFields(fields){
     return _.filter(fields, f => {
@@ -1064,6 +1033,44 @@ export class PeriscopeRouter {
 
 }
 
+export class DashboardManager {
+  constructor(){
+    this._dashboards = [];
+  }
+
+  get dashboards(){
+    return this._dashboards;
+  }
+
+  find(dashboardName){
+    return  _.find(this._dashboards, {name:dashboardName});
+  }
+  
+  createDashboard(type, dashboardConfiguration){
+    var dashboard = new type();
+    dashboard.configure(dashboardConfiguration);
+    this._dashboards.push(dashboard);
+    return dashboard;
+  }
+}
+
+@resolver
+export class Factory{
+  constructor(Type){
+    this.Type = Type;
+  }
+
+  get(container){
+    return (...rest)=>{
+      return container.invoke(this.Type, rest);
+    };
+  }
+
+  static of(Type){
+    return new Factory(Type);
+  }
+}
+
 
 export class StateDiscriminator{
   static discriminate(widgetStates){
@@ -1130,12 +1137,14 @@ export class Storage{
   }
 }
 
-@inject(Storage, AppConfig)
+const STORAGE_KEY = "prcpfwk23875hrw28esgfds";
+
+@inject(Storage)
 export class UserStateStorage{
 
-    constructor(storage, config){
-      this._storage = storage;
-      this._key = config.appStorageKey;
+    constructor(storage){
+      this._storage = STORAGE_KEY;
+      this._key = storageKey;
     }
 
 
@@ -1496,6 +1505,50 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
   }
 }
 
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
 export class DataActivatedBehavior extends WidgetBehavior {
   constructor(chanel, eventAggregator) {
     super();
@@ -1716,50 +1769,6 @@ export class WidgetBehavior {
     }
   }
 
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
 }
 
 export class SchemaProvider{
