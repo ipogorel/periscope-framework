@@ -1,14 +1,15 @@
 import {Storage} from './storage';
-import {AppConfig} from './../app-config';
 import {inject} from 'aurelia-framework';
 import * as _ from 'lodash';
 
-@inject(Storage, AppConfig)
+const STORAGE_KEY = "prcpfwk23875hrw28esgfds";
+
+@inject(Storage)
 export class UserStateStorage{
 
-    constructor(storage, config){
-      this._storage = storage;
-      this._key = config.appStorageKey;
+    constructor(storage){
+      this._storage = STORAGE_KEY;
+      this._key = storageKey;
     }
 
 
