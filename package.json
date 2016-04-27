@@ -30,8 +30,6 @@
       "dist": "dist/amd"
     },
     "dependencies": {
-      "aurelia-binding": "^1.0.0-beta.1.3.2",
-      "aurelia-bootstrapper": "^1.0.0-beta.1.2.0",
       "aurelia-dependency-injection": "^1.0.0-beta.1.2.0",
       "aurelia-event-aggregator": "^1.0.0-beta.1.2.0",
       "aurelia-fetch-client": "^1.0.0-beta.1.2.1",
@@ -49,10 +47,6 @@
       "aurelia-route-recognizer": "^1.0.0-beta.1.2.0",
       "aurelia-router": "^1.0.0-beta.1.2.1",
       "aurelia-task-queue": "^1.0.0-beta.1.2.0",
-      "aurelia-templating": "^1.0.0-beta.1.2.2",
-      "aurelia-templating-binding": "^1.0.0-beta.1.2.1",
-      "aurelia-templating-resources": "^1.0.0-beta.1.2.2",
-      "aurelia-templating-router": "^1.0.0-beta.1.2.0",
       "lodash": "^4.11.1",
       "moment": "^2.13.0",
       "numeral": "^1.5.3",
@@ -66,7 +60,6 @@
     }
   },
   "devDependencies": {
-    "aurelia-tools": "^0.1.22",
     "babel-dts-generator": "^0.4.5",
     "babel-eslint": "^4.1.1",
     "babel-plugin-syntax-flow": "^6.5.0",
@@ -105,6 +98,7 @@
     "karma-jspm": "^2.0.1",
     "karma-sourcemap-loader": "0.3.6",
     "object.assign": "^1.0.3",
+    "periscope-tools": "0.0.1",
     "require-dir": "^0.1.0",
     "run-sequence": "^1.0.2",
     "through2": "^2.0.0",

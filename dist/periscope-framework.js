@@ -1,8 +1,8 @@
 import lodash from 'lodash';
 import * as _ from 'lodash';
+import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
-import * as peg from 'pegjs';
 import {computedFrom,resolver,customElement,inject,useView,Decorators,bindable,noView,transient} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 import {EventAggregator} from 'aurelia-event-aggregator';
@@ -12,94 +12,6 @@ export class SchemaProvider{
   getSchema(){}
 }
 
-
-
-export class WidgetBehavior {
-
-  get widget() {
-    return this._widget;
-  }
-
-  attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.widget.behaviors.length; i++) {
-      if(this.widget.behaviors[i] === this) {
-        this.widget.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class DashboardBehavior {
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.dashboard.behaviors.length; i++) {
-      if(this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-}
 
 export class Widget {
 
@@ -475,6 +387,94 @@ export class LayoutWidget{
 
 }
 
+
+export class WidgetBehavior {
+
+  get widget() {
+    return this._widget;
+  }
+
+  attachToWidget(widget) {
+    this._widget = widget;
+    this._widget.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.widget.behaviors.length; i++) {
+      if(this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class DashboardBehavior {
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.dashboard.behaviors.length; i++) {
+      if(this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+}
+
 export class DataService{
   configure(configuration){
     this.url = configuration.url;
@@ -673,203 +673,6 @@ export class DashboardManager {
     dashboard.configure(dashboardConfiguration);
     this._dashboards.push(dashboard);
     return dashboard;
-  }
-}
-
-export class UrlHelper {
-
-  static objectToQuery(ar){
-    return encodeURIComponent(JSON.stringify(ar));
-  }
-
-  static queryToObject(queryParam){
-    return JSON.parse(queryParam);
-  }
-
-  static getParameterByName(name, url) {
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-      results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
-  }
-
-}
-
-export class StringHelper {
-
-  static compare (string1, string2) {
-    return string1.toUpperCase() === string2.toUpperCase();
-  }
-
-  static replaceAll(str, find, replace) {
-    return str.replace(new RegExp(find, 'g'), replace);
-  }
-
-  static hashCode(str){
-    var hash = 0;
-    if (str.length == 0) return hash;
-    for (let i = 0; i < str.length; i++) {
-      let char = str.charCodeAt(i);
-      hash = ((hash<<5)-hash)+char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
-  }
-
-  static getEditDistance(a, b){
-    if(a.length == 0) return b.length;
-    if(b.length == 0) return a.length;
-
-    var matrix = [];
-
-    // increment along the first column of each row
-    var i;
-    for(i = 0; i <= b.length; i++){
-      matrix[i] = [i];
-    }
-
-    // increment each column in the first row
-    var j;
-    for(j = 0; j <= a.length; j++){
-      matrix[0][j] = j;
-    }
-
-    // Fill in the rest of the matrix
-    for(i = 1; i <= b.length; i++){
-      for(j = 1; j <= a.length; j++){
-        if(b.charAt(i-1) == a.charAt(j-1)){
-          matrix[i][j] = matrix[i-1][j-1];
-        } else {
-          matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
-            Math.min(matrix[i][j-1] + 1, // insertion
-              matrix[i-1][j] + 1)); // deletion
-        }
-      }
-    }
-
-    return matrix[b.length][a.length];
-  }
-
-  static getPreviousWord(str, position, separators){
-    //var str = searchStr.substring(0, this.caretPosition).toLowerCase();
-    var str = str.substring(0, position);
-    var lastSeparatorIndex = 0;
-    for(let i=0; i < separators.length; i++) {
-      if (str.lastIndexOf(separators[i])>lastSeparatorIndex)
-        lastSeparatorIndex = str.lastIndexOf(separators[i]);
-    }
-    if (lastSeparatorIndex == str.length)
-      lastSeparatorIndex=0;
-    if ((lastSeparatorIndex>0)&&(lastSeparatorIndex < str.length))
-      lastSeparatorIndex++;
-
-    return str.substring(lastSeparatorIndex, str.length);
-  }
-
-  static getNextWord(str, position, separators){
-    var str = str.substring(position, str.length);
-    var firstSeparatorIndex = str.length;
-    for(let i=0; i < separators.length; i++) {
-      if ((str.indexOf(separators[i])<firstSeparatorIndex)&&(str.indexOf(separators[i])>=0))
-        firstSeparatorIndex = str.indexOf(separators[i]);
-    }
-    return str.substring(0, firstSeparatorIndex);
-  }
-}
-
-export class GuidHelper {
-
-  static guid() {
-    return GuidHelper._s4() + GuidHelper._s4() + '-' + GuidHelper._s4() + '-' + GuidHelper._s4() + '-' +
-      GuidHelper._s4() + '-' + GuidHelper._s4() + GuidHelper._s4() + GuidHelper._s4();
-  }
-
-  static _s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  }
-}
-
-
-export class DataHelper {
-  static getNumericFields(fields){
-    return _.filter(fields, f => {
-      if ((f.type == "number")||(f.type == "currency"))
-        return f;
-    });
-  }
-  static getStringFields(fields){
-    return _.filter(fields,{type:"string"});
-  }
-
-  static getDateFields(fields){
-    return _.filter(fields,{type:"date"});
-  }
-
-  static getFieldType(collection, fieldName) {
-    var blankCount = 0;
-    var result;
-    for(var i=0; i< collection.length; i++){
-      var val = collection[i][fieldName];
-      if(val!=undefined){
-        if (DataHelper.isString(val))
-          result = "string";
-        else if (DataHelper.isNumber(val)) {
-          if (DataHelper.isCurrency(collection, fieldName))
-            result = "currency";
-          else
-            result = "number";
-        }
-        else if (DataHelper.isDate(val))
-          result = "date";
-        return result;
-      }
-      else{
-        blankCount++;
-      }
-      if(blankCount>300){
-        return undefined;
-      }
-    }
-  }
-
-  static deserializeDates(jsonArray) {
-    for(var r = 0; r< jsonArray.length; r++) {
-      var jsonObj = jsonArray[r];
-      for (var field in jsonObj) {
-        if (jsonObj.hasOwnProperty(field)) {
-          var value = jsonObj[field];
-          if(value && typeof value == 'string' && value.indexOf('/Date')===0){
-            jsonObj[field] = new Date(parseInt(value.substr(6)));
-          }
-        }
-      }
-    }
-    return jsonArray;
-  }
-
-  static isCurrency(collection, fieldName){
-    if ((collection.length===0)||(!fieldName))
-      return false;
-    var largeValues =_.filter(collection, x=> (Math.abs(x[fieldName])>=1000)).length;
-    if ((largeValues/collection.length)> 0.4)
-      return true;
-    return false;
-  }
-
-  static isDate(value) {
-    return ((new Date(value) !== "Invalid Date" && !isNaN(new Date(value))));
-  }
-
-  static isString(value) {
-    return (typeof value === 'string' || value instanceof String);
-  }
-
-  static isNumber(value) {
-    return (typeof value === 'number');
   }
 }
 
@@ -1106,6 +909,203 @@ export class DataHolder {
 
 }
 
+export class UrlHelper {
+
+  static objectToQuery(ar){
+    return encodeURIComponent(JSON.stringify(ar));
+  }
+
+  static queryToObject(queryParam){
+    return JSON.parse(queryParam);
+  }
+
+  static getParameterByName(name, url) {
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+      results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
+}
+
+export class StringHelper {
+
+  static compare (string1, string2) {
+    return string1.toUpperCase() === string2.toUpperCase();
+  }
+
+  static replaceAll(str, find, replace) {
+    return str.replace(new RegExp(find, 'g'), replace);
+  }
+
+  static hashCode(str){
+    var hash = 0;
+    if (str.length == 0) return hash;
+    for (let i = 0; i < str.length; i++) {
+      let char = str.charCodeAt(i);
+      hash = ((hash<<5)-hash)+char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+  }
+
+  static getEditDistance(a, b){
+    if(a.length == 0) return b.length;
+    if(b.length == 0) return a.length;
+
+    var matrix = [];
+
+    // increment along the first column of each row
+    var i;
+    for(i = 0; i <= b.length; i++){
+      matrix[i] = [i];
+    }
+
+    // increment each column in the first row
+    var j;
+    for(j = 0; j <= a.length; j++){
+      matrix[0][j] = j;
+    }
+
+    // Fill in the rest of the matrix
+    for(i = 1; i <= b.length; i++){
+      for(j = 1; j <= a.length; j++){
+        if(b.charAt(i-1) == a.charAt(j-1)){
+          matrix[i][j] = matrix[i-1][j-1];
+        } else {
+          matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+            Math.min(matrix[i][j-1] + 1, // insertion
+              matrix[i-1][j] + 1)); // deletion
+        }
+      }
+    }
+
+    return matrix[b.length][a.length];
+  }
+
+  static getPreviousWord(str, position, separators){
+    //var str = searchStr.substring(0, this.caretPosition).toLowerCase();
+    var str = str.substring(0, position);
+    var lastSeparatorIndex = 0;
+    for(let i=0; i < separators.length; i++) {
+      if (str.lastIndexOf(separators[i])>lastSeparatorIndex)
+        lastSeparatorIndex = str.lastIndexOf(separators[i]);
+    }
+    if (lastSeparatorIndex == str.length)
+      lastSeparatorIndex=0;
+    if ((lastSeparatorIndex>0)&&(lastSeparatorIndex < str.length))
+      lastSeparatorIndex++;
+
+    return str.substring(lastSeparatorIndex, str.length);
+  }
+
+  static getNextWord(str, position, separators){
+    var str = str.substring(position, str.length);
+    var firstSeparatorIndex = str.length;
+    for(let i=0; i < separators.length; i++) {
+      if ((str.indexOf(separators[i])<firstSeparatorIndex)&&(str.indexOf(separators[i])>=0))
+        firstSeparatorIndex = str.indexOf(separators[i]);
+    }
+    return str.substring(0, firstSeparatorIndex);
+  }
+}
+
+export class GuidHelper {
+
+  static guid() {
+    return GuidHelper._s4() + GuidHelper._s4() + '-' + GuidHelper._s4() + '-' + GuidHelper._s4() + '-' +
+      GuidHelper._s4() + '-' + GuidHelper._s4() + GuidHelper._s4() + GuidHelper._s4();
+  }
+
+  static _s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+}
+
+
+export class DataHelper {
+  static getNumericFields(fields){
+    return _.filter(fields, f => {
+      if ((f.type == "number")||(f.type == "currency"))
+        return f;
+    });
+  }
+  static getStringFields(fields){
+    return _.filter(fields,{type:"string"});
+  }
+
+  static getDateFields(fields){
+    return _.filter(fields,{type:"date"});
+  }
+
+  static getFieldType(collection, fieldName) {
+    var blankCount = 0;
+    var result;
+    for(var i=0; i< collection.length; i++){
+      var val = collection[i][fieldName];
+      if(val!=undefined){
+        if (DataHelper.isString(val))
+          result = "string";
+        else if (DataHelper.isNumber(val)) {
+          if (DataHelper.isCurrency(collection, fieldName))
+            result = "currency";
+          else
+            result = "number";
+        }
+        else if (DataHelper.isDate(val))
+          result = "date";
+        return result;
+      }
+      else{
+        blankCount++;
+      }
+      if(blankCount>300){
+        return undefined;
+      }
+    }
+  }
+
+  static deserializeDates(jsonArray) {
+    for(var r = 0; r< jsonArray.length; r++) {
+      var jsonObj = jsonArray[r];
+      for (var field in jsonObj) {
+        if (jsonObj.hasOwnProperty(field)) {
+          var value = jsonObj[field];
+          if(value && typeof value == 'string' && value.indexOf('/Date')===0){
+            jsonObj[field] = new Date(parseInt(value.substr(6)));
+          }
+        }
+      }
+    }
+    return jsonArray;
+  }
+
+  static isCurrency(collection, fieldName){
+    if ((collection.length===0)||(!fieldName))
+      return false;
+    var largeValues =_.filter(collection, x=> (Math.abs(x[fieldName])>=1000)).length;
+    if ((largeValues/collection.length)> 0.4)
+      return true;
+    return false;
+  }
+
+  static isDate(value) {
+    return ((new Date(value) !== "Invalid Date" && !isNaN(new Date(value))));
+  }
+
+  static isString(value) {
+    return (typeof value === 'string' || value instanceof String);
+  }
+
+  static isNumber(value) {
+    return (typeof value === 'number');
+  }
+}
+
 export class DashboardConfiguration {
   invoke(){
 
@@ -1157,6 +1157,48 @@ export class StaticSchemaProvider extends SchemaProvider{
     return new Promise((resolve, reject)=>{
       resolve(this._schema);
     });
+  }
+}
+
+
+export class Chart extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.categoriesField = settings.categoriesField;
+    this.seriesDefaults = settings.seriesDefaults;
+    this.stateType = "chartState";
+    this.attachBehaviors();
+  }
+
+  get categoriesField(){
+    return this._categoriesField;
+  }
+  set categoriesField(value){
+    this._categoriesField = value;
+  }
+
+  get seriesDefaults(){
+    return this._seriesDefaults;
+  }
+  set seriesDefaults(value){
+    this._seriesDefaults = value;
+  }
+
+}
+
+export class DetailedView extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.fields = settings.fields;
+    this.stateType = "detailedViewState";
+    this.attachBehaviors();
+  }
+
+  get fields(){
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
   }
 }
 
@@ -1240,6 +1282,139 @@ export class SettingsHandleBehavior extends WidgetBehavior
     if (this.subscription)
       this.subscription.dispose();
   }
+}
+
+export class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+
+  get dataSourceToConfigurate(){
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
+  }
+
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+
+}
+
+export class Grid extends Widget {
+  constructor(settings) {
+    super(settings);
+
+    this.columns = settings.columns? settings.columns : [];
+    this.navigatable = settings.navigatable;
+    this.autoGenerateColumns = settings.autoGenerateColumns;
+    this.pageSize = settings.pageSize;
+    this.group = settings.group;
+
+    this.stateType = "gridState";
+
+    this._dataSelected = new WidgetEvent();
+    this._dataActivated = new WidgetEvent();
+    this._dataFieldSelected = new WidgetEvent();
+
+    this.attachBehaviors();
+  }
+
+  get columns(){
+    return this._columns;
+  }
+  set columns(value) {
+    this._columns = value;
+  }
+
+  get navigatable(){
+    return this._navigatable;
+  }
+  set navigatable(value) {
+    this._navigatable = value;
+  }
+
+  get autoGenerateColumns(){
+    return this._autoGenerateColumns;
+  }
+  set autoGenerateColumns(value) {
+    this._autoGenerateColumns = value;
+  }
+
+  get pageSize(){
+    return this._pageSize;
+  }
+  set pageSize(value) {
+    this._pageSize = value;
+  }
+
+  get group(){
+    return this._group;
+  }
+  set group(value){
+    this._group = value;
+  }
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+  
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState(){
+    this.state = {columns:this.columns};
+  }
+
+  restoreState(){
+    if (this.state)
+      this.columns = this.state.columns;
+  }
+}
+
+export class SearchBox extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.stateType = "searchBoxState";
+    this._dataFilterChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+
+
 }
 
 export class DataActivatedBehavior extends WidgetBehavior {
@@ -1492,181 +1667,6 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
   }
 }
 
-export class Chart extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.categoriesField = settings.categoriesField;
-    this.seriesDefaults = settings.seriesDefaults;
-    this.stateType = "chartState";
-    this.attachBehaviors();
-  }
-
-  get categoriesField(){
-    return this._categoriesField;
-  }
-  set categoriesField(value){
-    this._categoriesField = value;
-  }
-
-  get seriesDefaults(){
-    return this._seriesDefaults;
-  }
-  set seriesDefaults(value){
-    this._seriesDefaults = value;
-  }
-
-}
-
-export class DataSourceConfigurator extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    this.stateType = "dataSourceConfiguratorState";
-    this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-
-  get dataSourceToConfigurate(){
-    return this._dataSourceToConfigurate;
-  }
-  set dataSourceToConfigurate(value) {
-    this._dataSourceToConfigurate = value;
-  }
-
-
-  get dataSourceChanged() {
-    return this._dataSourceChanged;
-  }
-  set dataSourceChanged(handler) {
-    this._dataSourceChanged.attach(handler);
-  }
-
-
-}
-
-export class DetailedView extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.fields = settings.fields;
-    this.stateType = "detailedViewState";
-    this.attachBehaviors();
-  }
-
-  get fields(){
-    return this._fields;
-  }
-  set fields(value) {
-    this._fields = value;
-  }
-}
-
-
-export class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
-
-    this.columns = settings.columns? settings.columns : [];
-    this.navigatable = settings.navigatable;
-    this.autoGenerateColumns = settings.autoGenerateColumns;
-    this.pageSize = settings.pageSize;
-    this.group = settings.group;
-
-    this.stateType = "gridState";
-
-    this._dataSelected = new WidgetEvent();
-    this._dataActivated = new WidgetEvent();
-    this._dataFieldSelected = new WidgetEvent();
-
-    this.attachBehaviors();
-  }
-
-  get columns(){
-    return this._columns;
-  }
-  set columns(value) {
-    this._columns = value;
-  }
-
-  get navigatable(){
-    return this._navigatable;
-  }
-  set navigatable(value) {
-    this._navigatable = value;
-  }
-
-  get autoGenerateColumns(){
-    return this._autoGenerateColumns;
-  }
-  set autoGenerateColumns(value) {
-    this._autoGenerateColumns = value;
-  }
-
-  get pageSize(){
-    return this._pageSize;
-  }
-  set pageSize(value) {
-    this._pageSize = value;
-  }
-
-  get group(){
-    return this._group;
-  }
-  set group(value){
-    this._group = value;
-  }
-
-  get dataSelected() {
-    return this._dataSelected;
-  }
-  set dataSelected(handler) {
-    this._dataSelected.attach(handler);
-  }
-
-  get dataActivated() {
-    return this._dataActivated;
-  }
-  set dataActivated(handler) {
-    this._dataActivated.attach(handler);
-  }
-  
-
-  get dataFieldSelected() {
-    return this._dataFieldSelected;
-  }
-  set dataFieldSelected(handler) {
-    this._dataFieldSelected.attach(handler);
-  }
-
-  saveState(){
-    this.state = {columns:this.columns};
-  }
-
-  restoreState(){
-    if (this.state)
-      this.columns = this.state.columns;
-  }
-}
-
-export class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "searchBoxState";
-    this._dataFilterChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-  get dataFilterChanged() {
-    return this._dataFilterChanged;
-  }
-  set dataFilterChanged(handler) {
-    this._dataFilterChanged.attach(handler);
-  }
-
-
-
-}
-
 @transient()
 @inject(HttpClient)
 export class JsonDataService extends DataService {
@@ -1792,114 +1792,6 @@ export class UserStateStorage{
 
 }
 
-export class StateUrlParser{
-  static stateToQuery(widgetStates){
-    var params = []
-    for (let widgetState of widgetStates)
-        params.push({"sk": widgetState.key, "sv":widgetState.value});
-    //.widgetName, "st":widgetState.value.stateType, "so":widgetState.value.stateObject
-    return ((params.length>0)? "?q=" + UrlHelper.objectToQuery(params) :"");
-  }
-
-  static queryToState(url){
-    var result = [];
-    var q = UrlHelper.getParameterByName("q", url);
-    if (q){
-      var widgetStates = UrlHelper.queryToObject(q);
-      for (var ws of widgetStates){
-        result.push({"key":ws.sk, "value":ws.sv});
-      }
-    }
-    return result;
-  }
-}
-
-export class Query {
-
-  get sort(){
-    return this._sort;
-  }
-  set sort(value){
-    this._sort = value;
-  }
-
-  get group(){
-    return this._group;
-  }
-  set group(value){
-    this._group = value;
-  }
-
-  get sortDir(){
-    return this._sortDir;
-  }
-  set sortDir(value){
-    this._sortDir = value;
-  }
-
-  get take(){
-    return this._take;
-  }
-  set take(value){
-    this._take = value;
-  }
-
-  get fields(){
-    return this._fields;
-  }
-  set fields(value){
-    this._fields = value;
-  }
-
-  get skip(){
-    return this._skip;
-  }
-  set skip(value){
-    this._skip = value;
-  }
-
-  /*get clientSideFilter() {
-    return this._clientSideFilter;
-  }
-  set clientSideFilter(value) {
-    this._clientSideFilter = value;
-  }*/
-
-
-  get serverSideFilter() {
-    return this._serverSideFilter;
-  }
-  set serverSideFilter(value) {
-    this._serverSideFilter = value;
-  }
-
-  cacheKey(){
-    return Math.abs(StringHelper.hashCode(
-        ((this.serverSideFilter)?this.serverSideFilter:"") +
-        (this.fields?this.fields.join(""):"") +
-        (this.sort?this.sort:"") +
-        (this.sortDir?this.sortDir:"") +
-        (this.take?this.take:"0") +
-        (this.skip?this.skip:"0")));
-  }
-  
-}
-
-
-export class FormatValueConverter {
-  static format(value, format){
-    if (DataHelper.isDate(value))
-      return moment(value).format(format);
-    if (DataHelper.isNumber(value))
-      return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
-}
-
 @inject(HttpClient)
 export class ExpressionParserFactory {
 
@@ -1930,50 +1822,6 @@ export class ExpressionParserFactory {
   }
 }
 
-
-@transient()
-@inject(HttpClient)
-export class StaticJsonDataService extends DataService {
-  constructor(http) {
-    super();
-    http.configure(config => {
-      config.useStandardConfiguration();
-    });
-    this._http = http;
-  }
-  
-
-  read(options) {
-    return this._http
-      .fetch(this.url)
-      .then(response => {
-        return response.json();
-      })
-      .then(jsonData => {
-        var d = jsonData;
-        d = this.dataMapper? this.dataMapper(d) : d;
-        if (options.filter){
-          var evaluator = new QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, options.filter);
-        }
-        var total = d.length;
-        // sort
-        if (options.sort)
-          d = _.orderBy(d,[options.sort],[options.sortDir]);
-        var l = options.skip + options.take;
-        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
-        if (options.fields && options.fields.length>0)
-          d = _.map(d, item =>{
-            return _.pick(item, options.fields);
-          });
-        return {
-          data: DataHelper.deserializeDates(d),
-          total: (this.totalMapper? this.totalMapper(jsonData) : total)
-        }
-      });
-  }
-
-}
 
 export class Datasource {
     
@@ -2089,6 +1937,158 @@ export class DataSourceConfiguration {
 
 
 
+
+export class StateUrlParser{
+  static stateToQuery(widgetStates){
+    var params = []
+    for (let widgetState of widgetStates)
+        params.push({"sk": widgetState.key, "sv":widgetState.value});
+    //.widgetName, "st":widgetState.value.stateType, "so":widgetState.value.stateObject
+    return ((params.length>0)? "?q=" + UrlHelper.objectToQuery(params) :"");
+  }
+
+  static queryToState(url){
+    var result = [];
+    var q = UrlHelper.getParameterByName("q", url);
+    if (q){
+      var widgetStates = UrlHelper.queryToObject(q);
+      for (var ws of widgetStates){
+        result.push({"key":ws.sk, "value":ws.sv});
+      }
+    }
+    return result;
+  }
+}
+
+export class Query {
+
+  get sort(){
+    return this._sort;
+  }
+  set sort(value){
+    this._sort = value;
+  }
+
+  get group(){
+    return this._group;
+  }
+  set group(value){
+    this._group = value;
+  }
+
+  get sortDir(){
+    return this._sortDir;
+  }
+  set sortDir(value){
+    this._sortDir = value;
+  }
+
+  get take(){
+    return this._take;
+  }
+  set take(value){
+    this._take = value;
+  }
+
+  get fields(){
+    return this._fields;
+  }
+  set fields(value){
+    this._fields = value;
+  }
+
+  get skip(){
+    return this._skip;
+  }
+  set skip(value){
+    this._skip = value;
+  }
+
+  /*get clientSideFilter() {
+    return this._clientSideFilter;
+  }
+  set clientSideFilter(value) {
+    this._clientSideFilter = value;
+  }*/
+
+
+  get serverSideFilter() {
+    return this._serverSideFilter;
+  }
+  set serverSideFilter(value) {
+    this._serverSideFilter = value;
+  }
+
+  cacheKey(){
+    return Math.abs(StringHelper.hashCode(
+        ((this.serverSideFilter)?this.serverSideFilter:"") +
+        (this.fields?this.fields.join(""):"") +
+        (this.sort?this.sort:"") +
+        (this.sortDir?this.sortDir:"") +
+        (this.take?this.take:"0") +
+        (this.skip?this.skip:"0")));
+  }
+  
+}
+
+
+export class FormatValueConverter {
+  static format(value, format){
+    if (DataHelper.isDate(value))
+      return moment(value).format(format);
+    if (DataHelper.isNumber(value))
+      return numeral(value).format(format);
+    return value;
+  }
+
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  }
+}
+
+@transient()
+@inject(HttpClient)
+export class StaticJsonDataService extends DataService {
+  constructor(http) {
+    super();
+    http.configure(config => {
+      config.useStandardConfiguration();
+    });
+    this._http = http;
+  }
+  
+
+  read(options) {
+    return this._http
+      .fetch(this.url)
+      .then(response => {
+        return response.json();
+      })
+      .then(jsonData => {
+        var d = jsonData;
+        d = this.dataMapper? this.dataMapper(d) : d;
+        if (options.filter){
+          var evaluator = new QueryExpressionEvaluator();
+          d = evaluator.evaluate(d, options.filter);
+        }
+        var total = d.length;
+        // sort
+        if (options.sort)
+          d = _.orderBy(d,[options.sort],[options.sortDir]);
+        var l = options.skip + options.take;
+        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
+        if (options.fields && options.fields.length>0)
+          d = _.map(d, item =>{
+            return _.pick(item, options.fields);
+          });
+        return {
+          data: DataHelper.deserializeDates(d),
+          total: (this.totalMapper? this.totalMapper(jsonData) : total)
+        }
+      });
+  }
+
+}
 
 export class MemoryCacheStorage extends CacheStorage{
   constructor(){

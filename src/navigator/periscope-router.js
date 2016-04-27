@@ -1,11 +1,11 @@
-import {NavigationHistory} from './navigation-history';
 import {inject} from 'aurelia-framework';
 import {EventAggregator} from 'aurelia-event-aggregator';
+import {Router} from 'aurelia-router';
+import {NavigationHistory} from './navigation-history';
 import {UserStateStorage} from './../state/user-state-storage';
 import {StateDiscriminator} from './../state/state-discriminator';
 import {StateUrlParser} from './../state/state-url-parser';
 import {StringHelper} from './../helpers/string-helper';
-import {Router} from 'aurelia-router';
 import * as _ from 'lodash';
 
 
