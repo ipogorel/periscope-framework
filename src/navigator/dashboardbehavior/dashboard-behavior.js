@@ -1,4 +1,3 @@
-
 export class DashboardBehavior {
 
   get dashboard() {

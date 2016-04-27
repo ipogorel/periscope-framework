@@ -1,6 +1,5 @@
 import {DashboardBehavior} from './dashboard-behavior';
 
-
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
     super();

@@ -1,4 +1,4 @@
-import {CacheStorage} from './cache-storage';
+import {CacheStorage} from './../cache/cache-storage';
 import * as _ from 'lodash';
 
 export class MemoryCacheStorage extends CacheStorage{
