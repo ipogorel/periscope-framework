@@ -4,7 +4,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.DslExpressionManagerFactory = exports.DslExpressionManager = exports.PeriscopeRouter = exports.MemoryCacheStorage = exports.DataSourceConfiguration = exports.Datasource = exports.StaticJsonDataService = exports.ExpressionParserFactory = exports.FormatValueConverter = exports.Query = exports.StateUrlParser = exports.UserStateStorage = exports.SwaggerSchemaProvider = exports.JsonDataService = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataFilterHandleBehavior = exports.StaticSchemaProvider = exports.CacheManager = exports.CacheStorage = exports.DashboardConfiguration = exports.DataHolder = exports.QueryExpressionEvaluator = exports.ExpressionParser = exports.Grammar = exports.DashboardManager = exports.Factory = exports.DataHelper = exports.GuidHelper = exports.StringHelper = exports.UrlHelper = exports.NavigationHistory = exports.StateDiscriminator = exports.Storage = exports.Schema = exports.DataServiceConfiguration = exports.DataService = exports.DashboardBehavior = exports.WidgetEventMessage = exports.WidgetEvent = exports.WidgetBehavior = exports.SchemaProvider = undefined;
+  exports.DslExpressionManagerFactory = exports.DslExpressionManager = exports.PeriscopeRouter = exports.MemoryCacheStorage = exports.DataSourceConfiguration = exports.Datasource = exports.StaticJsonDataService = exports.ExpressionParserFactory = exports.FormatValueConverter = exports.Query = exports.StateUrlParser = exports.UserStateStorage = exports.SwaggerSchemaProvider = exports.JsonDataService = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataFilterHandleBehavior = exports.StaticSchemaProvider = exports.CacheManager = exports.CacheStorage = exports.DashboardConfiguration = exports.DataHolder = exports.QueryExpressionEvaluator = exports.ExpressionParser = exports.Grammar = exports.DataHelper = exports.GuidHelper = exports.StringHelper = exports.UrlHelper = exports.DashboardManager = exports.Factory = exports.NavigationHistory = exports.StateDiscriminator = exports.Storage = exports.Schema = exports.DataServiceConfiguration = exports.DataService = exports.LayoutWidget = exports.DashboardBase = exports.Widget = exports.DashboardBehavior = exports.WidgetEventMessage = exports.WidgetEvent = exports.WidgetBehavior = exports.SchemaProvider = undefined;
 
   var _ = _interopRequireWildcard(_lodash);
 
@@ -69,7 +69,36 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var _class, _dec, _dec2, _class2, _dec3, _class3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _class6, _dec8, _class7;
+  function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
+    var desc = {};
+    Object['ke' + 'ys'](descriptor).forEach(function (key) {
+      desc[key] = descriptor[key];
+    });
+    desc.enumerable = !!desc.enumerable;
+    desc.configurable = !!desc.configurable;
+
+    if ('value' in desc || desc.initializer) {
+      desc.writable = true;
+    }
+
+    desc = decorators.slice().reverse().reduce(function (desc, decorator) {
+      return decorator(target, property, desc) || desc;
+    }, desc);
+
+    if (context && desc.initializer !== void 0) {
+      desc.value = desc.initializer ? desc.initializer.call(context) : void 0;
+      desc.initializer = undefined;
+    }
+
+    if (desc.initializer === void 0) {
+      Object['define' + 'Property'](target, property, desc);
+      desc = null;
+    }
+
+    return desc;
+  }
+
+  var _dec, _desc, _value, _class, _class2, _dec2, _dec3, _class3, _dec4, _class4, _dec5, _class5, _dec6, _dec7, _class6, _dec8, _class7, _dec9, _class8;
 
   var _createClass = function () {
     function defineProperties(target, props) {
@@ -221,6 +250,405 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     return DashboardBehavior;
   }();
 
+  var Widget = exports.Widget = function () {
+    function Widget(settings) {
+      _classCallCheck(this, Widget);
+
+      this._settings = settings;
+      this._behaviors = [];
+    }
+
+    Widget.prototype.attachBehavior = function attachBehavior(behavior) {
+      behavior.attachToWidget(this);
+    };
+
+    Widget.prototype.attachBehaviors = function attachBehaviors() {
+      if (this.settings.behavior) {
+        for (var _iterator = this.settings.behavior, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+          var _ref;
+
+          if (_isArray) {
+            if (_i >= _iterator.length) break;
+            _ref = _iterator[_i++];
+          } else {
+            _i = _iterator.next();
+            if (_i.done) break;
+            _ref = _i.value;
+          }
+
+          var b = _ref;
+
+          this.attachBehavior(b);
+        }
+      }
+    };
+
+    Widget.prototype.changeSettings = function changeSettings(newSettings) {
+      var _this = this;
+
+      if (newSettings) {
+        _.forOwn(newSettings, function (v, k) {
+          _this.settings[k] = v;
+        });
+        this.refresh();
+      }
+    };
+
+    Widget.prototype.refresh = function refresh() {};
+
+    Widget.prototype.dispose = function dispose() {
+      while (true) {
+        if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+      }
+    };
+
+    Widget.prototype._calculateHeight = function _calculateHeight(contentContainerElement) {
+      if (!contentContainerElement) return this.settings.minHeight;
+      var p = $(contentContainerElement).parents(".widget-container");
+      var headerHeight = p.find(".portlet-header")[0].scrollHeight;
+      var parentHeight = p[0].offsetHeight - headerHeight;
+      return parentHeight > this.settings.minHeight ? parentHeight : this.settings.minHeight;
+    };
+
+    _createClass(Widget, [{
+      key: 'self',
+      get: function get() {
+        return this;
+      }
+    }, {
+      key: 'settings',
+      get: function get() {
+        return this._settings;
+      }
+    }, {
+      key: 'behaviors',
+      get: function get() {
+        return this._behaviors;
+      }
+    }, {
+      key: 'name',
+      get: function get() {
+        return this.settings.name;
+      }
+    }, {
+      key: 'state',
+      get: function get() {
+        if (this.stateStorage) {
+          var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+          var s = this.stateStorage.get(key);
+          if (s) return s.stateObject;
+        }
+        return undefined;
+      },
+      set: function set(value) {
+        if (this.stateStorage) {
+          var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+          if (!value) this.stateStorage.remove(key);else {
+            var s = { stateType: this.stateType, stateObject: value };
+            this.stateStorage.set(key, s);
+          }
+        }
+      }
+    }, {
+      key: 'stateType',
+      get: function get() {
+        return this._type;
+      },
+      set: function set(value) {
+        this._type = value;
+      }
+    }, {
+      key: 'showHeader',
+      get: function get() {
+        return this.settings.showHeader;
+      }
+    }, {
+      key: 'dataHolder',
+      set: function set(value) {
+        this._dataHolder = value;
+      },
+      get: function get() {
+        return this._dataHolder;
+      }
+    }, {
+      key: 'header',
+      get: function get() {
+        return this.settings.header;
+      },
+      set: function set(value) {
+        this.settings.header = value;
+      }
+    }, {
+      key: 'stateStorage',
+      get: function get() {
+        return this.settings.stateStorage;
+      }
+    }, {
+      key: 'dataSource',
+      set: function set(value) {
+        this.settings.dataSource = value;
+      },
+      get: function get() {
+        return this.settings.dataSource;
+      }
+    }, {
+      key: 'dataMapper',
+      get: function get() {
+        return this.settings.dataMapper;
+      }
+    }, {
+      key: 'dataFilter',
+      get: function get() {
+        return this._dataFilter;
+      },
+      set: function set(value) {
+        this._dataFilter = value;
+      }
+    }, {
+      key: 'type',
+      get: function get() {
+        return this._type;
+      }
+    }, {
+      key: 'dashboard',
+      get: function get() {
+        return this._dashboard;
+      },
+      set: function set(value) {
+        this._dashboard = value;
+      }
+    }]);
+
+    return Widget;
+  }();
+
+  var DashboardBase = exports.DashboardBase = function () {
+    function DashboardBase() {
+      _classCallCheck(this, DashboardBase);
+
+      this._layout = [];
+      this._behaviors = [];
+    }
+
+    DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
+      this._name = dashboardConfiguration.name;
+      this._title = dashboardConfiguration.title;
+      this._route = dashboardConfiguration.route;
+    };
+
+    DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
+      var wl = _.find(this._layout, function (w) {
+        return w.widget.name === widgetName;
+      });
+      if (wl) return wl.widget;
+    };
+
+    DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
+      var lw = new LayoutWidget();
+      lw.widget = widget;
+      lw.sizeX = dimensions.sizeX;
+      lw.sizeY = dimensions.sizeY;
+      lw.col = dimensions.col;
+      lw.row = dimensions.row;
+      this._layout.push(lw);
+      widget.dashboard = this;
+    };
+
+    DashboardBase.prototype.removeWidget = function removeWidget(widget) {
+      _.remove(this._layout, function (w) {
+        if (w.widget === widget) {
+          widget.dispose();
+          return true;
+        }
+        return false;
+      });
+    };
+
+    DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
+      var oldLw = _.find(this._layout, function (w) {
+        return w.widget === oldWidget;
+      });
+      if (oldLw) {
+        newWidget.dashboard = this;
+        var newLw = new LayoutWidget();
+        newLw.widget = newWidget;
+        newLw.sizeX = oldLw.sizeX;
+        newLw.sizeY = oldLw.sizeY;
+        newLw.col = oldLw.col;
+        newLw.row = oldLw.row;
+
+        newLw.navigationStack.push(oldWidget);
+        this._layout.splice(_.indexOf(this._layout, oldLw), 1, newLw);
+      }
+    };
+
+    DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
+      var lw = _.find(this._layout, function (w) {
+        return w.widget === currentWidget;
+      });
+      var previousWidget = lw.navigationStack.pop();
+      if (previousWidget) {
+        var previousLw = new LayoutWidget();
+        previousLw.widget = previousWidget;
+        previousLw.sizeX = lw.sizeX;
+        previousLw.sizeY = lw.sizeY;
+        previousLw.col = lw.col;
+        previousLw.row = lw.row;
+        this._layout.splice(_.indexOf(this._layout, lw), 1, previousLw);
+      }
+    };
+
+    DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
+      var lw = _.find(this._layout, function (w) {
+        return w.widget === widget;
+      });
+      if (newSize) {
+        var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
+        var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
+        lw.resize(x, y);
+      } else lw.rollbackResize();
+    };
+
+    DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
+      widget.refresh();
+    };
+
+    DashboardBase.prototype.refresh = function refresh() {
+      for (var i = 0; i < this._layout.length; i++) {
+        this.refreshWidget(this._layout[i].widget);
+      }
+    };
+
+    DashboardBase.prototype.dispose = function dispose() {
+      for (var i = 0; i < this._layout.length; i++) {
+        this._layout[i].widget.dispose();
+      }
+      this._layout = [];
+
+      while (true) {
+        if (this._behaviors.length > 0) this._behaviors[0].detach();else break;
+      }
+    };
+
+    _createClass(DashboardBase, [{
+      key: 'name',
+      get: function get() {
+        return this._name;
+      }
+    }, {
+      key: 'route',
+      get: function get() {
+        return this._route;
+      }
+    }, {
+      key: 'title',
+      get: function get() {
+        return this._title;
+      }
+    }, {
+      key: 'layout',
+      get: function get() {
+        return this._layout;
+      }
+    }, {
+      key: 'behaviors',
+      get: function get() {
+        return this._behaviors;
+      }
+    }]);
+
+    return DashboardBase;
+  }();
+
+  var LayoutWidget = exports.LayoutWidget = (_dec = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class = function () {
+    function LayoutWidget() {
+      _classCallCheck(this, LayoutWidget);
+
+      this.navigationStack = [];
+      this.resized = false;
+    }
+
+    LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
+      this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
+      this.sizeX = newSizeX;
+      this.sizeY = newSizeY;
+      this.resized = true;
+    };
+
+    LayoutWidget.prototype.rollbackResize = function rollbackResize() {
+      if (this._originalDimensions) {
+        this.sizeX = this._originalDimensions.sizeX;
+        this.sizeY = this._originalDimensions.sizeY;
+      }
+      this.resized = false;
+    };
+
+    _createClass(LayoutWidget, [{
+      key: 'widget',
+      get: function get() {
+        return this._widget;
+      },
+      set: function set(value) {
+        this._widget = value;
+      }
+    }, {
+      key: 'navigationStack',
+      get: function get() {
+        return this._navigationStack;
+      },
+      set: function set(value) {
+        this._navigationStack = value;
+      }
+    }, {
+      key: 'sizeX',
+      get: function get() {
+        return this._sizeX;
+      },
+      set: function set(value) {
+        this._sizeX = value;
+      }
+    }, {
+      key: 'sizeY',
+      get: function get() {
+        return this._sizeY;
+      },
+      set: function set(value) {
+        this._sizeY = value;
+      }
+    }, {
+      key: 'col',
+      get: function get() {
+        return this._col;
+      },
+      set: function set(value) {
+        this._col = value;
+      }
+    }, {
+      key: 'row',
+      get: function get() {
+        return this._row;
+      },
+      set: function set(value) {
+        this._row = value;
+      }
+    }, {
+      key: 'resized',
+      get: function get() {
+        return this._resized;
+      },
+      set: function set(value) {
+        this._resized = value;
+      }
+    }, {
+      key: 'hasNavStack',
+      get: function get() {
+        return this.navigationStack && this.navigationStack.length > 0;
+      }
+    }]);
+
+    return LayoutWidget;
+  }(), (_applyDecoratedDescriptor(_class.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'hasNavStack'), _class.prototype)), _class));
+
   var DataService = exports.DataService = function () {
     function DataService() {
       _classCallCheck(this, DataService);
@@ -340,19 +768,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
 
     StateDiscriminator.discriminate = function discriminate(widgetStates) {
       var result = [];
-      for (var _iterator = widgetStates, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-        var _ref;
+      for (var _iterator2 = widgetStates, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+        var _ref2;
 
-        if (_isArray) {
-          if (_i >= _iterator.length) break;
-          _ref = _iterator[_i++];
+        if (_isArray2) {
+          if (_i2 >= _iterator2.length) break;
+          _ref2 = _iterator2[_i2++];
         } else {
-          _i = _iterator.next();
-          if (_i.done) break;
-          _ref = _i.value;
+          _i2 = _iterator2.next();
+          if (_i2.done) break;
+          _ref2 = _i2.value;
         }
 
-        var ws = _ref;
+        var ws = _ref2;
 
         if (ws.value.stateType === "searchBoxState") result.push(ws);
       }
@@ -374,28 +802,6 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     };
 
     NavigationHistory.prototype.update = function update(url, dateTime) {
-      for (var _iterator2 = this._history, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-        var _ref2;
-
-        if (_isArray2) {
-          if (_i2 >= _iterator2.length) break;
-          _ref2 = _iterator2[_i2++];
-        } else {
-          _i2 = _iterator2.next();
-          if (_i2.done) break;
-          _ref2 = _i2.value;
-        }
-
-        var h = _ref2;
-
-        if (h.url === url) {
-          h.dateTime = dateTime;
-          break;
-        }
-      }
-    };
-
-    NavigationHistory.prototype.delete = function _delete(url) {
       for (var _iterator3 = this._history, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
         var _ref3;
 
@@ -408,7 +814,29 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
           _ref3 = _i3.value;
         }
 
-        var i = _ref3;
+        var h = _ref3;
+
+        if (h.url === url) {
+          h.dateTime = dateTime;
+          break;
+        }
+      }
+    };
+
+    NavigationHistory.prototype.delete = function _delete(url) {
+      for (var _iterator4 = this._history, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+        var _ref4;
+
+        if (_isArray4) {
+          if (_i4 >= _iterator4.length) break;
+          _ref4 = _iterator4[_i4++];
+        } else {
+          _i4 = _iterator4.next();
+          if (_i4.done) break;
+          _ref4 = _i4.value;
+        }
+
+        var i = _ref4;
 
         if (i.url === url) {
           this._history.splice(i, 1);
@@ -431,19 +859,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     };
 
     NavigationHistory.prototype.exists = function exists(url) {
-      for (var _iterator4 = this._history, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-        var _ref4;
+      for (var _iterator5 = this._history, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+        var _ref5;
 
-        if (_isArray4) {
-          if (_i4 >= _iterator4.length) break;
-          _ref4 = _iterator4[_i4++];
+        if (_isArray5) {
+          if (_i5 >= _iterator5.length) break;
+          _ref5 = _iterator5[_i5++];
         } else {
-          _i4 = _iterator4.next();
-          if (_i4.done) break;
-          _ref4 = _i4.value;
+          _i5 = _iterator5.next();
+          if (_i5.done) break;
+          _ref5 = _i5.value;
         }
 
-        var i = _ref4;
+        var i = _ref5;
 
         if (i.route === url) return true;
       }
@@ -458,6 +886,60 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     }]);
 
     return NavigationHistory;
+  }();
+
+  var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class2 = function () {
+    function Factory(Type) {
+      _classCallCheck(this, Factory);
+
+      this.Type = Type;
+    }
+
+    Factory.prototype.get = function get(container) {
+      var _this2 = this;
+
+      return function () {
+        for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
+          rest[_key] = arguments[_key];
+        }
+
+        return container.invoke(_this2.Type, rest);
+      };
+    };
+
+    Factory.of = function of(Type) {
+      return new Factory(Type);
+    };
+
+    return Factory;
+  }()) || _class2;
+
+  var DashboardManager = exports.DashboardManager = function () {
+    function DashboardManager() {
+      _classCallCheck(this, DashboardManager);
+
+      this._dashboards = [];
+    }
+
+    DashboardManager.prototype.find = function find(dashboardName) {
+      return _.find(this._dashboards, { name: dashboardName });
+    };
+
+    DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
+      var dashboard = new type();
+      dashboard.configure(dashboardConfiguration);
+      this._dashboards.push(dashboard);
+      return dashboard;
+    };
+
+    _createClass(DashboardManager, [{
+      key: 'dashboards',
+      get: function get() {
+        return this._dashboards;
+      }
+    }]);
+
+    return DashboardManager;
   }();
 
   var UrlHelper = exports.UrlHelper = function () {
@@ -655,60 +1137,6 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     return DataHelper;
   }();
 
-  var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class = function () {
-    function Factory(Type) {
-      _classCallCheck(this, Factory);
-
-      this.Type = Type;
-    }
-
-    Factory.prototype.get = function get(container) {
-      var _this = this;
-
-      return function () {
-        for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
-          rest[_key] = arguments[_key];
-        }
-
-        return container.invoke(_this.Type, rest);
-      };
-    };
-
-    Factory.of = function of(Type) {
-      return new Factory(Type);
-    };
-
-    return Factory;
-  }()) || _class;
-
-  var DashboardManager = exports.DashboardManager = function () {
-    function DashboardManager() {
-      _classCallCheck(this, DashboardManager);
-
-      this._dashboards = [];
-    }
-
-    DashboardManager.prototype.find = function find(dashboardName) {
-      return _.find(this._dashboards, { name: dashboardName });
-    };
-
-    DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
-      var dashboard = new type();
-      dashboard.configure(dashboardConfiguration);
-      this._dashboards.push(dashboard);
-      return dashboard;
-    };
-
-    _createClass(DashboardManager, [{
-      key: 'dashboards',
-      get: function get() {
-        return this._dashboards;
-      }
-    }]);
-
-    return DashboardManager;
-  }();
-
   var DSL_GRAMMAR = '\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = "record.";\n \t\tvar result = "";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))\n              result = prefix + fieldname + ".toLowerCase().includes(\'" + v.substring(1,value.length-1) + "\')"\n          else if (v.indexOf("%")===0)\n              result = prefix + fieldname + ".toLowerCase().endsWith(\'" + v.substring(1,value.length) + "\')"\n          else if (v.lastIndexOf("%")===(value.length-1))\n              result = prefix + fieldname + ".toLowerCase().startsWith(\'" + v.substring(0,value.length-1) + "\')"\n        }\n        if (result == "")\n          result = prefix + fieldname + ".toLowerCase() == \'" + v + "\'";\n\n        result="(" + prefix + fieldname + "!=null && " + result + ")"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = "";\n    var values = value.split(\',\');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = \'[\\"\\\']\';\n      var re = new RegExp(find, \'g\');\n      var v = values[i].replace(new RegExp(find, \'g\'), "");\n      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += " || ";\n    }\n    if (result.length>0)\n      result = "(" + result + ")"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin "LOGIC_OPERATOR"\n     = and\n     / or\n\nand = space* "and"i space* {return " && ";}\n\nor = space* "or"i space* {return " || ";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}\n          / "(" space? e:expression space* ")" space* {return "(" + e +")";}\n\n\n\nvaluesArray "STRING_VALUES_ARRAY"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* "," space* v:stringValue) {return  nv}\n\n\n\ndateValue "DATE_VALUE"\n        = quote? dt:$(date+) quote? {return "\'" + dt + "\'";}\n\n\nstringValue  "STRING_VALUE"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return "";}\n\n\nnumericValue  "NUMERIC_VALUE"\n       = $(numeric+)\n\n\nop "OPERATOR"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq "STRING_OPERATOR_EQUAL"\n  = eq\n  / not_eq\n\nop_in "STRING_OPERATOR_IN"\n  = in\n\neq = space* "=" space* {return "==";}\n\nnot_eq = space* "!=" space* {return "!=";}\n\ngt = space* v:">" space* {return v;}\n\nge = space* v:">=" space* {return v;}\n\nlt = space* v:"<" space* {return v;}\n\nle = space* v:"<=" space* {return v;}\n\nin = space* v:"in" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield "FIELD_NAME"\n      = stringField\n     / numericField\n     / dateField\n\nstringField "STRING_FIELD_NAME"\n     = @S@\n\nnumericField "NUMERIC_FIELD_NAME"\n     = @N@\n\ndateField "DATE_FIELD_NAME"\n     = @D@\n\nquote = [\\\'\\"]\n\n\n';
 
   var Grammar = exports.Grammar = function () {
@@ -761,19 +1189,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     QueryExpressionEvaluator.prototype.evaluate = function evaluate(data, searchExpression) {
       var res = [];
       if (searchExpression != "") {
-        for (var _iterator5 = data, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-          var _ref5;
+        for (var _iterator6 = data, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+          var _ref6;
 
-          if (_isArray5) {
-            if (_i5 >= _iterator5.length) break;
-            _ref5 = _iterator5[_i5++];
+          if (_isArray6) {
+            if (_i6 >= _iterator6.length) break;
+            _ref6 = _iterator6[_i6++];
           } else {
-            _i5 = _iterator5.next();
-            if (_i5.done) break;
-            _ref5 = _i5.value;
+            _i6 = _iterator6.next();
+            if (_i6.done) break;
+            _ref6 = _i6.value;
           }
 
-          var record = _ref5;
+          var record = _ref6;
 
           if (eval(searchExpression)) {
             res.push(record);
@@ -855,14 +1283,14 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     }
 
     CacheManager.prototype.startCleaner = function startCleaner() {
-      var _this2 = this;
+      var _this3 = this;
 
       if (!this.cleaner) {
         (function () {
-          var self = _this2;
-          _this2.cleaner = window.setInterval(function () {
+          var self = _this3;
+          _this3.cleaner = window.setInterval(function () {
             self._cacheStorage.removeExpired();
-          }, _this2._cleanInterval);
+          }, _this3._cleanInterval);
         })();
       }
     };
@@ -891,17 +1319,17 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function StaticSchemaProvider(schema) {
       _classCallCheck(this, StaticSchemaProvider);
 
-      var _this3 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+      var _this4 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
 
-      _this3._schema = schema;
-      return _this3;
+      _this4._schema = schema;
+      return _this4;
     }
 
     StaticSchemaProvider.prototype.getSchema = function getSchema() {
-      var _this4 = this;
+      var _this5 = this;
 
       return new Promise(function (resolve, reject) {
-        resolve(_this4._schema);
+        resolve(_this5._schema);
       });
     };
 
@@ -914,12 +1342,12 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataFilterHandleBehavior(channel, eventAggregator, filterMapper) {
       _classCallCheck(this, DataFilterHandleBehavior);
 
-      var _this5 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+      var _this6 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-      _this5._channel = channel;
-      _this5._eventAggregator = eventAggregator;
-      _this5._filterMapper = filterMapper;
-      return _this5;
+      _this6._channel = channel;
+      _this6._eventAggregator = eventAggregator;
+      _this6._filterMapper = filterMapper;
+      return _this6;
     }
 
     DataFilterHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -946,11 +1374,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataSourceHandleBehavior(channel, eventAggregator) {
       _classCallCheck(this, DataSourceHandleBehavior);
 
-      var _this6 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
+      var _this7 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
 
-      _this6._channel = channel;
-      _this6._eventAggregator = eventAggregator;
-      return _this6;
+      _this7._channel = channel;
+      _this7._eventAggregator = eventAggregator;
+      return _this7;
     }
 
     DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -976,12 +1404,12 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
       _classCallCheck(this, SettingsHandleBehavior);
 
-      var _this7 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
+      var _this8 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
 
-      _this7._channel = channel;
-      _this7._eventAggregator = eventAggregator;
-      _this7._messageMapper = messageMapper;
-      return _this7;
+      _this8._channel = channel;
+      _this8._eventAggregator = eventAggregator;
+      _this8._messageMapper = messageMapper;
+      return _this8;
     }
 
     SettingsHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -1011,11 +1439,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataActivatedBehavior(chanel, eventAggregator) {
       _classCallCheck(this, DataActivatedBehavior);
 
-      var _this8 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
+      var _this9 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
 
-      _this8._chanel = chanel;
-      _this8._eventAggregator = eventAggregator;
-      return _this8;
+      _this9._chanel = chanel;
+      _this9._eventAggregator = eventAggregator;
+      return _this9;
     }
 
     DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -1042,11 +1470,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataFieldSelectedBehavior(chanel, eventAggregator) {
       _classCallCheck(this, DataFieldSelectedBehavior);
 
-      var _this9 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
+      var _this10 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
 
-      _this9._chanel = chanel;
-      _this9._eventAggregator = eventAggregator;
-      return _this9;
+      _this10._chanel = chanel;
+      _this10._eventAggregator = eventAggregator;
+      return _this10;
     }
 
     DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -1073,11 +1501,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataFilterChangedBehavior(channel, eventAggregator) {
       _classCallCheck(this, DataFilterChangedBehavior);
 
-      var _this10 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
+      var _this11 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
 
-      _this10._channel = channel;
-      _this10._eventAggregator = eventAggregator;
-      return _this10;
+      _this11._channel = channel;
+      _this11._eventAggregator = eventAggregator;
+      return _this11;
     }
 
     DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -1103,11 +1531,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataSelectedBehavior(chanel, eventAggregator) {
       _classCallCheck(this, DataSelectedBehavior);
 
-      var _this11 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
+      var _this12 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
 
-      _this11._chanel = chanel;
-      _this11._eventAggregator = eventAggregator;
-      return _this11;
+      _this12._chanel = chanel;
+      _this12._eventAggregator = eventAggregator;
+      return _this12;
     }
 
     DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -1134,11 +1562,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function DataSourceChangedBehavior(channel, eventAggregator) {
       _classCallCheck(this, DataSourceChangedBehavior);
 
-      var _this12 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
+      var _this13 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
 
-      _this12._channel = channel;
-      _this12._eventAggregator = eventAggregator;
-      return _this12;
+      _this13._channel = channel;
+      _this13._eventAggregator = eventAggregator;
+      return _this13;
     }
 
     DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -1164,14 +1592,14 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function ChangeRouteBehavior(settings) {
       _classCallCheck(this, ChangeRouteBehavior);
 
-      var _this13 = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
+      var _this14 = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-      _this13._chanel = settings.chanel;
-      _this13._eventAggregator = settings.eventAggregator;
-      _this13._newRoute = settings.newRoute;
-      _this13._router = settings.router;
-      _this13._paramsMapper = settings.paramsMapper;
-      return _this13;
+      _this14._chanel = settings.chanel;
+      _this14._eventAggregator = settings.eventAggregator;
+      _this14._newRoute = settings.newRoute;
+      _this14._router = settings.router;
+      _this14._paramsMapper = settings.paramsMapper;
+      return _this14;
     }
 
     ChangeRouteBehavior.prototype.attach = function attach(dashboard) {
@@ -1203,19 +1631,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function CreateWidgetBehavior(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
       _classCallCheck(this, CreateWidgetBehavior);
 
-      var _this14 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
+      var _this15 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
 
-      _this14._chanel = chanel;
-      _this14._widgetType = widgetType;
-      _this14._widgetSettings = widgetSettings;
-      _this14._widgetDimensions = widgetDimensions;
-      _this14._eventAggregator = eventAggregator;
-      _this14._filterMapper = filterMapper;
-      return _this14;
+      _this15._chanel = chanel;
+      _this15._widgetType = widgetType;
+      _this15._widgetSettings = widgetSettings;
+      _this15._widgetDimensions = widgetDimensions;
+      _this15._eventAggregator = eventAggregator;
+      _this15._filterMapper = filterMapper;
+      return _this15;
     }
 
     CreateWidgetBehavior.prototype.attach = function attach(dashboard) {
-      var _this15 = this;
+      var _this16 = this;
 
       _DashboardBehavior2.prototype.attach.call(this, dashboard);
       var me = this;
@@ -1223,7 +1651,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
         var w = dashboard.getWidgetByName(me._widgetSettings.name);
         if (!w) {
           var w = new me._widgetType(me._widgetSettings);
-          dashboard.addWidget(w, _this15._widgetDimensions);
+          dashboard.addWidget(w, _this16._widgetDimensions);
         }
         w.dataFilter = me._filterMapper ? me._filterMapper(message) : "";
         w.refresh();
@@ -1244,10 +1672,10 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function ManageNavigationStackBehavior(eventAggregator) {
       _classCallCheck(this, ManageNavigationStackBehavior);
 
-      var _this16 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
+      var _this17 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
 
-      _this16._eventAggregator = eventAggregator;
-      return _this16;
+      _this17._eventAggregator = eventAggregator;
+      return _this17;
     }
 
     ManageNavigationStackBehavior.prototype.attach = function attach(dashboard) {
@@ -1277,15 +1705,15 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function ReplaceWidgetBehavior(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
       _classCallCheck(this, ReplaceWidgetBehavior);
 
-      var _this17 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
+      var _this18 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
 
-      _this17._chanel = chanel;
-      _this17._widgetType = widgetType;
-      _this17._widgetSettings = widgetSettings;
-      _this17._eventAggregator = eventAggregator;
-      _this17._widgetToReplaceName = widgetToReplaceName;
-      _this17._mapper = mapper;
-      return _this17;
+      _this18._chanel = chanel;
+      _this18._widgetType = widgetType;
+      _this18._widgetSettings = widgetSettings;
+      _this18._eventAggregator = eventAggregator;
+      _this18._widgetToReplaceName = widgetToReplaceName;
+      _this18._mapper = mapper;
+      return _this18;
     }
 
     ReplaceWidgetBehavior.prototype.attach = function attach(dashboard) {
@@ -1308,37 +1736,264 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     return ReplaceWidgetBehavior;
   }(DashboardBehavior);
 
-  var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec2 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class2 = _dec2(_class2 = function (_DataService) {
+  var Chart = exports.Chart = function (_Widget) {
+    _inherits(Chart, _Widget);
+
+    function Chart(settings) {
+      _classCallCheck(this, Chart);
+
+      var _this19 = _possibleConstructorReturn(this, _Widget.call(this, settings));
+
+      _this19.categoriesField = settings.categoriesField;
+      _this19.seriesDefaults = settings.seriesDefaults;
+      _this19.stateType = "chartState";
+      _this19.attachBehaviors();
+      return _this19;
+    }
+
+    _createClass(Chart, [{
+      key: 'categoriesField',
+      get: function get() {
+        return this._categoriesField;
+      },
+      set: function set(value) {
+        this._categoriesField = value;
+      }
+    }, {
+      key: 'seriesDefaults',
+      get: function get() {
+        return this._seriesDefaults;
+      },
+      set: function set(value) {
+        this._seriesDefaults = value;
+      }
+    }]);
+
+    return Chart;
+  }(Widget);
+
+  var DataSourceConfigurator = exports.DataSourceConfigurator = function (_Widget2) {
+    _inherits(DataSourceConfigurator, _Widget2);
+
+    function DataSourceConfigurator(settings) {
+      _classCallCheck(this, DataSourceConfigurator);
+
+      var _this20 = _possibleConstructorReturn(this, _Widget2.call(this, settings));
+
+      _this20.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+      _this20.stateType = "dataSourceConfiguratorState";
+      _this20._dataSourceChanged = new WidgetEvent();
+      _this20.attachBehaviors();
+      return _this20;
+    }
+
+    _createClass(DataSourceConfigurator, [{
+      key: 'dataSourceToConfigurate',
+      get: function get() {
+        return this._dataSourceToConfigurate;
+      },
+      set: function set(value) {
+        this._dataSourceToConfigurate = value;
+      }
+    }, {
+      key: 'dataSourceChanged',
+      get: function get() {
+        return this._dataSourceChanged;
+      },
+      set: function set(handler) {
+        this._dataSourceChanged.attach(handler);
+      }
+    }]);
+
+    return DataSourceConfigurator;
+  }(Widget);
+
+  var DetailedView = exports.DetailedView = function (_Widget3) {
+    _inherits(DetailedView, _Widget3);
+
+    function DetailedView(settings) {
+      _classCallCheck(this, DetailedView);
+
+      var _this21 = _possibleConstructorReturn(this, _Widget3.call(this, settings));
+
+      _this21.fields = settings.fields;
+      _this21.stateType = "detailedViewState";
+      _this21.attachBehaviors();
+      return _this21;
+    }
+
+    _createClass(DetailedView, [{
+      key: 'fields',
+      get: function get() {
+        return this._fields;
+      },
+      set: function set(value) {
+        this._fields = value;
+      }
+    }]);
+
+    return DetailedView;
+  }(Widget);
+
+  var Grid = exports.Grid = function (_Widget4) {
+    _inherits(Grid, _Widget4);
+
+    function Grid(settings) {
+      _classCallCheck(this, Grid);
+
+      var _this22 = _possibleConstructorReturn(this, _Widget4.call(this, settings));
+
+      _this22.columns = settings.columns ? settings.columns : [];
+      _this22.navigatable = settings.navigatable;
+      _this22.autoGenerateColumns = settings.autoGenerateColumns;
+      _this22.pageSize = settings.pageSize;
+      _this22.group = settings.group;
+
+      _this22.stateType = "gridState";
+
+      _this22._dataSelected = new WidgetEvent();
+      _this22._dataActivated = new WidgetEvent();
+      _this22._dataFieldSelected = new WidgetEvent();
+
+      _this22.attachBehaviors();
+      return _this22;
+    }
+
+    Grid.prototype.saveState = function saveState() {
+      this.state = { columns: this.columns };
+    };
+
+    Grid.prototype.restoreState = function restoreState() {
+      if (this.state) this.columns = this.state.columns;
+    };
+
+    _createClass(Grid, [{
+      key: 'columns',
+      get: function get() {
+        return this._columns;
+      },
+      set: function set(value) {
+        this._columns = value;
+      }
+    }, {
+      key: 'navigatable',
+      get: function get() {
+        return this._navigatable;
+      },
+      set: function set(value) {
+        this._navigatable = value;
+      }
+    }, {
+      key: 'autoGenerateColumns',
+      get: function get() {
+        return this._autoGenerateColumns;
+      },
+      set: function set(value) {
+        this._autoGenerateColumns = value;
+      }
+    }, {
+      key: 'pageSize',
+      get: function get() {
+        return this._pageSize;
+      },
+      set: function set(value) {
+        this._pageSize = value;
+      }
+    }, {
+      key: 'group',
+      get: function get() {
+        return this._group;
+      },
+      set: function set(value) {
+        this._group = value;
+      }
+    }, {
+      key: 'dataSelected',
+      get: function get() {
+        return this._dataSelected;
+      },
+      set: function set(handler) {
+        this._dataSelected.attach(handler);
+      }
+    }, {
+      key: 'dataActivated',
+      get: function get() {
+        return this._dataActivated;
+      },
+      set: function set(handler) {
+        this._dataActivated.attach(handler);
+      }
+    }, {
+      key: 'dataFieldSelected',
+      get: function get() {
+        return this._dataFieldSelected;
+      },
+      set: function set(handler) {
+        this._dataFieldSelected.attach(handler);
+      }
+    }]);
+
+    return Grid;
+  }(Widget);
+
+  var SearchBox = exports.SearchBox = function (_Widget5) {
+    _inherits(SearchBox, _Widget5);
+
+    function SearchBox(settings) {
+      _classCallCheck(this, SearchBox);
+
+      var _this23 = _possibleConstructorReturn(this, _Widget5.call(this, settings));
+
+      _this23.stateType = "searchBoxState";
+      _this23._dataFilterChanged = new WidgetEvent();
+      _this23.attachBehaviors();
+      return _this23;
+    }
+
+    _createClass(SearchBox, [{
+      key: 'dataFilterChanged',
+      get: function get() {
+        return this._dataFilterChanged;
+      },
+      set: function set(handler) {
+        this._dataFilterChanged.attach(handler);
+      }
+    }]);
+
+    return SearchBox;
+  }(Widget);
+
+  var JsonDataService = exports.JsonDataService = (_dec2 = (0, _aureliaFramework.transient)(), _dec3 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec2(_class3 = _dec3(_class3 = function (_DataService) {
     _inherits(JsonDataService, _DataService);
 
     function JsonDataService(http) {
       _classCallCheck(this, JsonDataService);
 
-      var _this18 = _possibleConstructorReturn(this, _DataService.call(this));
+      var _this24 = _possibleConstructorReturn(this, _DataService.call(this));
 
       http.configure(function (config) {
         config.useStandardConfiguration();
       });
-      _this18._http = http;
-      return _this18;
+      _this24._http = http;
+      return _this24;
     }
 
     JsonDataService.prototype.read = function read(options) {
-      var _this19 = this;
+      var _this25 = this;
 
       var url = this.url + (this.queryMapper ? this.queryMapper(options) : "");
       return this._http.fetch(this.url).then(function (response) {
         return response.json();
       }).then(function (jsonData) {
         return {
-          data: _this19.dataMapper ? _this19.dataMapper(jsonData) : jsonData,
-          total: _this19.totalMapper ? _this19.totalMapper(jsonData) : jsonData.length
+          data: _this25.dataMapper ? _this25.dataMapper(jsonData) : jsonData,
+          total: _this25.totalMapper ? _this25.totalMapper(jsonData) : jsonData.length
         };
       });
     };
 
     return JsonDataService;
-  }(DataService)) || _class2) || _class2);
+  }(DataService)) || _class3) || _class3);
 
   var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaProvider2) {
     _inherits(SwaggerSchemaProvider, _SchemaProvider2);
@@ -1346,13 +2001,13 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
       _classCallCheck(this, SwaggerSchemaProvider);
 
-      var _this20 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+      var _this26 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
 
-      _this20._modelName = modelName;
-      _this20._methodName = methodName;
-      _this20._apiName = apiName;
-      _this20._definitionUrl = definitionUrl;
-      return _this20;
+      _this26._modelName = modelName;
+      _this26._methodName = methodName;
+      _this26._apiName = apiName;
+      _this26._definitionUrl = definitionUrl;
+      return _this26;
     }
 
     SwaggerSchemaProvider.prototype.getSchema = function getSchema() {
@@ -1378,12 +2033,12 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
 
   var STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-  var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework.inject)(Storage), _dec3(_class3 = function () {
+  var UserStateStorage = exports.UserStateStorage = (_dec4 = (0, _aureliaFramework.inject)(Storage), _dec4(_class4 = function () {
     function UserStateStorage(storage) {
       _classCallCheck(this, UserStateStorage);
 
-      this._storage = STORAGE_KEY;
-      this._key = storageKey;
+      this._storage = storage;
+      this._key = STORAGE_KEY;
     }
 
     UserStateStorage.prototype.getAll = function getAll(namespace) {
@@ -1443,7 +2098,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     };
 
     return UserStateStorage;
-  }()) || _class3);
+  }()) || _class4);
 
   var StateUrlParser = exports.StateUrlParser = function () {
     function StateUrlParser() {
@@ -1452,19 +2107,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
 
     StateUrlParser.stateToQuery = function stateToQuery(widgetStates) {
       var params = [];
-      for (var _iterator6 = widgetStates, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-        var _ref6;
+      for (var _iterator7 = widgetStates, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
+        var _ref7;
 
-        if (_isArray6) {
-          if (_i6 >= _iterator6.length) break;
-          _ref6 = _iterator6[_i6++];
+        if (_isArray7) {
+          if (_i7 >= _iterator7.length) break;
+          _ref7 = _iterator7[_i7++];
         } else {
-          _i6 = _iterator6.next();
-          if (_i6.done) break;
-          _ref6 = _i6.value;
+          _i7 = _iterator7.next();
+          if (_i7.done) break;
+          _ref7 = _i7.value;
         }
 
-        var widgetState = _ref6;
+        var widgetState = _ref7;
 
         params.push({ "sk": widgetState.key, "sv": widgetState.value });
       }
@@ -1476,19 +2131,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
       var q = UrlHelper.getParameterByName("q", url);
       if (q) {
         var widgetStates = UrlHelper.queryToObject(q);
-        for (var _iterator7 = widgetStates, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
-          var _ref7;
+        for (var _iterator8 = widgetStates, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
+          var _ref8;
 
-          if (_isArray7) {
-            if (_i7 >= _iterator7.length) break;
-            _ref7 = _iterator7[_i7++];
+          if (_isArray8) {
+            if (_i8 >= _iterator8.length) break;
+            _ref8 = _iterator8[_i8++];
           } else {
-            _i7 = _iterator7.next();
-            if (_i7.done) break;
-            _ref7 = _i7.value;
+            _i8 = _iterator8.next();
+            if (_i8.done) break;
+            _ref8 = _i8.value;
           }
 
-          var ws = _ref7;
+          var ws = _ref8;
 
           result.push({ "key": ws.sk, "value": ws.sv });
         }
@@ -1588,7 +2243,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
   }();
 
   exports.FormatValueConverter = FormatValueConverter;
-  var ExpressionParserFactory = exports.ExpressionParserFactory = (_dec4 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec4(_class4 = function () {
+  var ExpressionParserFactory = exports.ExpressionParserFactory = (_dec5 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec5(_class5 = function () {
     function ExpressionParserFactory(http) {
       _classCallCheck(this, ExpressionParserFactory);
 
@@ -1613,30 +2268,30 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     };
 
     return ExpressionParserFactory;
-  }()) || _class4);
-  var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec6 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec5(_class5 = _dec6(_class5 = function (_DataService2) {
+  }()) || _class5);
+  var StaticJsonDataService = exports.StaticJsonDataService = (_dec6 = (0, _aureliaFramework.transient)(), _dec7 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec6(_class6 = _dec7(_class6 = function (_DataService2) {
     _inherits(StaticJsonDataService, _DataService2);
 
     function StaticJsonDataService(http) {
       _classCallCheck(this, StaticJsonDataService);
 
-      var _this21 = _possibleConstructorReturn(this, _DataService2.call(this));
+      var _this27 = _possibleConstructorReturn(this, _DataService2.call(this));
 
       http.configure(function (config) {
         config.useStandardConfiguration();
       });
-      _this21._http = http;
-      return _this21;
+      _this27._http = http;
+      return _this27;
     }
 
     StaticJsonDataService.prototype.read = function read(options) {
-      var _this22 = this;
+      var _this28 = this;
 
       return this._http.fetch(this.url).then(function (response) {
         return response.json();
       }).then(function (jsonData) {
         var d = jsonData;
-        d = _this22.dataMapper ? _this22.dataMapper(d) : d;
+        d = _this28.dataMapper ? _this28.dataMapper(d) : d;
         if (options.filter) {
           var evaluator = new QueryExpressionEvaluator();
           d = evaluator.evaluate(d, options.filter);
@@ -1651,13 +2306,13 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
         });
         return {
           data: DataHelper.deserializeDates(d),
-          total: _this22.totalMapper ? _this22.totalMapper(jsonData) : total
+          total: _this28.totalMapper ? _this28.totalMapper(jsonData) : total
         };
       });
     };
 
     return StaticJsonDataService;
-  }(DataService)) || _class5) || _class5);
+  }(DataService)) || _class6) || _class6);
 
   var Datasource = exports.Datasource = function () {
     function Datasource(datasourceConfiguration) {
@@ -1681,7 +2336,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     };
 
     Datasource.prototype.getData = function getData(query) {
-      var _this23 = this;
+      var _this29 = this;
 
       var dataHolder = new DataHolder();
       dataHolder.query = query;
@@ -1711,7 +2366,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
       }).then(function (d) {
         dataHolder.data = _.isArray(d.data) ? d.data : [d.data];
         dataHolder.total = d.total;
-        if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this23._cache.cacheTimeSeconds);
+        if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this29._cache.cacheTimeSeconds);
         return dataHolder;
       });
     };
@@ -1791,10 +2446,10 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     function MemoryCacheStorage() {
       _classCallCheck(this, MemoryCacheStorage);
 
-      var _this24 = _possibleConstructorReturn(this, _CacheStorage.call(this));
+      var _this30 = _possibleConstructorReturn(this, _CacheStorage.call(this));
 
-      _this24._cache = {};
-      return _this24;
+      _this30._cache = {};
+      return _this30;
     }
 
     MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
@@ -1827,7 +2482,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     return MemoryCacheStorage;
   }(CacheStorage);
 
-  var PeriscopeRouter = exports.PeriscopeRouter = (_dec7 = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaEventAggregator.EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec7(_class6 = function () {
+  var PeriscopeRouter = exports.PeriscopeRouter = (_dec8 = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaEventAggregator.EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec8(_class7 = function () {
     function PeriscopeRouter(aureliaRouter, eventAggregator, userStateStorage, navigationHistory) {
       _classCallCheck(this, PeriscopeRouter);
 
@@ -1852,22 +2507,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
 
       var routeWidgetsState = StateUrlParser.queryToState(routeItem.route);
       var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(routeItem.dashboardName));
-      for (var _iterator8 = storageWidgetsState, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
-        var _ref8;
-
-        if (_isArray8) {
-          if (_i8 >= _iterator8.length) break;
-          _ref8 = _iterator8[_i8++];
-        } else {
-          _i8 = _iterator8.next();
-          if (_i8.done) break;
-          _ref8 = _i8.value;
-        }
-
-        var oldSt = _ref8;
-
-        this._userStateStorage.remove(oldSt.key);
-      }for (var _iterator9 = routeWidgetsState, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
+      for (var _iterator9 = storageWidgetsState, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
         var _ref9;
 
         if (_isArray9) {
@@ -1879,7 +2519,22 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
           _ref9 = _i9.value;
         }
 
-        var newSt = _ref9;
+        var oldSt = _ref9;
+
+        this._userStateStorage.remove(oldSt.key);
+      }for (var _iterator10 = routeWidgetsState, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
+        var _ref10;
+
+        if (_isArray10) {
+          if (_i10 >= _iterator10.length) break;
+          _ref10 = _iterator10[_i10++];
+        } else {
+          _i10 = _iterator10.next();
+          if (_i10.done) break;
+          _ref10 = _i10.value;
+        }
+
+        var newSt = _ref10;
 
         this._userStateStorage.set(newSt.key, newSt.value);
       }
@@ -1904,7 +2559,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     }]);
 
     return PeriscopeRouter;
-  }()) || _class6);
+  }()) || _class7);
 
   var DslExpressionManager = exports.DslExpressionManager = function () {
     function DslExpressionManager(parser, dataSource, fieldsList) {
@@ -1954,7 +2609,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     };
 
     DslExpressionManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
-      var _this25 = this;
+      var _this31 = this;
 
       var type = '';
       var result = [];
@@ -1970,36 +2625,36 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
           case "STRING_FIELD_NAME":
           case "NUMERIC_FIELD_NAME":
           case "DATE_FIELD_NAME":
-            var filteredFields = lastWord ? _.filter(_this25.fields, function (f) {
+            var filteredFields = lastWord ? _.filter(_this31.fields, function (f) {
               return f.toLowerCase().startsWith(lastWord.toLowerCase());
-            }) : _this25.fields;
-            resolve(_this25._normalizeData("field", filteredFields.sort()));
+            }) : _this31.fields;
+            resolve(_this31._normalizeData("field", filteredFields.sort()));
             break;
           case "STRING_OPERATOR_EQUAL":
           case "STRING_OPERATOR_IN":
-            resolve(_this25._normalizeData("operator", _this25._getStringComparisonOperatorsArray()));
+            resolve(_this31._normalizeData("operator", _this31._getStringComparisonOperatorsArray()));
             break;
           case "STRING_VALUE":
           case "STRING_PATTERN":
-            lastFldName = _this25._getLastFieldName(searchStr, _this25.fields, pegException.column);
-            _this25._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-              resolve(_this25._normalizeData("string", data));
+            lastFldName = _this31._getLastFieldName(searchStr, _this31.fields, pegException.column);
+            _this31._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+              resolve(_this31._normalizeData("string", data));
             });
             break;
           case "STRING_VALUES_ARRAY":
-            lastFldName = _this25._getLastFieldName(searchStr, _this25.fields, pegException.column);
-            _this25._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-              resolve(_this25._normalizeData("array_string", data));
+            lastFldName = _this31._getLastFieldName(searchStr, _this31.fields, pegException.column);
+            _this31._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+              resolve(_this31._normalizeData("array_string", data));
             });
             break;
-            resolve(_this25._normalizeData("array_string", []));
+            resolve(_this31._normalizeData("array_string", []));
             break;
           case "OPERATOR":
-            resolve(_this25._normalizeData("operator", _this25._getComparisonOperatorsArray()));
+            resolve(_this31._normalizeData("operator", _this31._getComparisonOperatorsArray()));
             break;
           case "LOGIC_OPERATOR":
           case "end of input":
-            resolve(_this25._normalizeData("operator", _this25._getLogicalOperatorsArray()));
+            resolve(_this31._normalizeData("operator", _this31._getLogicalOperatorsArray()));
             break;
           default:
             resolve([]);
@@ -2010,19 +2665,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
 
     DslExpressionManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
       if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-        for (var _iterator10 = ex.expected, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
-          var _ref10;
+        for (var _iterator11 = ex.expected, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
+          var _ref11;
 
-          if (_isArray10) {
-            if (_i10 >= _iterator10.length) break;
-            _ref10 = _iterator10[_i10++];
+          if (_isArray11) {
+            if (_i11 >= _iterator11.length) break;
+            _ref11 = _iterator11[_i11++];
           } else {
-            _i10 = _iterator10.next();
-            if (_i10.done) break;
-            _ref10 = _i10.value;
+            _i11 = _iterator11.next();
+            if (_i11.done) break;
+            _ref11 = _i11.value;
           }
 
-          var desc = _ref10;
+          var desc = _ref11;
 
           if (desc.type == "other" || desc.type == "end") {
             return desc.description;
@@ -2086,19 +2741,19 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
       var expr = new RegExp('record.([a-zA-Z0-9\%\_\-]*)', 'g');
       var match;
       while ((match = expr.exec(searchExpression)) !== null) {
-        for (var _iterator11 = this.fields, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
-          var _ref11;
+        for (var _iterator12 = this.fields, _isArray12 = Array.isArray(_iterator12), _i12 = 0, _iterator12 = _isArray12 ? _iterator12 : _iterator12[Symbol.iterator]();;) {
+          var _ref12;
 
-          if (_isArray11) {
-            if (_i11 >= _iterator11.length) break;
-            _ref11 = _iterator11[_i11++];
+          if (_isArray12) {
+            if (_i12 >= _iterator12.length) break;
+            _ref12 = _iterator12[_i12++];
           } else {
-            _i11 = _iterator11.next();
-            if (_i11.done) break;
-            _ref11 = _i11.value;
+            _i12 = _iterator12.next();
+            if (_i12.done) break;
+            _ref12 = _i12.value;
           }
 
-          var fld = _ref11;
+          var fld = _ref12;
 
           if (match[1].toLowerCase() === fld.toLowerCase()) searchExpression = StringHelper.replaceAll(searchExpression, match[0], 'record.' + fld);
         }
@@ -2109,7 +2764,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     return DslExpressionManager;
   }();
 
-  var DslExpressionManagerFactory = exports.DslExpressionManagerFactory = (_dec8 = (0, _aureliaFramework.inject)(ExpressionParserFactory), _dec8(_class7 = function () {
+  var DslExpressionManagerFactory = exports.DslExpressionManagerFactory = (_dec9 = (0, _aureliaFramework.inject)(ExpressionParserFactory), _dec9(_class8 = function () {
     function DslExpressionManagerFactory(expressionParserFactory) {
       _classCallCheck(this, DslExpressionManagerFactory);
 
@@ -2117,7 +2772,7 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
     }
 
     DslExpressionManagerFactory.prototype.createInstance = function createInstance(dataSource, fields) {
-      var _this26 = this;
+      var _this32 = this;
 
       return dataSource.transport.readService.getSchema().then(function (schema) {
         var fields = schema.fields;
@@ -2125,11 +2780,11 @@ define(['exports', 'lodash', 'numeral', 'moment', 'pegjs', 'aurelia-framework', 
         var numericFields = _.map(DataHelper.getNumericFields(fields), "field");
         var stringFields = _.map(DataHelper.getStringFields(fields), "field");
         var dateFields = _.map(DataHelper.getDateFields(fields), "field");
-        var parser = _this26.expressionParserFactory.createInstance(numericFields, stringFields, dateFields);
+        var parser = _this32.expressionParserFactory.createInstance(numericFields, stringFields, dateFields);
         return new DslExpressionManager(parser, dataSource, allFields);
       });
     };
 
     return DslExpressionManagerFactory;
-  }()) || _class7);
+  }()) || _class8);
 });

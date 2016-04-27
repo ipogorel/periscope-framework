@@ -1,10 +1,40 @@
-var _class, _dec, _dec2, _class2, _dec3, _class3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _class6, _dec8, _class7;
+var _dec, _desc, _value, _class, _class2, _dec2, _dec3, _class3, _dec4, _class4, _dec5, _class5, _dec6, _dec7, _class6, _dec8, _class7, _dec9, _class8;
 
+function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
+  var desc = {};
+  Object['ke' + 'ys'](descriptor).forEach(function (key) {
+    desc[key] = descriptor[key];
+  });
+  desc.enumerable = !!desc.enumerable;
+  desc.configurable = !!desc.configurable;
+
+  if ('value' in desc || desc.initializer) {
+    desc.writable = true;
+  }
+
+  desc = decorators.slice().reverse().reduce(function (desc, decorator) {
+    return decorator(target, property, desc) || desc;
+  }, desc);
+
+  if (context && desc.initializer !== void 0) {
+    desc.value = desc.initializer ? desc.initializer.call(context) : void 0;
+    desc.initializer = undefined;
+  }
+
+  if (desc.initializer === void 0) {
+    Object['define' + 'Property'](target, property, desc);
+    desc = null;
+  }
+
+  return desc;
+}
+
+import lodash from 'lodash';
 import * as _ from 'lodash';
 import numeral from 'numeral';
 import moment from 'moment';
 import * as peg from 'pegjs';
-import { resolver, inject, transient } from 'aurelia-framework';
+import { computedFrom, resolver, customElement, inject, useView, Decorators, bindable, noView, transient } from 'aurelia-framework';
 import { HttpClient } from 'aurelia-fetch-client';
 import { EventAggregator } from 'aurelia-event-aggregator';
 import { Router } from 'aurelia-router';
@@ -99,6 +129,345 @@ export let DashboardBehavior = class DashboardBehavior {
     }
   }
 };
+
+export let Widget = class Widget {
+
+  constructor(settings) {
+    this._settings = settings;
+    this._behaviors = [];
+  }
+
+  get self() {
+    return this;
+  }
+
+  get settings() {
+    return this._settings;
+  }
+
+  get behaviors() {
+    return this._behaviors;
+  }
+
+  get name() {
+    return this.settings.name;
+  }
+
+  get state() {
+    if (this.stateStorage) {
+      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+      var s = this.stateStorage.get(key);
+      if (s) return s.stateObject;
+    }
+    return undefined;
+  }
+
+  set state(value) {
+    if (this.stateStorage) {
+      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+      if (!value) this.stateStorage.remove(key);else {
+        var s = { stateType: this.stateType, stateObject: value };
+        this.stateStorage.set(key, s);
+      }
+    }
+  }
+
+  get stateType() {
+    return this._type;
+  }
+  set stateType(value) {
+    this._type = value;
+  }
+
+  get showHeader() {
+    return this.settings.showHeader;
+  }
+
+  set dataHolder(value) {
+    this._dataHolder = value;
+  }
+  get dataHolder() {
+    return this._dataHolder;
+  }
+
+  get header() {
+    return this.settings.header;
+  }
+  set header(value) {
+    this.settings.header = value;
+  }
+
+  get stateStorage() {
+    return this.settings.stateStorage;
+  }
+
+  set dataSource(value) {
+    this.settings.dataSource = value;
+  }
+  get dataSource() {
+    return this.settings.dataSource;
+  }
+
+  get dataMapper() {
+    return this.settings.dataMapper;
+  }
+
+  get dataFilter() {
+    return this._dataFilter;
+  }
+
+  set dataFilter(value) {
+    this._dataFilter = value;
+  }
+
+  get type() {
+    return this._type;
+  }
+
+  get dashboard() {
+    return this._dashboard;
+  }
+  set dashboard(value) {
+    this._dashboard = value;
+  }
+
+  attachBehavior(behavior) {
+    behavior.attachToWidget(this);
+  }
+
+  attachBehaviors() {
+    if (this.settings.behavior) {
+      for (let b of this.settings.behavior) this.attachBehavior(b);
+    }
+  }
+
+  changeSettings(newSettings) {
+    if (newSettings) {
+      _.forOwn(newSettings, (v, k) => {
+        this.settings[k] = v;
+      });
+      this.refresh();
+    }
+  }
+
+  refresh() {}
+
+  dispose() {
+    while (true) {
+      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+    }
+  }
+
+  _calculateHeight(contentContainerElement) {
+    if (!contentContainerElement) return this.settings.minHeight;
+    var p = $(contentContainerElement).parents(".widget-container");
+    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
+    var parentHeight = p[0].offsetHeight - headerHeight;
+    return parentHeight > this.settings.minHeight ? parentHeight : this.settings.minHeight;
+  }
+};
+
+export let DashboardBase = class DashboardBase {
+  constructor() {
+    this._layout = [];
+    this._behaviors = [];
+  }
+
+  get name() {
+    return this._name;
+  }
+
+  get route() {
+    return this._route;
+  }
+
+  get title() {
+    return this._title;
+  }
+
+  get layout() {
+    return this._layout;
+  }
+
+  get behaviors() {
+    return this._behaviors;
+  }
+
+  configure(dashboardConfiguration) {
+    this._name = dashboardConfiguration.name;
+    this._title = dashboardConfiguration.title;
+    this._route = dashboardConfiguration.route;
+  }
+
+  getWidgetByName(widgetName) {
+    var wl = _.find(this._layout, w => {
+      return w.widget.name === widgetName;
+    });
+    if (wl) return wl.widget;
+  }
+
+  addWidget(widget, dimensions) {
+    let lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this._layout.push(lw);
+    widget.dashboard = this;
+  }
+
+  removeWidget(widget) {
+    _.remove(this._layout, w => {
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  replaceWidget(oldWidget, newWidget) {
+    let oldLw = _.find(this._layout, w => {
+      return w.widget === oldWidget;
+    });
+    if (oldLw) {
+      newWidget.dashboard = this;
+      let newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this._layout.splice(_.indexOf(this._layout, oldLw), 1, newLw);
+    }
+  }
+
+  restoreWidget(currentWidget) {
+    let lw = _.find(this._layout, w => {
+      return w.widget === currentWidget;
+    });
+    let previousWidget = lw.navigationStack.pop();
+    if (previousWidget) {
+      let previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this._layout.splice(_.indexOf(this._layout, lw), 1, previousLw);
+    }
+  }
+
+  resizeWidget(widget, newSize) {
+    var lw = _.find(this._layout, w => {
+      return w.widget === widget;
+    });
+    if (newSize) {
+      let x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
+      let y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
+      lw.resize(x, y);
+    } else lw.rollbackResize();
+  }
+
+  refreshWidget(widget) {
+    widget.refresh();
+  }
+
+  refresh() {
+    for (let i = 0; i < this._layout.length; i++) {
+      this.refreshWidget(this._layout[i].widget);
+    }
+  }
+
+  dispose() {
+    for (let i = 0; i < this._layout.length; i++) {
+      this._layout[i].widget.dispose();
+    }
+    this._layout = [];
+
+    while (true) {
+      if (this._behaviors.length > 0) this._behaviors[0].detach();else break;
+    }
+  }
+};
+
+export let LayoutWidget = (_dec = computedFrom('navigationStack'), (_class = class LayoutWidget {
+  constructor() {
+    this.navigationStack = [];
+    this.resized = false;
+  }
+  get widget() {
+    return this._widget;
+  }
+  set widget(value) {
+    this._widget = value;
+  }
+
+  get navigationStack() {
+    return this._navigationStack;
+  }
+  set navigationStack(value) {
+    this._navigationStack = value;
+  }
+
+  get sizeX() {
+    return this._sizeX;
+  }
+  set sizeX(value) {
+    this._sizeX = value;
+  }
+
+  get sizeY() {
+    return this._sizeY;
+  }
+  set sizeY(value) {
+    this._sizeY = value;
+  }
+
+  get col() {
+    return this._col;
+  }
+  set col(value) {
+    this._col = value;
+  }
+
+  get row() {
+    return this._row;
+  }
+  set row(value) {
+    this._row = value;
+  }
+
+  get resized() {
+    return this._resized;
+  }
+  set resized(value) {
+    this._resized = value;
+  }
+
+  get hasNavStack() {
+    return this.navigationStack && this.navigationStack.length > 0;
+  }
+
+  resize(newSizeX, newSizeY) {
+    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  }
+
+  rollbackResize() {
+    if (this._originalDimensions) {
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  }
+
+}, (_applyDecoratedDescriptor(_class.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'hasNavStack'), _class.prototype)), _class));
 
 export let DataService = class DataService {
   configure(configuration) {
@@ -248,6 +617,43 @@ export let NavigationHistory = class NavigationHistory {
     return false;
   }
 
+};
+
+export let Factory = resolver(_class2 = class Factory {
+  constructor(Type) {
+    this.Type = Type;
+  }
+
+  get(container) {
+    return (...rest) => {
+      return container.invoke(this.Type, rest);
+    };
+  }
+
+  static of(Type) {
+    return new Factory(Type);
+  }
+}) || _class2;
+
+export let DashboardManager = class DashboardManager {
+  constructor() {
+    this._dashboards = [];
+  }
+
+  get dashboards() {
+    return this._dashboards;
+  }
+
+  find(dashboardName) {
+    return _.find(this._dashboards, { name: dashboardName });
+  }
+
+  createDashboard(type, dashboardConfiguration) {
+    var dashboard = new type();
+    dashboard.configure(dashboardConfiguration);
+    this._dashboards.push(dashboard);
+    return dashboard;
+  }
 };
 
 export let UrlHelper = class UrlHelper {
@@ -419,43 +825,6 @@ export let DataHelper = class DataHelper {
 
   static isNumber(value) {
     return typeof value === 'number';
-  }
-};
-
-export let Factory = resolver(_class = class Factory {
-  constructor(Type) {
-    this.Type = Type;
-  }
-
-  get(container) {
-    return (...rest) => {
-      return container.invoke(this.Type, rest);
-    };
-  }
-
-  static of(Type) {
-    return new Factory(Type);
-  }
-}) || _class;
-
-export let DashboardManager = class DashboardManager {
-  constructor() {
-    this._dashboards = [];
-  }
-
-  get dashboards() {
-    return this._dashboards;
-  }
-
-  find(dashboardName) {
-    return _.find(this._dashboards, { name: dashboardName });
-  }
-
-  createDashboard(type, dashboardConfiguration) {
-    var dashboard = new type();
-    dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
-    return dashboard;
   }
 };
 
@@ -1031,7 +1400,174 @@ export let ReplaceWidgetBehavior = class ReplaceWidgetBehavior extends Dashboard
   }
 };
 
-export let JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class2 = _dec2(_class2 = class JsonDataService extends DataService {
+export let Chart = class Chart extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.categoriesField = settings.categoriesField;
+    this.seriesDefaults = settings.seriesDefaults;
+    this.stateType = "chartState";
+    this.attachBehaviors();
+  }
+
+  get categoriesField() {
+    return this._categoriesField;
+  }
+  set categoriesField(value) {
+    this._categoriesField = value;
+  }
+
+  get seriesDefaults() {
+    return this._seriesDefaults;
+  }
+  set seriesDefaults(value) {
+    this._seriesDefaults = value;
+  }
+
+};
+
+export let DataSourceConfigurator = class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+  get dataSourceToConfigurate() {
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
+  }
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+};
+
+export let DetailedView = class DetailedView extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.fields = settings.fields;
+    this.stateType = "detailedViewState";
+    this.attachBehaviors();
+  }
+
+  get fields() {
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
+  }
+};
+
+export let Grid = class Grid extends Widget {
+  constructor(settings) {
+    super(settings);
+
+    this.columns = settings.columns ? settings.columns : [];
+    this.navigatable = settings.navigatable;
+    this.autoGenerateColumns = settings.autoGenerateColumns;
+    this.pageSize = settings.pageSize;
+    this.group = settings.group;
+
+    this.stateType = "gridState";
+
+    this._dataSelected = new WidgetEvent();
+    this._dataActivated = new WidgetEvent();
+    this._dataFieldSelected = new WidgetEvent();
+
+    this.attachBehaviors();
+  }
+
+  get columns() {
+    return this._columns;
+  }
+  set columns(value) {
+    this._columns = value;
+  }
+
+  get navigatable() {
+    return this._navigatable;
+  }
+  set navigatable(value) {
+    this._navigatable = value;
+  }
+
+  get autoGenerateColumns() {
+    return this._autoGenerateColumns;
+  }
+  set autoGenerateColumns(value) {
+    this._autoGenerateColumns = value;
+  }
+
+  get pageSize() {
+    return this._pageSize;
+  }
+  set pageSize(value) {
+    this._pageSize = value;
+  }
+
+  get group() {
+    return this._group;
+  }
+  set group(value) {
+    this._group = value;
+  }
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState() {
+    this.state = { columns: this.columns };
+  }
+
+  restoreState() {
+    if (this.state) this.columns = this.state.columns;
+  }
+};
+
+export let SearchBox = class SearchBox extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.stateType = "searchBoxState";
+    this._dataFilterChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+};
+
+export let JsonDataService = (_dec2 = transient(), _dec3 = inject(HttpClient), _dec2(_class3 = _dec3(_class3 = class JsonDataService extends DataService {
   constructor(http) {
     super();
     http.configure(config => {
@@ -1051,7 +1587,7 @@ export let JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _d
       };
     });
   }
-}) || _class2) || _class2);
+}) || _class3) || _class3);
 
 import Swagger from "swagger-client";
 export let SwaggerSchemaProvider = class SwaggerSchemaProvider extends SchemaProvider {
@@ -1083,11 +1619,11 @@ export let SwaggerSchemaProvider = class SwaggerSchemaProvider extends SchemaPro
 
 const STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-export let UserStateStorage = (_dec3 = inject(Storage), _dec3(_class3 = class UserStateStorage {
+export let UserStateStorage = (_dec4 = inject(Storage), _dec4(_class4 = class UserStateStorage {
 
   constructor(storage) {
-    this._storage = STORAGE_KEY;
-    this._key = storageKey;
+    this._storage = storage;
+    this._key = STORAGE_KEY;
   }
 
   getAll(namespace) {
@@ -1144,7 +1680,7 @@ export let UserStateStorage = (_dec3 = inject(Storage), _dec3(_class3 = class Us
     return obj;
   }
 
-}) || _class3);
+}) || _class4);
 
 export let StateUrlParser = class StateUrlParser {
   static stateToQuery(widgetStates) {
@@ -1236,7 +1772,7 @@ export let FormatValueConverter = class FormatValueConverter {
   }
 };
 
-export let ExpressionParserFactory = (_dec4 = inject(HttpClient), _dec4(_class4 = class ExpressionParserFactory {
+export let ExpressionParserFactory = (_dec5 = inject(HttpClient), _dec5(_class5 = class ExpressionParserFactory {
 
   constructor(http) {
     http.configure(config => {
@@ -1258,9 +1794,9 @@ export let ExpressionParserFactory = (_dec4 = inject(HttpClient), _dec4(_class4 
     }
     if (fieldList.length > 0) return fieldList.join('/ ');else return "'unknown_field'";
   }
-}) || _class4);
+}) || _class5);
 
-export let StaticJsonDataService = (_dec5 = transient(), _dec6 = inject(HttpClient), _dec5(_class5 = _dec6(_class5 = class StaticJsonDataService extends DataService {
+export let StaticJsonDataService = (_dec6 = transient(), _dec7 = inject(HttpClient), _dec6(_class6 = _dec7(_class6 = class StaticJsonDataService extends DataService {
   constructor(http) {
     super();
     http.configure(config => {
@@ -1294,7 +1830,7 @@ export let StaticJsonDataService = (_dec5 = transient(), _dec6 = inject(HttpClie
     });
   }
 
-}) || _class5) || _class5);
+}) || _class6) || _class6);
 
 export let Datasource = class Datasource {
 
@@ -1431,7 +1967,7 @@ export let MemoryCacheStorage = class MemoryCacheStorage extends CacheStorage {
   }
 };
 
-export let PeriscopeRouter = (_dec7 = inject(Router, EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec7(_class6 = class PeriscopeRouter {
+export let PeriscopeRouter = (_dec8 = inject(Router, EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec8(_class7 = class PeriscopeRouter {
   constructor(aureliaRouter, eventAggregator, userStateStorage, navigationHistory) {
     this._aureliaRouter = aureliaRouter;
     this._navigationHistory = navigationHistory;
@@ -1470,7 +2006,7 @@ export let PeriscopeRouter = (_dec7 = inject(Router, EventAggregator, UserStateS
     this._aureliaRouter.navigate(routeItem.route);
   }
 
-}) || _class6);
+}) || _class7);
 
 export let DslExpressionManager = class DslExpressionManager {
 
@@ -1634,7 +2170,7 @@ export let DslExpressionManager = class DslExpressionManager {
 
 };
 
-export let DslExpressionManagerFactory = (_dec8 = inject(ExpressionParserFactory), _dec8(_class7 = class DslExpressionManagerFactory {
+export let DslExpressionManagerFactory = (_dec9 = inject(ExpressionParserFactory), _dec9(_class8 = class DslExpressionManagerFactory {
 
   constructor(expressionParserFactory) {
     this.expressionParserFactory = expressionParserFactory;
@@ -1651,4 +2187,4 @@ export let DslExpressionManagerFactory = (_dec8 = inject(ExpressionParserFactory
       return new DslExpressionManager(parser, dataSource, allFields);
     });
   }
-}) || _class7);
+}) || _class8);

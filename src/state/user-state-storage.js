@@ -7,11 +7,10 @@ const STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 @inject(Storage)
 export class UserStateStorage{
 
-    constructor(storage){
-      this._storage = STORAGE_KEY;
-      this._key = storageKey;
+    constructor(storage) {
+      this._storage = storage;
+      this._key = STORAGE_KEY;
     }
-
 
     getAll (namespace){
       var data = this._storage.get(this._key);
