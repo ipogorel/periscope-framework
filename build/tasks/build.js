@@ -9,14 +9,29 @@ var concat = require('gulp-concat');
 var insert = require('gulp-insert');
 var rename = require('gulp-rename');
 var tools = require('periscope-tools');
-var debug = require('gulp-debug');
+var del = require('del');
+var vinylPaths = require('vinyl-paths');
 
 var jsName = paths.packageName + '.js';
 
+function removeDTSPlugin(options) {
+  var found = options.plugins.find(function(x){
+    return x instanceof Array;
+  });
+
+  var index = options.plugins.indexOf(found);
+  options.plugins.splice(index, 1);
+  return options;
+}
+
 gulp.task('build-index', function(){
   var importsToAdd = [];
-  return gulp.src(paths.source)
-    .pipe(tools.sortFiles())
+
+  return gulp.src([
+      paths.root + '*.js',
+      paths.root + '**/*.js',
+      '!' + paths.root + 'index.js',
+      '!' + paths.root + 'resources/*.js'])
     .pipe(through2.obj(function(file, enc, callback) {
       file.contents = new Buffer(tools.extractImports(file.contents.toString("utf8"), importsToAdd));
       this.push(file);
@@ -29,47 +44,50 @@ gulp.task('build-index', function(){
     .pipe(gulp.dest(paths.output));
 });
 
-gulp.task('build-es2015', function () {
+gulp.task('build-es2015-temp', function () {
   return gulp.src(paths.output + jsName)
-    .pipe(to5(assign({}, compilerOptions.es2015())))
+    .pipe(to5(assign({}, compilerOptions.commonjs())))
+    .pipe(gulp.dest(paths.output + 'temp'));
+});
+
+gulp.task('build-es2015', function () {
+  return gulp.src(paths.source)
+    .pipe(to5(assign({}, removeDTSPlugin(compilerOptions.es2015()))))
     .pipe(gulp.dest(paths.output + 'es2015'));
 });
 
 gulp.task('build-commonjs', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(to5(assign({}, compilerOptions.commonjs())))
+  return gulp.src(paths.source)
+    .pipe(to5(assign({}, removeDTSPlugin(compilerOptions.commonjs()))))
     .pipe(gulp.dest(paths.output + 'commonjs'));
 });
 
 gulp.task('build-amd', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(to5(assign({}, compilerOptions.amd())))
+  return gulp.src(paths.source)
+    .pipe(to5(assign({}, removeDTSPlugin(compilerOptions.amd()))))
     .pipe(gulp.dest(paths.output + 'amd'));
 });
 
 gulp.task('build-system', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(to5(assign({}, compilerOptions.system())))
+  return gulp.src(paths.source)
+    .pipe(to5(assign({}, removeDTSPlugin(compilerOptions.system()))))
     .pipe(gulp.dest(paths.output + 'system'));
 });
 
 gulp.task('build-dts', function(){
-  /*return gulp.src([paths.output + paths.packageName + '.d.ts', paths.doc + '/whatwg-fetch.d.ts'])
-      .pipe(concat(paths.packageName + '.d.ts'))
-      .pipe(gulp.dest(paths.output))
-      .pipe(gulp.dest(paths.output + 'es2015'))
-      .pipe(gulp.dest(paths.output + 'commonjs'))
-      .pipe(gulp.dest(paths.output + 'amd'))
-      .pipe(gulp.dest(paths.output + 'system'));*/
+  return gulp.src(paths.output + paths.packageName + '.d.ts')
+    .pipe(rename(paths.packageName + '.d.ts'))
+    .pipe(gulp.dest(paths.output + 'es2015'))
+    .pipe(gulp.dest(paths.output + 'commonjs'))
+    .pipe(gulp.dest(paths.output + 'amd'))
+    .pipe(gulp.dest(paths.output + 'system'));
 });
 
 gulp.task('build', function(callback) {
   return runSequence(
     'clean',
     'build-index',
-    ['build-es2015', 'build-commonjs', 'build-amd', 'build-system'],
-    'build-dts',
+    ['build-es2015-temp', 'build-es2015', 'build-commonjs', 'build-amd', 'build-system'],
     callback
   );
 });
-

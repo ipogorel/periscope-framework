@@ -31,7 +31,7 @@ System.config({
     "aurelia-router": "npm:aurelia-router@1.0.0-beta.1.2.1",
     "aurelia-task-queue": "npm:aurelia-task-queue@1.0.0-beta.1.2.0",
     "babel": "npm:babel-core@5.1.13",
-    "babel-runtime": "npm:babel-runtime@5.1.13",
+    "babel-runtime": "npm:babel-runtime@5.8.38",
     "core-js": "npm:core-js@2.0.3",
     "lodash": "npm:lodash@4.11.1",
     "moment": "npm:moment@2.13.0",
@@ -208,6 +208,9 @@ System.config({
       "aurelia-pal": "npm:aurelia-pal@1.0.0-beta.1.2.0",
       "aurelia-path": "npm:aurelia-path@1.0.0-beta.1.2.1",
       "aurelia-task-queue": "npm:aurelia-task-queue@1.0.0-beta.1.2.0"
+    },
+    "npm:babel-runtime@5.8.38": {
+      "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:bn.js@4.11.3": {
       "buffer": "github:jspm/nodelibs-buffer@0.1.0"
