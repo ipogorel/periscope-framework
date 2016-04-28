@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.LayoutWidget = exports.DashboardBase = exports.WidgetEvent = exports.WidgetEventMessage = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.PeriscopeRouter = exports.NavigationHistory = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.DashboardConfiguration = exports.Grammar = exports.ExpressionParser = exports.ExpressionParserFactory = exports.DslExpressionManager = exports.DslExpressionManagerFactory = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.PeriscopeRouter = exports.NavigationHistory = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Grammar = exports.ExpressionParser = exports.ExpressionParserFactory = exports.DslExpressionManager = exports.DslExpressionManagerFactory = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -174,6 +174,16 @@ var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
 
   return MemoryCacheStorage;
 }(CacheStorage);
+
+var DashboardConfiguration = exports.DashboardConfiguration = function () {
+  function DashboardConfiguration() {
+    _classCallCheck(this, DashboardConfiguration);
+  }
+
+  DashboardConfiguration.prototype.invoke = function invoke() {};
+
+  return DashboardConfiguration;
+}();
 
 var DataHolder = exports.DataHolder = function () {
   function DataHolder() {
@@ -734,16 +744,6 @@ var Grammar = exports.Grammar = function () {
   };
 
   return Grammar;
-}();
-
-var DashboardConfiguration = exports.DashboardConfiguration = function () {
-  function DashboardConfiguration() {
-    _classCallCheck(this, DashboardConfiguration);
-  }
-
-  DashboardConfiguration.prototype.invoke = function invoke() {};
-
-  return DashboardConfiguration;
 }();
 
 var DataHelper = exports.DataHelper = function () {
@@ -1532,6 +1532,233 @@ var FormatValueConverter = function () {
 
 exports.FormatValueConverter = FormatValueConverter;
 
+var DashboardBase = exports.DashboardBase = function () {
+  function DashboardBase() {
+    _classCallCheck(this, DashboardBase);
+
+    this._layout = [];
+    this._behaviors = [];
+  }
+
+  DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
+    this._name = dashboardConfiguration.name;
+    this._title = dashboardConfiguration.title;
+    this._route = dashboardConfiguration.route;
+  };
+
+  DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
+    var wl = _.find(this._layout, function (w) {
+      return w.widget.name === widgetName;
+    });
+    if (wl) return wl.widget;
+  };
+
+  DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
+    var lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this._layout.push(lw);
+    widget.dashboard = this;
+  };
+
+  DashboardBase.prototype.removeWidget = function removeWidget(widget) {
+    _.remove(this._layout, function (w) {
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  };
+
+  DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
+    var oldLw = _.find(this._layout, function (w) {
+      return w.widget === oldWidget;
+    });
+    if (oldLw) {
+      newWidget.dashboard = this;
+      var newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this._layout.splice(_.indexOf(this._layout, oldLw), 1, newLw);
+    }
+  };
+
+  DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
+    var lw = _.find(this._layout, function (w) {
+      return w.widget === currentWidget;
+    });
+    var previousWidget = lw.navigationStack.pop();
+    if (previousWidget) {
+      var previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this._layout.splice(_.indexOf(this._layout, lw), 1, previousLw);
+    }
+  };
+
+  DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
+    var lw = _.find(this._layout, function (w) {
+      return w.widget === widget;
+    });
+    if (newSize) {
+      var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
+      var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
+      lw.resize(x, y);
+    } else lw.rollbackResize();
+  };
+
+  DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
+    widget.refresh();
+  };
+
+  DashboardBase.prototype.refresh = function refresh() {
+    for (var i = 0; i < this._layout.length; i++) {
+      this.refreshWidget(this._layout[i].widget);
+    }
+  };
+
+  DashboardBase.prototype.dispose = function dispose() {
+    for (var i = 0; i < this._layout.length; i++) {
+      this._layout[i].widget.dispose();
+    }
+    this._layout = [];
+
+    while (true) {
+      if (this._behaviors.length > 0) this._behaviors[0].detach();else break;
+    }
+  };
+
+  _createClass(DashboardBase, [{
+    key: 'name',
+    get: function get() {
+      return this._name;
+    }
+  }, {
+    key: 'route',
+    get: function get() {
+      return this._route;
+    }
+  }, {
+    key: 'title',
+    get: function get() {
+      return this._title;
+    }
+  }, {
+    key: 'layout',
+    get: function get() {
+      return this._layout;
+    }
+  }, {
+    key: 'behaviors',
+    get: function get() {
+      return this._behaviors;
+    }
+  }]);
+
+  return DashboardBase;
+}();
+
+var LayoutWidget = exports.LayoutWidget = (_dec9 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class8 = function () {
+  function LayoutWidget() {
+    _classCallCheck(this, LayoutWidget);
+
+    this.navigationStack = [];
+    this.resized = false;
+  }
+
+  LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
+    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  };
+
+  LayoutWidget.prototype.rollbackResize = function rollbackResize() {
+    if (this._originalDimensions) {
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  };
+
+  _createClass(LayoutWidget, [{
+    key: 'widget',
+    get: function get() {
+      return this._widget;
+    },
+    set: function set(value) {
+      this._widget = value;
+    }
+  }, {
+    key: 'navigationStack',
+    get: function get() {
+      return this._navigationStack;
+    },
+    set: function set(value) {
+      this._navigationStack = value;
+    }
+  }, {
+    key: 'sizeX',
+    get: function get() {
+      return this._sizeX;
+    },
+    set: function set(value) {
+      this._sizeX = value;
+    }
+  }, {
+    key: 'sizeY',
+    get: function get() {
+      return this._sizeY;
+    },
+    set: function set(value) {
+      this._sizeY = value;
+    }
+  }, {
+    key: 'col',
+    get: function get() {
+      return this._col;
+    },
+    set: function set(value) {
+      this._col = value;
+    }
+  }, {
+    key: 'row',
+    get: function get() {
+      return this._row;
+    },
+    set: function set(value) {
+      this._row = value;
+    }
+  }, {
+    key: 'resized',
+    get: function get() {
+      return this._resized;
+    },
+    set: function set(value) {
+      this._resized = value;
+    }
+  }, {
+    key: 'hasNavStack',
+    get: function get() {
+      return this.navigationStack && this.navigationStack.length > 0;
+    }
+  }]);
+
+  return LayoutWidget;
+}(), (_applyDecoratedDescriptor(_class8.prototype, 'hasNavStack', [_dec9], Object.getOwnPropertyDescriptor(_class8.prototype, 'hasNavStack'), _class8.prototype)), _class8));
+
 var Chart = exports.Chart = function (_Widget) {
   _inherits(Chart, _Widget);
 
@@ -1931,291 +2158,6 @@ var Widget = exports.Widget = function () {
   return Widget;
 }();
 
-var WidgetEventMessage = exports.WidgetEventMessage = function () {
-  function WidgetEventMessage(widgetName) {
-    _classCallCheck(this, WidgetEventMessage);
-
-    this._originatorName = widgetName;
-  }
-
-  _createClass(WidgetEventMessage, [{
-    key: 'originatorName',
-    get: function get() {
-      return this._originatorName;
-    }
-  }]);
-
-  return WidgetEventMessage;
-}();
-
-var WidgetEvent = exports.WidgetEvent = function () {
-  function WidgetEvent(widgetName) {
-    _classCallCheck(this, WidgetEvent);
-
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  WidgetEvent.prototype.attach = function attach(handler) {
-    if (this._handlers.some(function (e) {
-      return e === handler;
-    })) {
-      return;
-    }
-    this._handlers.push(handler);
-  };
-
-  WidgetEvent.prototype.detach = function detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if (idx < 0) {
-      return;
-    }
-    this.handler.splice(idx, 1);
-  };
-
-  WidgetEvent.prototype.raise = function raise() {
-    for (var i = 0; i < this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  };
-
-  _createClass(WidgetEvent, [{
-    key: 'originatorName',
-    get: function get() {
-      return this._originatorName;
-    }
-  }]);
-
-  return WidgetEvent;
-}();
-
-var DashboardBase = exports.DashboardBase = function () {
-  function DashboardBase() {
-    _classCallCheck(this, DashboardBase);
-
-    this._layout = [];
-    this._behaviors = [];
-  }
-
-  DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
-    this._name = dashboardConfiguration.name;
-    this._title = dashboardConfiguration.title;
-    this._route = dashboardConfiguration.route;
-  };
-
-  DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
-    var wl = _.find(this._layout, function (w) {
-      return w.widget.name === widgetName;
-    });
-    if (wl) return wl.widget;
-  };
-
-  DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
-    var lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this._layout.push(lw);
-    widget.dashboard = this;
-  };
-
-  DashboardBase.prototype.removeWidget = function removeWidget(widget) {
-    _.remove(this._layout, function (w) {
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  };
-
-  DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
-    var oldLw = _.find(this._layout, function (w) {
-      return w.widget === oldWidget;
-    });
-    if (oldLw) {
-      newWidget.dashboard = this;
-      var newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this._layout.splice(_.indexOf(this._layout, oldLw), 1, newLw);
-    }
-  };
-
-  DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
-    var lw = _.find(this._layout, function (w) {
-      return w.widget === currentWidget;
-    });
-    var previousWidget = lw.navigationStack.pop();
-    if (previousWidget) {
-      var previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this._layout.splice(_.indexOf(this._layout, lw), 1, previousLw);
-    }
-  };
-
-  DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
-    var lw = _.find(this._layout, function (w) {
-      return w.widget === widget;
-    });
-    if (newSize) {
-      var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
-      var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
-      lw.resize(x, y);
-    } else lw.rollbackResize();
-  };
-
-  DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
-    widget.refresh();
-  };
-
-  DashboardBase.prototype.refresh = function refresh() {
-    for (var i = 0; i < this._layout.length; i++) {
-      this.refreshWidget(this._layout[i].widget);
-    }
-  };
-
-  DashboardBase.prototype.dispose = function dispose() {
-    for (var i = 0; i < this._layout.length; i++) {
-      this._layout[i].widget.dispose();
-    }
-    this._layout = [];
-
-    while (true) {
-      if (this._behaviors.length > 0) this._behaviors[0].detach();else break;
-    }
-  };
-
-  _createClass(DashboardBase, [{
-    key: 'name',
-    get: function get() {
-      return this._name;
-    }
-  }, {
-    key: 'route',
-    get: function get() {
-      return this._route;
-    }
-  }, {
-    key: 'title',
-    get: function get() {
-      return this._title;
-    }
-  }, {
-    key: 'layout',
-    get: function get() {
-      return this._layout;
-    }
-  }, {
-    key: 'behaviors',
-    get: function get() {
-      return this._behaviors;
-    }
-  }]);
-
-  return DashboardBase;
-}();
-
-var LayoutWidget = exports.LayoutWidget = (_dec9 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class8 = function () {
-  function LayoutWidget() {
-    _classCallCheck(this, LayoutWidget);
-
-    this.navigationStack = [];
-    this.resized = false;
-  }
-
-  LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
-    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  };
-
-  LayoutWidget.prototype.rollbackResize = function rollbackResize() {
-    if (this._originalDimensions) {
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
-  };
-
-  _createClass(LayoutWidget, [{
-    key: 'widget',
-    get: function get() {
-      return this._widget;
-    },
-    set: function set(value) {
-      this._widget = value;
-    }
-  }, {
-    key: 'navigationStack',
-    get: function get() {
-      return this._navigationStack;
-    },
-    set: function set(value) {
-      this._navigationStack = value;
-    }
-  }, {
-    key: 'sizeX',
-    get: function get() {
-      return this._sizeX;
-    },
-    set: function set(value) {
-      this._sizeX = value;
-    }
-  }, {
-    key: 'sizeY',
-    get: function get() {
-      return this._sizeY;
-    },
-    set: function set(value) {
-      this._sizeY = value;
-    }
-  }, {
-    key: 'col',
-    get: function get() {
-      return this._col;
-    },
-    set: function set(value) {
-      this._col = value;
-    }
-  }, {
-    key: 'row',
-    get: function get() {
-      return this._row;
-    },
-    set: function set(value) {
-      this._row = value;
-    }
-  }, {
-    key: 'resized',
-    get: function get() {
-      return this._resized;
-    },
-    set: function set(value) {
-      this._resized = value;
-    }
-  }, {
-    key: 'hasNavStack',
-    get: function get() {
-      return this.navigationStack && this.navigationStack.length > 0;
-    }
-  }]);
-
-  return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class8.prototype, 'hasNavStack', [_dec9], Object.getOwnPropertyDescriptor(_class8.prototype, 'hasNavStack'), _class8.prototype)), _class8));
-
 var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBehavior) {
   _inherits(ChangeRouteBehavior, _DashboardBehavior);
 
@@ -2394,6 +2336,64 @@ var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_Dashboard
 
   return ReplaceWidgetBehavior;
 }(DashboardBehavior);
+
+var WidgetEventMessage = exports.WidgetEventMessage = function () {
+  function WidgetEventMessage(widgetName) {
+    _classCallCheck(this, WidgetEventMessage);
+
+    this._originatorName = widgetName;
+  }
+
+  _createClass(WidgetEventMessage, [{
+    key: 'originatorName',
+    get: function get() {
+      return this._originatorName;
+    }
+  }]);
+
+  return WidgetEventMessage;
+}();
+
+var WidgetEvent = exports.WidgetEvent = function () {
+  function WidgetEvent(widgetName) {
+    _classCallCheck(this, WidgetEvent);
+
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  WidgetEvent.prototype.attach = function attach(handler) {
+    if (this._handlers.some(function (e) {
+      return e === handler;
+    })) {
+      return;
+    }
+    this._handlers.push(handler);
+  };
+
+  WidgetEvent.prototype.detach = function detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if (idx < 0) {
+      return;
+    }
+    this.handler.splice(idx, 1);
+  };
+
+  WidgetEvent.prototype.raise = function raise() {
+    for (var i = 0; i < this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  };
+
+  _createClass(WidgetEvent, [{
+    key: 'originatorName',
+    get: function get() {
+      return this._originatorName;
+    }
+  }]);
+
+  return WidgetEvent;
+}();
 
 var DataActivatedBehavior = exports.DataActivatedBehavior = function (_WidgetBehavior) {
   _inherits(DataActivatedBehavior, _WidgetBehavior);
