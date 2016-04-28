@@ -23,5 +23,6 @@ export class CacheManager {
   getStorage(){
     return this._cacheStorage;
   }
+
 }
 

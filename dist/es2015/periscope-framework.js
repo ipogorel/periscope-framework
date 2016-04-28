@@ -1,4 +1,4 @@
-var _dec, _desc, _value, _class, _class2, _dec2, _dec3, _class3, _dec4, _class4, _dec5, _class5, _dec6, _dec7, _class6, _dec8, _class7, _dec9, _class8;
+var _dec, _desc, _value, _class, _class2, _dec2, _dec3, _class3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _class6, _dec8, _class7, _dec9, _class8;
 
 function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
   var desc = {};
@@ -31,9 +31,9 @@ function _applyDecoratedDescriptor(target, property, decorators, descriptor, con
 
 import lodash from 'lodash';
 import * as _ from 'lodash';
-import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
+import * as peg from 'pegjs';
 import { computedFrom, resolver, customElement, inject, useView, Decorators, bindable, noView, transient } from 'aurelia-framework';
 import { HttpClient } from 'aurelia-fetch-client';
 import { EventAggregator } from 'aurelia-event-aggregator';
@@ -41,6 +41,93 @@ import { Router } from 'aurelia-router';
 
 export let SchemaProvider = class SchemaProvider {
   getSchema() {}
+};
+
+export let WidgetBehavior = class WidgetBehavior {
+
+  get widget() {
+    return this._widget;
+  }
+
+  attachToWidget(widget) {
+    this._widget = widget;
+    this._widget.behaviors.push(this);
+  }
+
+  detach() {
+    for (let i = 0; i < this.widget.behaviors.length; i++) {
+      if (this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+};
+
+export let WidgetEvent = class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName() {
+    return this._originatorName;
+  }
+
+  attach(handler) {
+    if (this._handlers.some(e => e === handler)) {
+      return;
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if (idx < 0) {
+      return;
+    }
+    this.handler.splice(idx, 1);
+  }
+
+  raise() {
+    for (var i = 0; i < this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+};
+
+export let WidgetEventMessage = class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName() {
+    return this._originatorName;
+  }
+
+};
+
+export let DashboardBehavior = class DashboardBehavior {
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach() {
+    for (let i = 0; i < this.dashboard.behaviors.length; i++) {
+      if (this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
 };
 
 export let Widget = class Widget {
@@ -382,93 +469,6 @@ export let LayoutWidget = (_dec = computedFrom('navigationStack'), (_class = cla
 
 }, (_applyDecoratedDescriptor(_class.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'hasNavStack'), _class.prototype)), _class));
 
-export let WidgetBehavior = class WidgetBehavior {
-
-  get widget() {
-    return this._widget;
-  }
-
-  attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
-  }
-
-  detach() {
-    for (let i = 0; i < this.widget.behaviors.length; i++) {
-      if (this.widget.behaviors[i] === this) {
-        this.widget.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-};
-
-export let WidgetEvent = class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName() {
-    return this._originatorName;
-  }
-
-  attach(handler) {
-    if (this._handlers.some(e => e === handler)) {
-      return;
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if (idx < 0) {
-      return;
-    }
-    this.handler.splice(idx, 1);
-  }
-
-  raise() {
-    for (var i = 0; i < this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-};
-
-export let WidgetEventMessage = class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName() {
-    return this._originatorName;
-  }
-
-};
-
-export let DashboardBehavior = class DashboardBehavior {
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach() {
-    for (let i = 0; i < this.dashboard.behaviors.length; i++) {
-      if (this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-};
-
 export let DataService = class DataService {
   configure(configuration) {
     this.url = configuration.url;
@@ -527,45 +527,6 @@ export let Schema = class Schema {
   }
 };
 
-export let Storage = class Storage {
-  constructor() {
-    this._provider = this._initProvider('Warning: Local Storage is disabled or unavailable.');
-  }
-  set(key, value) {
-    if (this._provider) return this._provider.setItem(key, JSON.stringify(value));
-    return undefined;
-  }
-  get(key) {
-
-    if (this._provider) return JSON.parse(this._provider.getItem(key));
-    return undefined;
-  }
-
-  clear() {
-    if (this._provider) this._provider.clear();
-  }
-
-  _initProvider(warning) {
-    if ('sessionStorage' in window && window['sessionStorage'] !== null) {
-      return sessionStorage;
-    } else {
-      console.warn(warning);
-      return undefined;
-    }
-  }
-};
-
-export let StateDiscriminator = class StateDiscriminator {
-  static discriminate(widgetStates) {
-    var result = [];
-    for (let ws of widgetStates) {
-      if (ws.value.stateType === "searchBoxState") result.push(ws);
-    }
-    return result;
-  }
-
-};
-
 export let NavigationHistory = class NavigationHistory {
   constructor() {
     this._history = [];
@@ -619,6 +580,45 @@ export let NavigationHistory = class NavigationHistory {
 
 };
 
+export let Storage = class Storage {
+  constructor() {
+    this._provider = this._initProvider('Warning: Local Storage is disabled or unavailable.');
+  }
+  set(key, value) {
+    if (this._provider) return this._provider.setItem(key, JSON.stringify(value));
+    return undefined;
+  }
+  get(key) {
+
+    if (this._provider) return JSON.parse(this._provider.getItem(key));
+    return undefined;
+  }
+
+  clear() {
+    if (this._provider) this._provider.clear();
+  }
+
+  _initProvider(warning) {
+    if ('sessionStorage' in window && window['sessionStorage'] !== null) {
+      return sessionStorage;
+    } else {
+      console.warn(warning);
+      return undefined;
+    }
+  }
+};
+
+export let StateDiscriminator = class StateDiscriminator {
+  static discriminate(widgetStates) {
+    var result = [];
+    for (let ws of widgetStates) {
+      if (ws.value.stateType === "searchBoxState") result.push(ws);
+    }
+    return result;
+  }
+
+};
+
 export let Factory = resolver(_class2 = class Factory {
   constructor(Type) {
     this.Type = Type;
@@ -654,222 +654,6 @@ export let DashboardManager = class DashboardManager {
     this._dashboards.push(dashboard);
     return dashboard;
   }
-};
-
-const DSL_GRAMMAR = `
-{
-function createStringExpression(fieldname, value){
- 		var prefix = "record.";
- 		var result = "";
- 		var v = value.trim().toLowerCase();
-        if (v.length>=2){
-          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
-              result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
-          else if (v.indexOf("%")===0)
-              result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
-          else if (v.lastIndexOf("%")===(value.length-1))
-              result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
-        }
-        if (result == "")
-          result = prefix + fieldname + ".toLowerCase() == '" + v + "'";
-
-        result="(" + prefix + fieldname + "!=null && " + result + ")"
-
-        return result;
- }
-  function createInExpression (fieldname, value) {
-    var result = "";
-    var values = value.split(',');
-    for (var i=0;i<values.length;i++)
-    {
-      var find = '[\\"\\']';
-      var re = new RegExp(find, 'g');
-      var v = values[i].replace(new RegExp(find, 'g'), "");
-      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();
-      result += createStringExpression(fieldname, v)
-      if (i<(values.length-1))
-        result += " || ";
-    }
-    if (result.length>0)
-      result = "(" + result + ")"
-    return result;
-  }
-}
-
-start = expression
-
-expression = c:condition j:join e:expression space? {return c+j+e;}
-           / c:condition space? {return c;}
-
-join "LOGIC_OPERATOR"
-     = and
-     / or
-
-and = space* "and"i space* {return " && ";}
-
-or = space* "or"i space* {return " || ";}
-
-
-condition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}
-          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}
-          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}
-          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}
-          / "(" space? e:expression space* ")" space* {return "(" + e +")";}
-
-
-
-valuesArray "STRING_VALUES_ARRAY"
-      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }
-
-nextValue = nv:(space* "," space* v:stringValue) {return  nv}
-
-
-
-dateValue "DATE_VALUE"
-        = quote? dt:$(date+) quote? {return "'" + dt + "'";}
-
-
-stringValue  "STRING_VALUE"
-	  = quote w:$(char+) quote {return  w }
-      / quote quote {return "";}
-
-
-numericValue  "NUMERIC_VALUE"
-       = $(numeric+)
-
-
-op "OPERATOR"
-   = op_eq
-   / ge
-   / gt
-   / le
-   / lt
-
-op_eq "STRING_OPERATOR_EQUAL"
-  = eq
-  / not_eq
-
-op_in "STRING_OPERATOR_IN"
-  = in
-
-eq = space* "=" space* {return "==";}
-
-not_eq = space* "!=" space* {return "!=";}
-
-gt = space* v:">" space* {return v;}
-
-ge = space* v:">=" space* {return v;}
-
-lt = space* v:"<" space* {return v;}
-
-le = space* v:"<=" space* {return v;}
-
-in = space* v:"in" space* {return v;}
-
-
-date = [0-9 \\:\\/]
-
-char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
-
-numeric = [0-9-\\.]
-
-space = [ \\t\\n\\r]+
-
-parentheses_l = [\\(] space*
-
-parentheses_r = space* [\\)]
-
-field "FIELD_NAME"
-      = stringField
-     / numericField
-     / dateField
-
-stringField "STRING_FIELD_NAME"
-     = @S@
-
-numericField "NUMERIC_FIELD_NAME"
-     = @N@
-
-dateField "DATE_FIELD_NAME"
-     = @D@
-
-quote = [\\'\\"]
-
-
-`;
-
-export let Grammar = class Grammar {
-  getGrammar() {
-    return DSL_GRAMMAR;
-  }
-};
-
-export let ExpressionParser = class ExpressionParser {
-
-  constructor(pegParser) {
-    this.parser = pegParser;
-  }
-
-  parse(searchString) {
-    return this.parser.parse(searchString);
-  }
-
-  validate(searchString) {
-    try {
-      this.parser.parse(searchString);
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  }
-
-};
-
-String.prototype.in = function (array) {
-  for (var i = 0; i < array.length; i++) {
-    if (array[i] == this) return true;
-  }
-  return false;
-};
-
-export let QueryExpressionEvaluator = class QueryExpressionEvaluator {
-  evaluate(data, searchExpression) {
-    var res = [];
-    if (searchExpression != "") {
-      for (let record of data) {
-        if (eval(searchExpression)) {
-          res.push(record);
-        }
-      }
-    } else res = data;
-    return res;
-  }
-
-};
-
-export let DataHolder = class DataHolder {
-  constructor() {}
-  get data() {
-    return this._data;
-  }
-  set data(value) {
-    this._data = value;
-  }
-
-  get total() {
-    return this._total;
-  }
-  set total(value) {
-    this._total = value;
-  }
-
-  get query() {
-    return this._query;
-  }
-  set query(value) {
-    this._query = value;
-  }
-
 };
 
 export let UrlHelper = class UrlHelper {
@@ -1044,6 +828,222 @@ export let DataHelper = class DataHelper {
   }
 };
 
+String.prototype.in = function (array) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i] == this) return true;
+  }
+  return false;
+};
+
+export let QueryExpressionEvaluator = class QueryExpressionEvaluator {
+  evaluate(data, searchExpression) {
+    var res = [];
+    if (searchExpression != "") {
+      for (let record of data) {
+        if (eval(searchExpression)) {
+          res.push(record);
+        }
+      }
+    } else res = data;
+    return res;
+  }
+
+};
+
+export let DataHolder = class DataHolder {
+  constructor() {}
+  get data() {
+    return this._data;
+  }
+  set data(value) {
+    this._data = value;
+  }
+
+  get total() {
+    return this._total;
+  }
+  set total(value) {
+    this._total = value;
+  }
+
+  get query() {
+    return this._query;
+  }
+  set query(value) {
+    this._query = value;
+  }
+
+};
+
+const DSL_GRAMMAR = `
+{
+function createStringExpression(fieldname, value){
+ 		var prefix = "record.";
+ 		var result = "";
+ 		var v = value.trim().toLowerCase();
+        if (v.length>=2){
+          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
+              result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
+          else if (v.indexOf("%")===0)
+              result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
+          else if (v.lastIndexOf("%")===(value.length-1))
+              result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
+        }
+        if (result == "")
+          result = prefix + fieldname + ".toLowerCase() == '" + v + "'";
+
+        result="(" + prefix + fieldname + "!=null && " + result + ")"
+
+        return result;
+ }
+  function createInExpression (fieldname, value) {
+    var result = "";
+    var values = value.split(',');
+    for (var i=0;i<values.length;i++)
+    {
+      var find = '[\\"\\']';
+      var re = new RegExp(find, 'g');
+      var v = values[i].replace(new RegExp(find, 'g'), "");
+      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();
+      result += createStringExpression(fieldname, v)
+      if (i<(values.length-1))
+        result += " || ";
+    }
+    if (result.length>0)
+      result = "(" + result + ")"
+    return result;
+  }
+}
+
+start = expression
+
+expression = c:condition j:join e:expression space? {return c+j+e;}
+           / c:condition space? {return c;}
+
+join "LOGIC_OPERATOR"
+     = and
+     / or
+
+and = space* "and"i space* {return " && ";}
+
+or = space* "or"i space* {return " || ";}
+
+
+condition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}
+          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}
+          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}
+          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}
+          / "(" space? e:expression space* ")" space* {return "(" + e +")";}
+
+
+
+valuesArray "STRING_VALUES_ARRAY"
+      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }
+
+nextValue = nv:(space* "," space* v:stringValue) {return  nv}
+
+
+
+dateValue "DATE_VALUE"
+        = quote? dt:$(date+) quote? {return "'" + dt + "'";}
+
+
+stringValue  "STRING_VALUE"
+	  = quote w:$(char+) quote {return  w }
+      / quote quote {return "";}
+
+
+numericValue  "NUMERIC_VALUE"
+       = $(numeric+)
+
+
+op "OPERATOR"
+   = op_eq
+   / ge
+   / gt
+   / le
+   / lt
+
+op_eq "STRING_OPERATOR_EQUAL"
+  = eq
+  / not_eq
+
+op_in "STRING_OPERATOR_IN"
+  = in
+
+eq = space* "=" space* {return "==";}
+
+not_eq = space* "!=" space* {return "!=";}
+
+gt = space* v:">" space* {return v;}
+
+ge = space* v:">=" space* {return v;}
+
+lt = space* v:"<" space* {return v;}
+
+le = space* v:"<=" space* {return v;}
+
+in = space* v:"in" space* {return v;}
+
+
+date = [0-9 \\:\\/]
+
+char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
+
+numeric = [0-9-\\.]
+
+space = [ \\t\\n\\r]+
+
+parentheses_l = [\\(] space*
+
+parentheses_r = space* [\\)]
+
+field "FIELD_NAME"
+      = stringField
+     / numericField
+     / dateField
+
+stringField "STRING_FIELD_NAME"
+     = @S@
+
+numericField "NUMERIC_FIELD_NAME"
+     = @N@
+
+dateField "DATE_FIELD_NAME"
+     = @D@
+
+quote = [\\'\\"]
+
+
+`;
+
+export let Grammar = class Grammar {
+  getGrammar() {
+    return DSL_GRAMMAR;
+  }
+};
+
+export let ExpressionParser = class ExpressionParser {
+
+  constructor(pegParser) {
+    this.parser = pegParser;
+  }
+
+  parse(searchString) {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString) {
+    try {
+      this.parser.parse(searchString);
+      return true;
+    } catch (ex) {
+      return false;
+    }
+  }
+
+};
+
 export let DashboardConfiguration = class DashboardConfiguration {
   invoke() {}
 };
@@ -1081,7 +1081,12 @@ export let CacheManager = class CacheManager {
   getStorage() {
     return this._cacheStorage;
   }
+
 };
+
+export function configure(aurelia) {
+  aurelia.globalResources("./helpers/converters/value-format");
+}
 
 export let StaticSchemaProvider = class StaticSchemaProvider extends SchemaProvider {
   constructor(schema) {
@@ -1092,47 +1097,6 @@ export let StaticSchemaProvider = class StaticSchemaProvider extends SchemaProvi
     return new Promise((resolve, reject) => {
       resolve(this._schema);
     });
-  }
-};
-
-export let Chart = class Chart extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.categoriesField = settings.categoriesField;
-    this.seriesDefaults = settings.seriesDefaults;
-    this.stateType = "chartState";
-    this.attachBehaviors();
-  }
-
-  get categoriesField() {
-    return this._categoriesField;
-  }
-  set categoriesField(value) {
-    this._categoriesField = value;
-  }
-
-  get seriesDefaults() {
-    return this._seriesDefaults;
-  }
-  set seriesDefaults(value) {
-    this._seriesDefaults = value;
-  }
-
-};
-
-export let DetailedView = class DetailedView extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.fields = settings.fields;
-    this.stateType = "detailedViewState";
-    this.attachBehaviors();
-  }
-
-  get fields() {
-    return this._fields;
-  }
-  set fields(value) {
-    this._fields = value;
   }
 };
 
@@ -1207,132 +1171,6 @@ export let SettingsHandleBehavior = class SettingsHandleBehavior extends WidgetB
     super.detach(dashboard);
     if (this.subscription) this.subscription.dispose();
   }
-};
-
-export let DataSourceConfigurator = class DataSourceConfigurator extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    this.stateType = "dataSourceConfiguratorState";
-    this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-  get dataSourceToConfigurate() {
-    return this._dataSourceToConfigurate;
-  }
-  set dataSourceToConfigurate(value) {
-    this._dataSourceToConfigurate = value;
-  }
-
-  get dataSourceChanged() {
-    return this._dataSourceChanged;
-  }
-  set dataSourceChanged(handler) {
-    this._dataSourceChanged.attach(handler);
-  }
-
-};
-
-export let Grid = class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
-
-    this.columns = settings.columns ? settings.columns : [];
-    this.navigatable = settings.navigatable;
-    this.autoGenerateColumns = settings.autoGenerateColumns;
-    this.pageSize = settings.pageSize;
-    this.group = settings.group;
-
-    this.stateType = "gridState";
-
-    this._dataSelected = new WidgetEvent();
-    this._dataActivated = new WidgetEvent();
-    this._dataFieldSelected = new WidgetEvent();
-
-    this.attachBehaviors();
-  }
-
-  get columns() {
-    return this._columns;
-  }
-  set columns(value) {
-    this._columns = value;
-  }
-
-  get navigatable() {
-    return this._navigatable;
-  }
-  set navigatable(value) {
-    this._navigatable = value;
-  }
-
-  get autoGenerateColumns() {
-    return this._autoGenerateColumns;
-  }
-  set autoGenerateColumns(value) {
-    this._autoGenerateColumns = value;
-  }
-
-  get pageSize() {
-    return this._pageSize;
-  }
-  set pageSize(value) {
-    this._pageSize = value;
-  }
-
-  get group() {
-    return this._group;
-  }
-  set group(value) {
-    this._group = value;
-  }
-
-  get dataSelected() {
-    return this._dataSelected;
-  }
-  set dataSelected(handler) {
-    this._dataSelected.attach(handler);
-  }
-
-  get dataActivated() {
-    return this._dataActivated;
-  }
-  set dataActivated(handler) {
-    this._dataActivated.attach(handler);
-  }
-
-  get dataFieldSelected() {
-    return this._dataFieldSelected;
-  }
-  set dataFieldSelected(handler) {
-    this._dataFieldSelected.attach(handler);
-  }
-
-  saveState() {
-    this.state = { columns: this.columns };
-  }
-
-  restoreState() {
-    if (this.state) this.columns = this.state.columns;
-  }
-};
-
-export let SearchBox = class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "searchBoxState";
-    this._dataFilterChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-  get dataFilterChanged() {
-    return this._dataFilterChanged;
-  }
-  set dataFilterChanged(handler) {
-    this._dataFilterChanged.attach(handler);
-  }
-
 };
 
 export let DataActivatedBehavior = class DataActivatedBehavior extends WidgetBehavior {
@@ -1567,6 +1405,173 @@ export let ReplaceWidgetBehavior = class ReplaceWidgetBehavior extends Dashboard
   }
 };
 
+export let Chart = class Chart extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.categoriesField = settings.categoriesField;
+    this.seriesDefaults = settings.seriesDefaults;
+    this.stateType = "chartState";
+    this.attachBehaviors();
+  }
+
+  get categoriesField() {
+    return this._categoriesField;
+  }
+  set categoriesField(value) {
+    this._categoriesField = value;
+  }
+
+  get seriesDefaults() {
+    return this._seriesDefaults;
+  }
+  set seriesDefaults(value) {
+    this._seriesDefaults = value;
+  }
+
+};
+
+export let DataSourceConfigurator = class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+  get dataSourceToConfigurate() {
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
+  }
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+};
+
+export let DetailedView = class DetailedView extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.fields = settings.fields;
+    this.stateType = "detailedViewState";
+    this.attachBehaviors();
+  }
+
+  get fields() {
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
+  }
+};
+
+export let Grid = class Grid extends Widget {
+  constructor(settings) {
+    super(settings);
+
+    this.columns = settings.columns ? settings.columns : [];
+    this.navigatable = settings.navigatable;
+    this.autoGenerateColumns = settings.autoGenerateColumns;
+    this.pageSize = settings.pageSize;
+    this.group = settings.group;
+
+    this.stateType = "gridState";
+
+    this._dataSelected = new WidgetEvent();
+    this._dataActivated = new WidgetEvent();
+    this._dataFieldSelected = new WidgetEvent();
+
+    this.attachBehaviors();
+  }
+
+  get columns() {
+    return this._columns;
+  }
+  set columns(value) {
+    this._columns = value;
+  }
+
+  get navigatable() {
+    return this._navigatable;
+  }
+  set navigatable(value) {
+    this._navigatable = value;
+  }
+
+  get autoGenerateColumns() {
+    return this._autoGenerateColumns;
+  }
+  set autoGenerateColumns(value) {
+    this._autoGenerateColumns = value;
+  }
+
+  get pageSize() {
+    return this._pageSize;
+  }
+  set pageSize(value) {
+    this._pageSize = value;
+  }
+
+  get group() {
+    return this._group;
+  }
+  set group(value) {
+    this._group = value;
+  }
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState() {
+    this.state = { columns: this.columns };
+  }
+
+  restoreState() {
+    if (this.state) this.columns = this.state.columns;
+  }
+};
+
+export let SearchBox = class SearchBox extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.stateType = "searchBoxState";
+    this._dataFilterChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+};
+
 export let JsonDataService = (_dec2 = transient(), _dec3 = inject(HttpClient), _dec2(_class3 = _dec3(_class3 = class JsonDataService extends DataService {
   constructor(http) {
     super();
@@ -1682,29 +1687,131 @@ export let UserStateStorage = (_dec4 = inject(Storage), _dec4(_class4 = class Us
 
 }) || _class4);
 
-export let ExpressionParserFactory = (_dec5 = inject(HttpClient), _dec5(_class5 = class ExpressionParserFactory {
+export let StateUrlParser = class StateUrlParser {
+  static stateToQuery(widgetStates) {
+    var params = [];
+    for (let widgetState of widgetStates) params.push({ "sk": widgetState.key, "sv": widgetState.value });
 
+    return params.length > 0 ? "?q=" + UrlHelper.objectToQuery(params) : "";
+  }
+
+  static queryToState(url) {
+    var result = [];
+    var q = UrlHelper.getParameterByName("q", url);
+    if (q) {
+      var widgetStates = UrlHelper.queryToObject(q);
+      for (var ws of widgetStates) {
+        result.push({ "key": ws.sk, "value": ws.sv });
+      }
+    }
+    return result;
+  }
+};
+
+export let Query = class Query {
+
+  get sort() {
+    return this._sort;
+  }
+  set sort(value) {
+    this._sort = value;
+  }
+
+  get group() {
+    return this._group;
+  }
+  set group(value) {
+    this._group = value;
+  }
+
+  get sortDir() {
+    return this._sortDir;
+  }
+  set sortDir(value) {
+    this._sortDir = value;
+  }
+
+  get take() {
+    return this._take;
+  }
+  set take(value) {
+    this._take = value;
+  }
+
+  get fields() {
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
+  }
+
+  get skip() {
+    return this._skip;
+  }
+  set skip(value) {
+    this._skip = value;
+  }
+
+  get serverSideFilter() {
+    return this._serverSideFilter;
+  }
+  set serverSideFilter(value) {
+    this._serverSideFilter = value;
+  }
+
+  cacheKey() {
+    return Math.abs(StringHelper.hashCode((this.serverSideFilter ? this.serverSideFilter : "") + (this.fields ? this.fields.join("") : "") + (this.sort ? this.sort : "") + (this.sortDir ? this.sortDir : "") + (this.take ? this.take : "0") + (this.skip ? this.skip : "0")));
+  }
+
+};
+
+export let FormatValueConverter = class FormatValueConverter {
+  static format(value, format) {
+    if (DataHelper.isDate(value)) return moment(value).format(format);
+    if (DataHelper.isNumber(value)) return numeral(value).format(format);
+    return value;
+  }
+
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  }
+};
+
+export let StaticJsonDataService = (_dec5 = transient(), _dec6 = inject(HttpClient), _dec5(_class5 = _dec6(_class5 = class StaticJsonDataService extends DataService {
   constructor(http) {
+    super();
     http.configure(config => {
       config.useStandardConfiguration();
     });
-    this.http = http;
+    this._http = http;
   }
 
-  createInstance(numericFieldList, stringFieldList, dateFieldList) {
-    var that = this;
-    var text = new Grammar().getGrammar();
-    var parserText = text.replace('@S@', that.concatenateFieldList(stringFieldList)).replace('@N@', that.concatenateFieldList(numericFieldList)).replace('@D@', that.concatenateFieldList(dateFieldList));
-    return new ExpressionParser(peg.buildParser(parserText));
+  read(options) {
+    return this._http.fetch(this.url).then(response => {
+      return response.json();
+    }).then(jsonData => {
+      var d = jsonData;
+      d = this.dataMapper ? this.dataMapper(d) : d;
+      if (options.filter) {
+        var evaluator = new QueryExpressionEvaluator();
+        d = evaluator.evaluate(d, options.filter);
+      }
+      var total = d.length;
+
+      if (options.sort) d = _.orderBy(d, [options.sort], [options.sortDir]);
+      var l = options.skip + options.take;
+      d = l ? _.slice(d, options.skip, l > d.length ? d.length : l) : d;
+      if (options.fields && options.fields.length > 0) d = _.map(d, item => {
+        return _.pick(item, options.fields);
+      });
+      return {
+        data: DataHelper.deserializeDates(d),
+        total: this.totalMapper ? this.totalMapper(jsonData) : total
+      };
+    });
   }
 
-  concatenateFieldList(fieldList) {
-    for (var i = 0; i < fieldList.length; i++) {
-      fieldList[i] = '\'' + fieldList[i] + '\'i';
-    }
-    if (fieldList.length > 0) return fieldList.join('/ ');else return "'unknown_field'";
-  }
-}) || _class5);
+}) || _class5) || _class5);
 
 export let Datasource = class Datasource {
 
@@ -1811,131 +1918,29 @@ export let DataSourceConfiguration = class DataSourceConfiguration {
   }
 };
 
-export let StateUrlParser = class StateUrlParser {
-  static stateToQuery(widgetStates) {
-    var params = [];
-    for (let widgetState of widgetStates) params.push({ "sk": widgetState.key, "sv": widgetState.value });
+export let ExpressionParserFactory = (_dec7 = inject(HttpClient), _dec7(_class6 = class ExpressionParserFactory {
 
-    return params.length > 0 ? "?q=" + UrlHelper.objectToQuery(params) : "";
-  }
-
-  static queryToState(url) {
-    var result = [];
-    var q = UrlHelper.getParameterByName("q", url);
-    if (q) {
-      var widgetStates = UrlHelper.queryToObject(q);
-      for (var ws of widgetStates) {
-        result.push({ "key": ws.sk, "value": ws.sv });
-      }
-    }
-    return result;
-  }
-};
-
-export let Query = class Query {
-
-  get sort() {
-    return this._sort;
-  }
-  set sort(value) {
-    this._sort = value;
-  }
-
-  get group() {
-    return this._group;
-  }
-  set group(value) {
-    this._group = value;
-  }
-
-  get sortDir() {
-    return this._sortDir;
-  }
-  set sortDir(value) {
-    this._sortDir = value;
-  }
-
-  get take() {
-    return this._take;
-  }
-  set take(value) {
-    this._take = value;
-  }
-
-  get fields() {
-    return this._fields;
-  }
-  set fields(value) {
-    this._fields = value;
-  }
-
-  get skip() {
-    return this._skip;
-  }
-  set skip(value) {
-    this._skip = value;
-  }
-
-  get serverSideFilter() {
-    return this._serverSideFilter;
-  }
-  set serverSideFilter(value) {
-    this._serverSideFilter = value;
-  }
-
-  cacheKey() {
-    return Math.abs(StringHelper.hashCode((this.serverSideFilter ? this.serverSideFilter : "") + (this.fields ? this.fields.join("") : "") + (this.sort ? this.sort : "") + (this.sortDir ? this.sortDir : "") + (this.take ? this.take : "0") + (this.skip ? this.skip : "0")));
-  }
-
-};
-
-export let FormatValueConverter = class FormatValueConverter {
-  static format(value, format) {
-    if (DataHelper.isDate(value)) return moment(value).format(format);
-    if (DataHelper.isNumber(value)) return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
-};
-
-export let StaticJsonDataService = (_dec6 = transient(), _dec7 = inject(HttpClient), _dec6(_class6 = _dec7(_class6 = class StaticJsonDataService extends DataService {
   constructor(http) {
-    super();
     http.configure(config => {
       config.useStandardConfiguration();
     });
-    this._http = http;
+    this.http = http;
   }
 
-  read(options) {
-    return this._http.fetch(this.url).then(response => {
-      return response.json();
-    }).then(jsonData => {
-      var d = jsonData;
-      d = this.dataMapper ? this.dataMapper(d) : d;
-      if (options.filter) {
-        var evaluator = new QueryExpressionEvaluator();
-        d = evaluator.evaluate(d, options.filter);
-      }
-      var total = d.length;
-
-      if (options.sort) d = _.orderBy(d, [options.sort], [options.sortDir]);
-      var l = options.skip + options.take;
-      d = l ? _.slice(d, options.skip, l > d.length ? d.length : l) : d;
-      if (options.fields && options.fields.length > 0) d = _.map(d, item => {
-        return _.pick(item, options.fields);
-      });
-      return {
-        data: DataHelper.deserializeDates(d),
-        total: this.totalMapper ? this.totalMapper(jsonData) : total
-      };
-    });
+  createInstance(numericFieldList, stringFieldList, dateFieldList) {
+    var that = this;
+    var text = new Grammar().getGrammar();
+    var parserText = text.replace('@S@', that.concatenateFieldList(stringFieldList)).replace('@N@', that.concatenateFieldList(numericFieldList)).replace('@D@', that.concatenateFieldList(dateFieldList));
+    return new ExpressionParser(peg.buildParser(parserText));
   }
 
-}) || _class6) || _class6);
+  concatenateFieldList(fieldList) {
+    for (var i = 0; i < fieldList.length; i++) {
+      fieldList[i] = '\'' + fieldList[i] + '\'i';
+    }
+    if (fieldList.length > 0) return fieldList.join('/ ');else return "'unknown_field'";
+  }
+}) || _class6);
 
 export let MemoryCacheStorage = class MemoryCacheStorage extends CacheStorage {
   constructor() {

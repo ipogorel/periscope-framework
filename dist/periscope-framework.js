@@ -1,8 +1,8 @@
 import lodash from 'lodash';
 import * as _ from 'lodash';
-import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
+import * as peg from 'pegjs';
 import {computedFrom,resolver,customElement,inject,useView,Decorators,bindable,noView,transient} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 import {EventAggregator} from 'aurelia-event-aggregator';
@@ -12,6 +12,94 @@ export class SchemaProvider{
   getSchema(){}
 }
 
+
+
+export class WidgetBehavior {
+
+  get widget() {
+    return this._widget;
+  }
+
+  attachToWidget(widget) {
+    this._widget = widget;
+    this._widget.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.widget.behaviors.length; i++) {
+      if(this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class DashboardBehavior {
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.dashboard.behaviors.length; i++) {
+      if(this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+}
 
 export class Widget {
 
@@ -387,94 +475,6 @@ export class LayoutWidget{
 
 }
 
-
-export class WidgetBehavior {
-
-  get widget() {
-    return this._widget;
-  }
-
-  attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.widget.behaviors.length; i++) {
-      if(this.widget.behaviors[i] === this) {
-        this.widget.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class DashboardBehavior {
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.dashboard.behaviors.length; i++) {
-      if(this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-}
-
 export class DataService{
   configure(configuration){
     this.url = configuration.url;
@@ -531,50 +531,6 @@ export class Schema {
     this.fields = [];
     this.parameters = [];
   }
-}
-
-export class Storage{
-  constructor(){
-    this._provider = this._initProvider('Warning: Local Storage is disabled or unavailable.');
-  }
-  set(key, value){
-    if (this._provider)
-     return this._provider.setItem(key, JSON.stringify(value));
-    return undefined;
-  }
-  get(key){
-
-    if (this._provider)
-      return  JSON.parse(this._provider.getItem(key));
-    return undefined;
-  }
-
-  clear(){
-    if (this._provider)
-      this._provider.clear();
-  }
-
-  _initProvider(warning){
-    if ('sessionStorage' in window && window['sessionStorage'] !== null) {
-      return sessionStorage;
-    } else {
-      console.warn(warning);
-      return undefined;
-    }
-  }
-}
-
-
-export class StateDiscriminator{
-  static discriminate(widgetStates){
-    var result = []
-    for (let ws of widgetStates){
-      if (ws.value.stateType==="searchBoxState")
-        result.push(ws);
-    }
-    return result;
-  }
-
 }
 
 export class NavigationHistory {
@@ -638,6 +594,50 @@ export class NavigationHistory {
 
 }
 
+export class Storage{
+  constructor(){
+    this._provider = this._initProvider('Warning: Local Storage is disabled or unavailable.');
+  }
+  set(key, value){
+    if (this._provider)
+     return this._provider.setItem(key, JSON.stringify(value));
+    return undefined;
+  }
+  get(key){
+
+    if (this._provider)
+      return  JSON.parse(this._provider.getItem(key));
+    return undefined;
+  }
+
+  clear(){
+    if (this._provider)
+      this._provider.clear();
+  }
+
+  _initProvider(warning){
+    if ('sessionStorage' in window && window['sessionStorage'] !== null) {
+      return sessionStorage;
+    } else {
+      console.warn(warning);
+      return undefined;
+    }
+  }
+}
+
+
+export class StateDiscriminator{
+  static discriminate(widgetStates){
+    var result = []
+    for (let ws of widgetStates){
+      if (ws.value.stateType==="searchBoxState")
+        result.push(ws);
+    }
+    return result;
+  }
+
+}
+
 @resolver
 export class Factory{
   constructor(Type){
@@ -674,239 +674,6 @@ export class DashboardManager {
     this._dashboards.push(dashboard);
     return dashboard;
   }
-}
-
-const DSL_GRAMMAR = `
-{
-function createStringExpression(fieldname, value){
- 		var prefix = "record.";
- 		var result = "";
- 		var v = value.trim().toLowerCase();
-        if (v.length>=2){
-          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
-              result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
-          else if (v.indexOf("%")===0)
-              result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
-          else if (v.lastIndexOf("%")===(value.length-1))
-              result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
-        }
-        if (result == "")
-          result = prefix + fieldname + ".toLowerCase() == '" + v + "'";
-
-        result="(" + prefix + fieldname + "!=null && " + result + ")"
-
-        return result;
- }
-  function createInExpression (fieldname, value) {
-    var result = "";
-    var values = value.split(',');
-    for (var i=0;i<values.length;i++)
-    {
-      var find = '[\\"\\']';
-      var re = new RegExp(find, 'g');
-      var v = values[i].replace(new RegExp(find, 'g'), "");
-      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();
-      result += createStringExpression(fieldname, v)
-      if (i<(values.length-1))
-        result += " || ";
-    }
-    if (result.length>0)
-      result = "(" + result + ")"
-    return result;
-  }
-}
-
-start = expression
-
-expression = c:condition j:join e:expression space? {return c+j+e;}
-           / c:condition space? {return c;}
-
-join "LOGIC_OPERATOR"
-     = and
-     / or
-
-and = space* "and"i space* {return " && ";}
-
-or = space* "or"i space* {return " || ";}
-
-
-condition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}
-          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}
-          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}
-          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}
-          / "(" space? e:expression space* ")" space* {return "(" + e +")";}
-
-
-
-valuesArray "STRING_VALUES_ARRAY"
-      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }
-
-nextValue = nv:(space* "," space* v:stringValue) {return  nv}
-
-
-
-dateValue "DATE_VALUE"
-        = quote? dt:$(date+) quote? {return "'" + dt + "'";}
-
-
-stringValue  "STRING_VALUE"
-	  = quote w:$(char+) quote {return  w }
-      / quote quote {return "";}
-
-
-numericValue  "NUMERIC_VALUE"
-       = $(numeric+)
-
-
-op "OPERATOR"
-   = op_eq
-   / ge
-   / gt
-   / le
-   / lt
-
-op_eq "STRING_OPERATOR_EQUAL"
-  = eq
-  / not_eq
-
-op_in "STRING_OPERATOR_IN"
-  = in
-
-eq = space* "=" space* {return "==";}
-
-not_eq = space* "!=" space* {return "!=";}
-
-gt = space* v:">" space* {return v;}
-
-ge = space* v:">=" space* {return v;}
-
-lt = space* v:"<" space* {return v;}
-
-le = space* v:"<=" space* {return v;}
-
-in = space* v:"in" space* {return v;}
-
-
-date = [0-9 \\:\\/]
-
-char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
-
-numeric = [0-9-\\.]
-
-space = [ \\t\\n\\r]+
-
-parentheses_l = [\\(] space*
-
-parentheses_r = space* [\\)]
-
-field "FIELD_NAME"
-      = stringField
-     / numericField
-     / dateField
-
-stringField "STRING_FIELD_NAME"
-     = @S@
-
-numericField "NUMERIC_FIELD_NAME"
-     = @N@
-
-dateField "DATE_FIELD_NAME"
-     = @D@
-
-quote = [\\'\\"]
-
-
-`;
-
-
-export class Grammar {
-  getGrammar(){
-    return DSL_GRAMMAR;
-  }
-}
-
-export class ExpressionParser {
-
-  constructor(pegParser)
-  {
-    this.parser =  pegParser;
-  }
-
-  parse(searchString)
-  {
-    return this.parser.parse(searchString);
-  }
-
-  validate(searchString)
-  {
-    try{
-      this.parser.parse(searchString);
-      return true;
-    }
-    catch(ex)
-    {
-      return false;
-    }
-  }
-
-}
-
-
-String.prototype.in = function(array)
-{
-  for (var i = 0; i < array.length; i++)
-  {
-    if (array[i]==this)
-      return true;
-  }
-  return false;
-}
-
-export class QueryExpressionEvaluator {
-  evaluate(data, searchExpression)
-  {
-    var res = [];
-    if (searchExpression!="") {
-      for (let record of data) {
-        if (eval(searchExpression)) {
-          res.push(record);
-        }
-      }
-    }
-    else
-      res = data;
-    return res;
-  }
-
-}
-
-
-export class DataHolder {
-  constructor(){
-  }
-  get data(){
-    return this._data;
-  }
-  set data(value){
-    this._data = value;
-  }
-
-  get total(){
-    return this._total;
-  }
-  set total(value){
-    this._total = value;
-  }
-
-  // Query object
-  get query(){
-    return this._query;
-  }
-  set query(value){
-    this._query = value;
-  }
-
-
 }
 
 export class UrlHelper {
@@ -1106,6 +873,239 @@ export class DataHelper {
   }
 }
 
+String.prototype.in = function(array)
+{
+  for (var i = 0; i < array.length; i++)
+  {
+    if (array[i]==this)
+      return true;
+  }
+  return false;
+}
+
+export class QueryExpressionEvaluator {
+  evaluate(data, searchExpression)
+  {
+    var res = [];
+    if (searchExpression!="") {
+      for (let record of data) {
+        if (eval(searchExpression)) {
+          res.push(record);
+        }
+      }
+    }
+    else
+      res = data;
+    return res;
+  }
+
+}
+
+
+export class DataHolder {
+  constructor(){
+  }
+  get data(){
+    return this._data;
+  }
+  set data(value){
+    this._data = value;
+  }
+
+  get total(){
+    return this._total;
+  }
+  set total(value){
+    this._total = value;
+  }
+
+  // Query object
+  get query(){
+    return this._query;
+  }
+  set query(value){
+    this._query = value;
+  }
+
+
+}
+
+const DSL_GRAMMAR = `
+{
+function createStringExpression(fieldname, value){
+ 		var prefix = "record.";
+ 		var result = "";
+ 		var v = value.trim().toLowerCase();
+        if (v.length>=2){
+          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
+              result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
+          else if (v.indexOf("%")===0)
+              result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
+          else if (v.lastIndexOf("%")===(value.length-1))
+              result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
+        }
+        if (result == "")
+          result = prefix + fieldname + ".toLowerCase() == '" + v + "'";
+
+        result="(" + prefix + fieldname + "!=null && " + result + ")"
+
+        return result;
+ }
+  function createInExpression (fieldname, value) {
+    var result = "";
+    var values = value.split(',');
+    for (var i=0;i<values.length;i++)
+    {
+      var find = '[\\"\\']';
+      var re = new RegExp(find, 'g');
+      var v = values[i].replace(new RegExp(find, 'g'), "");
+      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();
+      result += createStringExpression(fieldname, v)
+      if (i<(values.length-1))
+        result += " || ";
+    }
+    if (result.length>0)
+      result = "(" + result + ")"
+    return result;
+  }
+}
+
+start = expression
+
+expression = c:condition j:join e:expression space? {return c+j+e;}
+           / c:condition space? {return c;}
+
+join "LOGIC_OPERATOR"
+     = and
+     / or
+
+and = space* "and"i space* {return " && ";}
+
+or = space* "or"i space* {return " || ";}
+
+
+condition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}
+          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}
+          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}
+          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}
+          / "(" space? e:expression space* ")" space* {return "(" + e +")";}
+
+
+
+valuesArray "STRING_VALUES_ARRAY"
+      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }
+
+nextValue = nv:(space* "," space* v:stringValue) {return  nv}
+
+
+
+dateValue "DATE_VALUE"
+        = quote? dt:$(date+) quote? {return "'" + dt + "'";}
+
+
+stringValue  "STRING_VALUE"
+	  = quote w:$(char+) quote {return  w }
+      / quote quote {return "";}
+
+
+numericValue  "NUMERIC_VALUE"
+       = $(numeric+)
+
+
+op "OPERATOR"
+   = op_eq
+   / ge
+   / gt
+   / le
+   / lt
+
+op_eq "STRING_OPERATOR_EQUAL"
+  = eq
+  / not_eq
+
+op_in "STRING_OPERATOR_IN"
+  = in
+
+eq = space* "=" space* {return "==";}
+
+not_eq = space* "!=" space* {return "!=";}
+
+gt = space* v:">" space* {return v;}
+
+ge = space* v:">=" space* {return v;}
+
+lt = space* v:"<" space* {return v;}
+
+le = space* v:"<=" space* {return v;}
+
+in = space* v:"in" space* {return v;}
+
+
+date = [0-9 \\:\\/]
+
+char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
+
+numeric = [0-9-\\.]
+
+space = [ \\t\\n\\r]+
+
+parentheses_l = [\\(] space*
+
+parentheses_r = space* [\\)]
+
+field "FIELD_NAME"
+      = stringField
+     / numericField
+     / dateField
+
+stringField "STRING_FIELD_NAME"
+     = @S@
+
+numericField "NUMERIC_FIELD_NAME"
+     = @N@
+
+dateField "DATE_FIELD_NAME"
+     = @D@
+
+quote = [\\'\\"]
+
+
+`;
+
+
+export class Grammar {
+  getGrammar(){
+    return DSL_GRAMMAR;
+  }
+}
+
+export class ExpressionParser {
+
+  constructor(pegParser)
+  {
+    this.parser =  pegParser;
+  }
+
+  parse(searchString)
+  {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString)
+  {
+    try{
+      this.parser.parse(searchString);
+      return true;
+    }
+    catch(ex)
+    {
+      return false;
+    }
+  }
+
+}
+
+
 export class DashboardConfiguration {
   invoke(){
 
@@ -1145,8 +1145,13 @@ export class CacheManager {
   getStorage(){
     return this._cacheStorage;
   }
+
 }
 
+
+export function configure(aurelia) {
+  aurelia.globalResources("./helpers/converters/value-format");
+}
 
 export class StaticSchemaProvider extends SchemaProvider{
   constructor(schema){
@@ -1157,48 +1162,6 @@ export class StaticSchemaProvider extends SchemaProvider{
     return new Promise((resolve, reject)=>{
       resolve(this._schema);
     });
-  }
-}
-
-
-export class Chart extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.categoriesField = settings.categoriesField;
-    this.seriesDefaults = settings.seriesDefaults;
-    this.stateType = "chartState";
-    this.attachBehaviors();
-  }
-
-  get categoriesField(){
-    return this._categoriesField;
-  }
-  set categoriesField(value){
-    this._categoriesField = value;
-  }
-
-  get seriesDefaults(){
-    return this._seriesDefaults;
-  }
-  set seriesDefaults(value){
-    this._seriesDefaults = value;
-  }
-
-}
-
-export class DetailedView extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.fields = settings.fields;
-    this.stateType = "detailedViewState";
-    this.attachBehaviors();
-  }
-
-  get fields(){
-    return this._fields;
-  }
-  set fields(value) {
-    this._fields = value;
   }
 }
 
@@ -1282,139 +1245,6 @@ export class SettingsHandleBehavior extends WidgetBehavior
     if (this.subscription)
       this.subscription.dispose();
   }
-}
-
-export class DataSourceConfigurator extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    this.stateType = "dataSourceConfiguratorState";
-    this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-
-  get dataSourceToConfigurate(){
-    return this._dataSourceToConfigurate;
-  }
-  set dataSourceToConfigurate(value) {
-    this._dataSourceToConfigurate = value;
-  }
-
-
-  get dataSourceChanged() {
-    return this._dataSourceChanged;
-  }
-  set dataSourceChanged(handler) {
-    this._dataSourceChanged.attach(handler);
-  }
-
-
-}
-
-export class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
-
-    this.columns = settings.columns? settings.columns : [];
-    this.navigatable = settings.navigatable;
-    this.autoGenerateColumns = settings.autoGenerateColumns;
-    this.pageSize = settings.pageSize;
-    this.group = settings.group;
-
-    this.stateType = "gridState";
-
-    this._dataSelected = new WidgetEvent();
-    this._dataActivated = new WidgetEvent();
-    this._dataFieldSelected = new WidgetEvent();
-
-    this.attachBehaviors();
-  }
-
-  get columns(){
-    return this._columns;
-  }
-  set columns(value) {
-    this._columns = value;
-  }
-
-  get navigatable(){
-    return this._navigatable;
-  }
-  set navigatable(value) {
-    this._navigatable = value;
-  }
-
-  get autoGenerateColumns(){
-    return this._autoGenerateColumns;
-  }
-  set autoGenerateColumns(value) {
-    this._autoGenerateColumns = value;
-  }
-
-  get pageSize(){
-    return this._pageSize;
-  }
-  set pageSize(value) {
-    this._pageSize = value;
-  }
-
-  get group(){
-    return this._group;
-  }
-  set group(value){
-    this._group = value;
-  }
-
-  get dataSelected() {
-    return this._dataSelected;
-  }
-  set dataSelected(handler) {
-    this._dataSelected.attach(handler);
-  }
-
-  get dataActivated() {
-    return this._dataActivated;
-  }
-  set dataActivated(handler) {
-    this._dataActivated.attach(handler);
-  }
-  
-
-  get dataFieldSelected() {
-    return this._dataFieldSelected;
-  }
-  set dataFieldSelected(handler) {
-    this._dataFieldSelected.attach(handler);
-  }
-
-  saveState(){
-    this.state = {columns:this.columns};
-  }
-
-  restoreState(){
-    if (this.state)
-      this.columns = this.state.columns;
-  }
-}
-
-export class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "searchBoxState";
-    this._dataFilterChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-  get dataFilterChanged() {
-    return this._dataFilterChanged;
-  }
-  set dataFilterChanged(handler) {
-    this._dataFilterChanged.attach(handler);
-  }
-
-
-
 }
 
 export class DataActivatedBehavior extends WidgetBehavior {
@@ -1667,6 +1497,181 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
   }
 }
 
+export class Chart extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.categoriesField = settings.categoriesField;
+    this.seriesDefaults = settings.seriesDefaults;
+    this.stateType = "chartState";
+    this.attachBehaviors();
+  }
+
+  get categoriesField(){
+    return this._categoriesField;
+  }
+  set categoriesField(value){
+    this._categoriesField = value;
+  }
+
+  get seriesDefaults(){
+    return this._seriesDefaults;
+  }
+  set seriesDefaults(value){
+    this._seriesDefaults = value;
+  }
+
+}
+
+export class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+
+  get dataSourceToConfigurate(){
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
+  }
+
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+
+}
+
+export class DetailedView extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.fields = settings.fields;
+    this.stateType = "detailedViewState";
+    this.attachBehaviors();
+  }
+
+  get fields(){
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
+  }
+}
+
+
+export class Grid extends Widget {
+  constructor(settings) {
+    super(settings);
+
+    this.columns = settings.columns? settings.columns : [];
+    this.navigatable = settings.navigatable;
+    this.autoGenerateColumns = settings.autoGenerateColumns;
+    this.pageSize = settings.pageSize;
+    this.group = settings.group;
+
+    this.stateType = "gridState";
+
+    this._dataSelected = new WidgetEvent();
+    this._dataActivated = new WidgetEvent();
+    this._dataFieldSelected = new WidgetEvent();
+
+    this.attachBehaviors();
+  }
+
+  get columns(){
+    return this._columns;
+  }
+  set columns(value) {
+    this._columns = value;
+  }
+
+  get navigatable(){
+    return this._navigatable;
+  }
+  set navigatable(value) {
+    this._navigatable = value;
+  }
+
+  get autoGenerateColumns(){
+    return this._autoGenerateColumns;
+  }
+  set autoGenerateColumns(value) {
+    this._autoGenerateColumns = value;
+  }
+
+  get pageSize(){
+    return this._pageSize;
+  }
+  set pageSize(value) {
+    this._pageSize = value;
+  }
+
+  get group(){
+    return this._group;
+  }
+  set group(value){
+    this._group = value;
+  }
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+  
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState(){
+    this.state = {columns:this.columns};
+  }
+
+  restoreState(){
+    if (this.state)
+      this.columns = this.state.columns;
+  }
+}
+
+export class SearchBox extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.stateType = "searchBoxState";
+    this._dataFilterChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+
+
+}
+
 @transient()
 @inject(HttpClient)
 export class JsonDataService extends DataService {
@@ -1791,152 +1796,6 @@ export class UserStateStorage{
     }
 
 }
-
-@inject(HttpClient)
-export class ExpressionParserFactory {
-
-  constructor(http) {
-    http.configure(config => {
-      config.useStandardConfiguration();
-    });
-    this.http = http;
-  }
-
-  createInstance(numericFieldList, stringFieldList, dateFieldList) {
-    var that = this;
-    var text = new Grammar().getGrammar();
-    var parserText = text.replace('@S@', that.concatenateFieldList(stringFieldList))
-      .replace('@N@', that.concatenateFieldList(numericFieldList))
-      .replace('@D@', that.concatenateFieldList(dateFieldList));
-    return new ExpressionParser(peg.buildParser(parserText));
-  }
-
-  concatenateFieldList(fieldList){
-    for (var i = 0; i < fieldList.length; i++) {
-      fieldList[i] = '\'' + fieldList[i] + '\'i';
-    }
-    if (fieldList.length>0)
-      return fieldList.join('/ ');
-    else
-      return "'unknown_field'"
-  }
-}
-
-
-export class Datasource {
-    
-    constructor(datasourceConfiguration) {
-        this._name = datasourceConfiguration.name;
-        this._transport = datasourceConfiguration.transport;
-        this._schemeConfig = datasourceConfiguration.schemeConfig;
-        this._cache = datasourceConfiguration.cache;
-    }
-
-    get name() {
-        return this._name;
-    }
-
-    get transport(){
-      return this._transport;
-    }
-
-    get cacheManager(){
-      return this._cacheManager;
-    }
-
-    createDataHolder(){
-      return new DataHolder(this);
-    }
-
-    cacheOn(cacheKey){
-      if (this._cache&&this._cache.cacheManager) {
-        var storage = this._cache.cacheManager.getStorage();
-        return storage.getItem(cacheKey);
-      }
-    }
-
-    getData(query) {
-      let dataHolder = new DataHolder();
-      dataHolder.query = query;
-
-      if ((!this.transport)&&(!this.transport.readService))
-        throw "readService is not configured";
-
-      let storage;
-      let cacheKey = this.transport.readService.url + query.cacheKey();
-      if (this._cache&&this._cache.cacheManager){
-        storage = this._cache.cacheManager.getStorage();
-        let cachedDataHolder = storage.getItem(cacheKey);
-        if (cachedDataHolder) {
-          dataHolder.data = cachedDataHolder.data;
-          dataHolder.total = cachedDataHolder.total;
-          return new Promise((resolve, reject)=> {
-            resolve(dataHolder);
-          });
-        }
-      }
-      return this.transport.readService.read(
-          {
-            fields: query.fields,
-            filter: (query.serverSideFilter? query.serverSideFilter:""),
-            take: query.take,
-            skip: query.skip,
-            sort: query.sort,
-            sortDir: query.sortDir
-          })
-          .then(d => {
-            dataHolder.data = _.isArray(d.data)?d.data : [d.data];
-            dataHolder.total = d.total;
-            if (storage)
-              storage.setItem(cacheKey, {data:dataHolder.data, total:dataHolder.total}, this._cache.cacheTimeSeconds);
-            return dataHolder;
-      });
-    }
-
-    create(entity){
-      if ((!this.transport)&&(!this.transport.createService))
-        throw "createService is not configured";
-      return this.transport.createService.create(entity);
-    }
-
-    update(id, entity){
-      if ((!this.transport)&&(!this.transport.updateService))
-        throw "updateService is not configured";
-      return this.transport.updateService.update(id, entity);
-    }
-
-    delete(id, entity){
-      if ((!this.transport)&&(!this.transport.deleteService))
-        throw "deleteService is not configured";
-      return this.transport.updateService.delete(entity);
-    }
-}
-
-export class DataSourceConfiguration {
-  get cache(){
-    return this._cache;
-  }
-  set cache(value){
-    this._cache = value;
-  }
-
-  get transport(){
-    return this._transport;
-  }
-  set transport(value){
-    this._transport = value;
-  }
-  
-  get name(){
-    return this._name;
-  }
-  set name(value){
-    this._name = value;
-  }
-}
-
-
-
 
 export class StateUrlParser{
   static stateToQuery(widgetStates){
@@ -2089,6 +1948,152 @@ export class StaticJsonDataService extends DataService {
   }
 
 }
+
+export class Datasource {
+    
+    constructor(datasourceConfiguration) {
+        this._name = datasourceConfiguration.name;
+        this._transport = datasourceConfiguration.transport;
+        this._schemeConfig = datasourceConfiguration.schemeConfig;
+        this._cache = datasourceConfiguration.cache;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    get transport(){
+      return this._transport;
+    }
+
+    get cacheManager(){
+      return this._cacheManager;
+    }
+
+    createDataHolder(){
+      return new DataHolder(this);
+    }
+
+    cacheOn(cacheKey){
+      if (this._cache&&this._cache.cacheManager) {
+        var storage = this._cache.cacheManager.getStorage();
+        return storage.getItem(cacheKey);
+      }
+    }
+
+    getData(query) {
+      let dataHolder = new DataHolder();
+      dataHolder.query = query;
+
+      if ((!this.transport)&&(!this.transport.readService))
+        throw "readService is not configured";
+
+      let storage;
+      let cacheKey = this.transport.readService.url + query.cacheKey();
+      if (this._cache&&this._cache.cacheManager){
+        storage = this._cache.cacheManager.getStorage();
+        let cachedDataHolder = storage.getItem(cacheKey);
+        if (cachedDataHolder) {
+          dataHolder.data = cachedDataHolder.data;
+          dataHolder.total = cachedDataHolder.total;
+          return new Promise((resolve, reject)=> {
+            resolve(dataHolder);
+          });
+        }
+      }
+      return this.transport.readService.read(
+          {
+            fields: query.fields,
+            filter: (query.serverSideFilter? query.serverSideFilter:""),
+            take: query.take,
+            skip: query.skip,
+            sort: query.sort,
+            sortDir: query.sortDir
+          })
+          .then(d => {
+            dataHolder.data = _.isArray(d.data)?d.data : [d.data];
+            dataHolder.total = d.total;
+            if (storage)
+              storage.setItem(cacheKey, {data:dataHolder.data, total:dataHolder.total}, this._cache.cacheTimeSeconds);
+            return dataHolder;
+      });
+    }
+
+    create(entity){
+      if ((!this.transport)&&(!this.transport.createService))
+        throw "createService is not configured";
+      return this.transport.createService.create(entity);
+    }
+
+    update(id, entity){
+      if ((!this.transport)&&(!this.transport.updateService))
+        throw "updateService is not configured";
+      return this.transport.updateService.update(id, entity);
+    }
+
+    delete(id, entity){
+      if ((!this.transport)&&(!this.transport.deleteService))
+        throw "deleteService is not configured";
+      return this.transport.updateService.delete(entity);
+    }
+}
+
+export class DataSourceConfiguration {
+  get cache(){
+    return this._cache;
+  }
+  set cache(value){
+    this._cache = value;
+  }
+
+  get transport(){
+    return this._transport;
+  }
+  set transport(value){
+    this._transport = value;
+  }
+  
+  get name(){
+    return this._name;
+  }
+  set name(value){
+    this._name = value;
+  }
+}
+
+
+
+
+@inject(HttpClient)
+export class ExpressionParserFactory {
+
+  constructor(http) {
+    http.configure(config => {
+      config.useStandardConfiguration();
+    });
+    this.http = http;
+  }
+
+  createInstance(numericFieldList, stringFieldList, dateFieldList) {
+    var that = this;
+    var text = new Grammar().getGrammar();
+    var parserText = text.replace('@S@', that.concatenateFieldList(stringFieldList))
+      .replace('@N@', that.concatenateFieldList(numericFieldList))
+      .replace('@D@', that.concatenateFieldList(dateFieldList));
+    return new ExpressionParser(peg.buildParser(parserText));
+  }
+
+  concatenateFieldList(fieldList){
+    for (var i = 0; i < fieldList.length; i++) {
+      fieldList[i] = '\'' + fieldList[i] + '\'i';
+    }
+    if (fieldList.length>0)
+      return fieldList.join('/ ');
+    else
+      return "'unknown_field'"
+  }
+}
+
 
 export class MemoryCacheStorage extends CacheStorage{
   constructor(){

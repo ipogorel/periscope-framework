@@ -24,7 +24,7 @@
   },
   "jspm": {
     "registry": "npm",
-    "main": "periscope-framework",
+    "main": "index",
     "format": "amd",
     "directories": {
       "dist": "dist/amd"
