@@ -1,6 +1,8 @@
 'use strict';
 
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.FormatValueConverter = undefined;
 
 var _dataHelper = require('./../data-helper');

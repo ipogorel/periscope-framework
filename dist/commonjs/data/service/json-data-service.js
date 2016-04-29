@@ -1,6 +1,8 @@
 'use strict';
 
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
 exports.JsonDataService = undefined;
 
 var _dec, _dec2, _class;

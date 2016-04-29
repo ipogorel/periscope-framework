@@ -1,12 +1,20 @@
-"use strict";
+define(["exports"], function (exports) {
+  "use strict";
 
-exports.__esModule = true;
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
 
-var Schema = exports.Schema = function Schema() {
-  _classCallCheck(this, Schema);
+  var Schema = exports.Schema = function Schema() {
+    _classCallCheck(this, Schema);
 
-  this.fields = [];
-  this.parameters = [];
-};
+    this.fields = [];
+    this.parameters = [];
+  };
+});

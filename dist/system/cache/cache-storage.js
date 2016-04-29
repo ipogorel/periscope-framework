@@ -1,21 +1,34 @@
 "use strict";
 
-exports.__esModule = true;
+System.register([], function (_export, _context) {
+  var CacheStorage;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var CacheStorage = exports.CacheStorage = function () {
-  function CacheStorage() {
-    _classCallCheck(this, CacheStorage);
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
+  return {
+    setters: [],
+    execute: function () {
+      _export("CacheStorage", CacheStorage = function () {
+        function CacheStorage() {
+          _classCallCheck(this, CacheStorage);
+        }
 
-  CacheStorage.prototype.getItem = function getItem(key) {};
+        CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
 
-  CacheStorage.prototype.removeItem = function removeItem(key) {};
+        CacheStorage.prototype.getItem = function getItem(key) {};
 
-  CacheStorage.prototype.removeExpired = function removeExpired() {};
+        CacheStorage.prototype.removeItem = function removeItem(key) {};
 
-  return CacheStorage;
-}();
+        CacheStorage.prototype.removeExpired = function removeExpired() {};
+
+        return CacheStorage;
+      }());
+
+      _export("CacheStorage", CacheStorage);
+    }
+  };
+});

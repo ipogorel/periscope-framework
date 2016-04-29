@@ -1,6 +1,8 @@
 "use strict";
 
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.CreateWidgetBehavior = undefined;
 
 var _dashboardBehavior = require("./dashboard-behavior");

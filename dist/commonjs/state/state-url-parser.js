@@ -1,6 +1,8 @@
 "use strict";
 
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.StateUrlParser = undefined;
 
 var _urlHelper = require("./../helpers/url-helper");

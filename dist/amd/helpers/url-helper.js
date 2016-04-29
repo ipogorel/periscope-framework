@@ -1,30 +1,38 @@
-"use strict";
+define(["exports"], function (exports) {
+  "use strict";
 
-exports.__esModule = true;
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var UrlHelper = exports.UrlHelper = function () {
-  function UrlHelper() {
-    _classCallCheck(this, UrlHelper);
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  UrlHelper.objectToQuery = function objectToQuery(ar) {
-    return encodeURIComponent(JSON.stringify(ar));
-  };
+  var UrlHelper = exports.UrlHelper = function () {
+    function UrlHelper() {
+      _classCallCheck(this, UrlHelper);
+    }
 
-  UrlHelper.queryToObject = function queryToObject(queryParam) {
-    return JSON.parse(queryParam);
-  };
+    UrlHelper.objectToQuery = function objectToQuery(ar) {
+      return encodeURIComponent(JSON.stringify(ar));
+    };
 
-  UrlHelper.getParameterByName = function getParameterByName(name, url) {
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
-  };
+    UrlHelper.queryToObject = function queryToObject(queryParam) {
+      return JSON.parse(queryParam);
+    };
 
-  return UrlHelper;
-}();
+    UrlHelper.getParameterByName = function getParameterByName(name, url) {
+      name = name.replace(/[\[\]]/g, "\\$&");
+      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+          results = regex.exec(url);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, " "));
+    };
+
+    return UrlHelper;
+  }();
+});

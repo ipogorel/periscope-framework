@@ -1,15 +1,28 @@
 "use strict";
 
-exports.__esModule = true;
+System.register([], function (_export, _context) {
+  var DashboardConfiguration;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var DashboardConfiguration = exports.DashboardConfiguration = function () {
-  function DashboardConfiguration() {
-    _classCallCheck(this, DashboardConfiguration);
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  DashboardConfiguration.prototype.invoke = function invoke() {};
+  return {
+    setters: [],
+    execute: function () {
+      _export("DashboardConfiguration", DashboardConfiguration = function () {
+        function DashboardConfiguration() {
+          _classCallCheck(this, DashboardConfiguration);
+        }
 
-  return DashboardConfiguration;
-}();
+        DashboardConfiguration.prototype.invoke = function invoke() {};
+
+        return DashboardConfiguration;
+      }());
+
+      _export("DashboardConfiguration", DashboardConfiguration);
+    }
+  };
+});

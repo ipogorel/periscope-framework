@@ -16,12 +16,17 @@ exports.base = function() {
     plugins: [
       'syntax-flow',
       'transform-decorators-legacy',
-      'transform-function-bind',
+      ['babel-dts-generator', {
+        packageName: paths.packageName,
+        typings: '',
+        suppressModulePath: true,
+        suppressComments: false,
+        memberOutputFilter: /^_.*/
+      }],
       'transform-flow-strip-types'
     ]
   };
 }
-
 
 exports.commonjs = function() {
   var options = exports.base();

@@ -1,19 +1,27 @@
-"use strict";
+define(["exports"], function (exports) {
+  "use strict";
 
-exports.__esModule = true;
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var DSL_GRAMMAR = "\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = \"record.\";\n \t\tvar result = \"\";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf(\"%\")===0)&&(v.lastIndexOf(\"%\")===(v.length-1)))\n              result = prefix + fieldname + \".toLowerCase().includes('\" + v.substring(1,value.length-1) + \"')\"\n          else if (v.indexOf(\"%\")===0)\n              result = prefix + fieldname + \".toLowerCase().endsWith('\" + v.substring(1,value.length) + \"')\"\n          else if (v.lastIndexOf(\"%\")===(value.length-1))\n              result = prefix + fieldname + \".toLowerCase().startsWith('\" + v.substring(0,value.length-1) + \"')\"\n        }\n        if (result == \"\")\n          result = prefix + fieldname + \".toLowerCase() == '\" + v + \"'\";\n\n        result=\"(\" + prefix + fieldname + \"!=null && \" + result + \")\"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = \"\";\n    var values = value.split(',');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = '[\\\"\\']';\n      var re = new RegExp(find, 'g');\n      var v = values[i].replace(new RegExp(find, 'g'), \"\");\n      //result += \"record.\" + fieldname + \".toLowerCase() ==\" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += \" || \";\n    }\n    if (result.length>0)\n      result = \"(\" + result + \")\"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin \"LOGIC_OPERATOR\"\n     = and\n     / or\n\nand = space* \"and\"i space* {return \" && \";}\n\nor = space* \"or\"i space* {return \" || \";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return \"record.\" + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return \"record.\" + f + o + v;}\n          / \"(\" space? e:expression space* \")\" space* {return \"(\" + e +\")\";}\n\n\n\nvaluesArray \"STRING_VALUES_ARRAY\"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* \",\" space* v:stringValue) {return  nv}\n\n\n\ndateValue \"DATE_VALUE\"\n        = quote? dt:$(date+) quote? {return \"'\" + dt + \"'\";}\n\n\nstringValue  \"STRING_VALUE\"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return \"\";}\n\n\nnumericValue  \"NUMERIC_VALUE\"\n       = $(numeric+)\n\n\nop \"OPERATOR\"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq \"STRING_OPERATOR_EQUAL\"\n  = eq\n  / not_eq\n\nop_in \"STRING_OPERATOR_IN\"\n  = in\n\neq = space* \"=\" space* {return \"==\";}\n\nnot_eq = space* \"!=\" space* {return \"!=\";}\n\ngt = space* v:\">\" space* {return v;}\n\nge = space* v:\">=\" space* {return v;}\n\nlt = space* v:\"<\" space* {return v;}\n\nle = space* v:\"<=\" space* {return v;}\n\nin = space* v:\"in\" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield \"FIELD_NAME\"\n      = stringField\n     / numericField\n     / dateField\n\nstringField \"STRING_FIELD_NAME\"\n     = @S@\n\nnumericField \"NUMERIC_FIELD_NAME\"\n     = @N@\n\ndateField \"DATE_FIELD_NAME\"\n     = @D@\n\nquote = [\\'\\\"]\n\n\n";
-
-var Grammar = exports.Grammar = function () {
-  function Grammar() {
-    _classCallCheck(this, Grammar);
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  Grammar.prototype.getGrammar = function getGrammar() {
-    return DSL_GRAMMAR;
-  };
+  var DSL_GRAMMAR = "\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = \"record.\";\n \t\tvar result = \"\";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf(\"%\")===0)&&(v.lastIndexOf(\"%\")===(v.length-1)))\n              result = prefix + fieldname + \".toLowerCase().includes('\" + v.substring(1,value.length-1) + \"')\"\n          else if (v.indexOf(\"%\")===0)\n              result = prefix + fieldname + \".toLowerCase().endsWith('\" + v.substring(1,value.length) + \"')\"\n          else if (v.lastIndexOf(\"%\")===(value.length-1))\n              result = prefix + fieldname + \".toLowerCase().startsWith('\" + v.substring(0,value.length-1) + \"')\"\n        }\n        if (result == \"\")\n          result = prefix + fieldname + \".toLowerCase() == '\" + v + \"'\";\n\n        result=\"(\" + prefix + fieldname + \"!=null && \" + result + \")\"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = \"\";\n    var values = value.split(',');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = '[\\\"\\']';\n      var re = new RegExp(find, 'g');\n      var v = values[i].replace(new RegExp(find, 'g'), \"\");\n      //result += \"record.\" + fieldname + \".toLowerCase() ==\" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += \" || \";\n    }\n    if (result.length>0)\n      result = \"(\" + result + \")\"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin \"LOGIC_OPERATOR\"\n     = and\n     / or\n\nand = space* \"and\"i space* {return \" && \";}\n\nor = space* \"or\"i space* {return \" || \";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return \"record.\" + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return \"record.\" + f + o + v;}\n          / \"(\" space? e:expression space* \")\" space* {return \"(\" + e +\")\";}\n\n\n\nvaluesArray \"STRING_VALUES_ARRAY\"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* \",\" space* v:stringValue) {return  nv}\n\n\n\ndateValue \"DATE_VALUE\"\n        = quote? dt:$(date+) quote? {return \"'\" + dt + \"'\";}\n\n\nstringValue  \"STRING_VALUE\"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return \"\";}\n\n\nnumericValue  \"NUMERIC_VALUE\"\n       = $(numeric+)\n\n\nop \"OPERATOR\"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq \"STRING_OPERATOR_EQUAL\"\n  = eq\n  / not_eq\n\nop_in \"STRING_OPERATOR_IN\"\n  = in\n\neq = space* \"=\" space* {return \"==\";}\n\nnot_eq = space* \"!=\" space* {return \"!=\";}\n\ngt = space* v:\">\" space* {return v;}\n\nge = space* v:\">=\" space* {return v;}\n\nlt = space* v:\"<\" space* {return v;}\n\nle = space* v:\"<=\" space* {return v;}\n\nin = space* v:\"in\" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield \"FIELD_NAME\"\n      = stringField\n     / numericField\n     / dateField\n\nstringField \"STRING_FIELD_NAME\"\n     = @S@\n\nnumericField \"NUMERIC_FIELD_NAME\"\n     = @N@\n\ndateField \"DATE_FIELD_NAME\"\n     = @D@\n\nquote = [\\'\\\"]\n\n\n";
 
-  return Grammar;
-}();
+  var Grammar = exports.Grammar = function () {
+    function Grammar() {
+      _classCallCheck(this, Grammar);
+    }
+
+    Grammar.prototype.getGrammar = function getGrammar() {
+      return DSL_GRAMMAR;
+    };
+
+    return Grammar;
+  }();
+});

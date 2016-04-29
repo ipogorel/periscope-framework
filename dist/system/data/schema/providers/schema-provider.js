@@ -1,15 +1,28 @@
 "use strict";
 
-exports.__esModule = true;
+System.register([], function (_export, _context) {
+  var SchemaProvider;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var SchemaProvider = exports.SchemaProvider = function () {
-  function SchemaProvider() {
-    _classCallCheck(this, SchemaProvider);
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  SchemaProvider.prototype.getSchema = function getSchema() {};
+  return {
+    setters: [],
+    execute: function () {
+      _export("SchemaProvider", SchemaProvider = function () {
+        function SchemaProvider() {
+          _classCallCheck(this, SchemaProvider);
+        }
 
-  return SchemaProvider;
-}();
+        SchemaProvider.prototype.getSchema = function getSchema() {};
+
+        return SchemaProvider;
+      }());
+
+      _export("SchemaProvider", SchemaProvider);
+    }
+  };
+});

@@ -1,12 +1,25 @@
 "use strict";
 
-exports.__esModule = true;
+System.register([], function (_export, _context) {
+  var Schema;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
 
-var Schema = exports.Schema = function Schema() {
-  _classCallCheck(this, Schema);
+  return {
+    setters: [],
+    execute: function () {
+      _export("Schema", Schema = function Schema() {
+        _classCallCheck(this, Schema);
 
-  this.fields = [];
-  this.parameters = [];
-};
+        this.fields = [];
+        this.parameters = [];
+      });
+
+      _export("Schema", Schema);
+    }
+  };
+});
