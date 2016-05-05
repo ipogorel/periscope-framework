@@ -23,6 +23,13 @@ export let Widget = class Widget {
     return this.settings.name;
   }
 
+  get minHeight() {
+    return this.settings.minHeight;
+  }
+  set minHeight(value) {
+    this.settings.minHeight = value;
+  }
+
   get state() {
     if (this.stateStorage) {
       var key = this.stateStorage.createKey(this.dashboard.name, this.name);
@@ -128,11 +135,4 @@ export let Widget = class Widget {
     }
   }
 
-  _calculateHeight(contentContainerElement) {
-    if (!contentContainerElement) return this.settings.minHeight;
-    var p = $(contentContainerElement).parents(".widget-container");
-    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
-    var parentHeight = p[0].offsetHeight - headerHeight;
-    return parentHeight > this.settings.minHeight ? parentHeight : this.settings.minHeight;
-  }
 };

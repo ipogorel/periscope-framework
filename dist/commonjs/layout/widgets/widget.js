@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -7,7 +7,7 @@ exports.Widget = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _lodash = require("lodash");
+var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
@@ -67,36 +67,36 @@ var Widget = exports.Widget = function () {
     }
   };
 
-  Widget.prototype._calculateHeight = function _calculateHeight(contentContainerElement) {
-    if (!contentContainerElement) return this.settings.minHeight;
-    var p = $(contentContainerElement).parents(".widget-container");
-    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
-    var parentHeight = p[0].offsetHeight - headerHeight;
-    return parentHeight > this.settings.minHeight ? parentHeight : this.settings.minHeight;
-  };
-
   _createClass(Widget, [{
-    key: "self",
+    key: 'self',
     get: function get() {
       return this;
     }
   }, {
-    key: "settings",
+    key: 'settings',
     get: function get() {
       return this._settings;
     }
   }, {
-    key: "behaviors",
+    key: 'behaviors',
     get: function get() {
       return this._behaviors;
     }
   }, {
-    key: "name",
+    key: 'name',
     get: function get() {
       return this.settings.name;
     }
   }, {
-    key: "state",
+    key: 'minHeight',
+    get: function get() {
+      return this.settings.minHeight;
+    },
+    set: function set(value) {
+      this.settings.minHeight = value;
+    }
+  }, {
+    key: 'state',
     get: function get() {
       if (this.stateStorage) {
         var key = this.stateStorage.createKey(this.dashboard.name, this.name);
@@ -115,7 +115,7 @@ var Widget = exports.Widget = function () {
       }
     }
   }, {
-    key: "stateType",
+    key: 'stateType',
     get: function get() {
       return this._type;
     },
@@ -123,12 +123,12 @@ var Widget = exports.Widget = function () {
       this._type = value;
     }
   }, {
-    key: "showHeader",
+    key: 'showHeader',
     get: function get() {
       return this.settings.showHeader;
     }
   }, {
-    key: "dataHolder",
+    key: 'dataHolder',
     set: function set(value) {
       this._dataHolder = value;
     },
@@ -136,7 +136,7 @@ var Widget = exports.Widget = function () {
       return this._dataHolder;
     }
   }, {
-    key: "header",
+    key: 'header',
     get: function get() {
       return this.settings.header;
     },
@@ -144,12 +144,12 @@ var Widget = exports.Widget = function () {
       this.settings.header = value;
     }
   }, {
-    key: "stateStorage",
+    key: 'stateStorage',
     get: function get() {
       return this.settings.stateStorage;
     }
   }, {
-    key: "dataSource",
+    key: 'dataSource',
     set: function set(value) {
       this.settings.dataSource = value;
     },
@@ -157,12 +157,12 @@ var Widget = exports.Widget = function () {
       return this.settings.dataSource;
     }
   }, {
-    key: "dataMapper",
+    key: 'dataMapper',
     get: function get() {
       return this.settings.dataMapper;
     }
   }, {
-    key: "dataFilter",
+    key: 'dataFilter',
     get: function get() {
       return this._dataFilter;
     },
@@ -170,12 +170,12 @@ var Widget = exports.Widget = function () {
       this._dataFilter = value;
     }
   }, {
-    key: "type",
+    key: 'type',
     get: function get() {
       return this._type;
     }
   }, {
-    key: "dashboard",
+    key: 'dashboard',
     get: function get() {
       return this._dashboard;
     },

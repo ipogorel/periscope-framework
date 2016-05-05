@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 
-System.register(["lodash"], function (_export, _context) {
+System.register(['lodash'], function (_export, _context) {
   var lodash, _createClass, Widget;
 
   function _classCallCheck(instance, Constructor) {
@@ -32,7 +32,7 @@ System.register(["lodash"], function (_export, _context) {
         };
       }();
 
-      _export("Widget", Widget = function () {
+      _export('Widget', Widget = function () {
         function Widget(settings) {
           _classCallCheck(this, Widget);
 
@@ -84,36 +84,36 @@ System.register(["lodash"], function (_export, _context) {
           }
         };
 
-        Widget.prototype._calculateHeight = function _calculateHeight(contentContainerElement) {
-          if (!contentContainerElement) return this.settings.minHeight;
-          var p = $(contentContainerElement).parents(".widget-container");
-          var headerHeight = p.find(".portlet-header")[0].scrollHeight;
-          var parentHeight = p[0].offsetHeight - headerHeight;
-          return parentHeight > this.settings.minHeight ? parentHeight : this.settings.minHeight;
-        };
-
         _createClass(Widget, [{
-          key: "self",
+          key: 'self',
           get: function get() {
             return this;
           }
         }, {
-          key: "settings",
+          key: 'settings',
           get: function get() {
             return this._settings;
           }
         }, {
-          key: "behaviors",
+          key: 'behaviors',
           get: function get() {
             return this._behaviors;
           }
         }, {
-          key: "name",
+          key: 'name',
           get: function get() {
             return this.settings.name;
           }
         }, {
-          key: "state",
+          key: 'minHeight',
+          get: function get() {
+            return this.settings.minHeight;
+          },
+          set: function set(value) {
+            this.settings.minHeight = value;
+          }
+        }, {
+          key: 'state',
           get: function get() {
             if (this.stateStorage) {
               var key = this.stateStorage.createKey(this.dashboard.name, this.name);
@@ -132,7 +132,7 @@ System.register(["lodash"], function (_export, _context) {
             }
           }
         }, {
-          key: "stateType",
+          key: 'stateType',
           get: function get() {
             return this._type;
           },
@@ -140,12 +140,12 @@ System.register(["lodash"], function (_export, _context) {
             this._type = value;
           }
         }, {
-          key: "showHeader",
+          key: 'showHeader',
           get: function get() {
             return this.settings.showHeader;
           }
         }, {
-          key: "dataHolder",
+          key: 'dataHolder',
           set: function set(value) {
             this._dataHolder = value;
           },
@@ -153,7 +153,7 @@ System.register(["lodash"], function (_export, _context) {
             return this._dataHolder;
           }
         }, {
-          key: "header",
+          key: 'header',
           get: function get() {
             return this.settings.header;
           },
@@ -161,12 +161,12 @@ System.register(["lodash"], function (_export, _context) {
             this.settings.header = value;
           }
         }, {
-          key: "stateStorage",
+          key: 'stateStorage',
           get: function get() {
             return this.settings.stateStorage;
           }
         }, {
-          key: "dataSource",
+          key: 'dataSource',
           set: function set(value) {
             this.settings.dataSource = value;
           },
@@ -174,12 +174,12 @@ System.register(["lodash"], function (_export, _context) {
             return this.settings.dataSource;
           }
         }, {
-          key: "dataMapper",
+          key: 'dataMapper',
           get: function get() {
             return this.settings.dataMapper;
           }
         }, {
-          key: "dataFilter",
+          key: 'dataFilter',
           get: function get() {
             return this._dataFilter;
           },
@@ -187,12 +187,12 @@ System.register(["lodash"], function (_export, _context) {
             this._dataFilter = value;
           }
         }, {
-          key: "type",
+          key: 'type',
           get: function get() {
             return this._type;
           }
         }, {
-          key: "dashboard",
+          key: 'dashboard',
           get: function get() {
             return this._dashboard;
           },
@@ -204,7 +204,7 @@ System.register(["lodash"], function (_export, _context) {
         return Widget;
       }());
 
-      _export("Widget", Widget);
+      _export('Widget', Widget);
     }
   };
 });

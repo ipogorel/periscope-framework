@@ -111,9 +111,7 @@ export class DashboardBase
   refreshWidget(widget){
     widget.refresh();
   }
-
-
-
+  
   refresh() {
     for (let i=0; i<this._layout.length; i++) {
       this.refreshWidget(this._layout[i].widget);

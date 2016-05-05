@@ -45,6 +45,9 @@ declare module 'periscope-framework' {
     removeItem(key: any): any;
     removeExpired(): any;
   }
+  export class DashboardConfiguration {
+    invoke(): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
@@ -114,9 +117,6 @@ declare module 'periscope-framework' {
   }
   export class Grammar {
     getGrammar(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
   }
   export class DataHelper {
     static getNumericFields(fields: any): any;
