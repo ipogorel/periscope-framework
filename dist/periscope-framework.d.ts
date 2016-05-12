@@ -8,12 +8,12 @@ declare module 'periscope-framework' {
     resolver,
     inject,
     transient,
-    computedFrom,
     customElement,
     useView,
     Decorators,
     bindable,
-    noView
+    noView,
+    computedFrom
   } from 'aurelia-framework';
   import {
     EventAggregator
