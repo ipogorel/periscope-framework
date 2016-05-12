@@ -2457,6 +2457,52 @@ export class WidgetBehavior {
 
 }
 
+export class SchemaProvider{
+  getSchema(){}
+}
+
+
+export class StaticSchemaProvider extends SchemaProvider{
+  constructor(schema){
+    super();
+    this._schema = schema;
+  }
+  getSchema(){
+    return new Promise((resolve, reject)=>{
+      resolve(this._schema);
+    });
+  }
+}
+
+
+import Swagger from "swagger-client";
+export class SwaggerSchemaProvider extends SchemaProvider{
+  constructor(definitionUrl, apiName, methodName, modelName){
+    super();
+    this._modelName = modelName;
+    this._methodName = methodName;
+    this._apiName = apiName;
+    this._definitionUrl = definitionUrl;
+  }
+  getSchema(){
+    var self = this;
+    return new Swagger({
+      url: this._definitionUrl,
+      usePromise: true}).then(client => {
+        let result = new Schema();
+        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
+          result.parameters.push(p);
+        });
+        if (client.definitions[self._modelName]) {
+          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
+            result.fields.push({field: key, type: value.type});
+          });
+        }
+        return result;
+    });
+  }
+}
+
 export class AstParser{
   constructor(){
     this._clientSide = "clientSide";
@@ -2536,12 +2582,12 @@ export class AstToJavascriptParser extends AstParser{
   _parseTree(treeNode, result){
     if (treeNode.left) {
       result.push(this._createExpression(treeNode.connector, treeNode.left));
-      this._parseTree(treeNode.right, result);
+      if (treeNode.right)
+        this._parseTree(treeNode.right, result);
     }
-    else {
+    else
       result.push(this._createExpression(treeNode.connector, treeNode));
-      return result.join(" ");
-    }
+    return result.join(" ");
   }
 
 
@@ -2576,50 +2622,4 @@ export class AstToJavascriptParser extends AstParser{
     return result;
   }
 
-}
-
-export class SchemaProvider{
-  getSchema(){}
-}
-
-
-export class StaticSchemaProvider extends SchemaProvider{
-  constructor(schema){
-    super();
-    this._schema = schema;
-  }
-  getSchema(){
-    return new Promise((resolve, reject)=>{
-      resolve(this._schema);
-    });
-  }
-}
-
-
-import Swagger from "swagger-client";
-export class SwaggerSchemaProvider extends SchemaProvider{
-  constructor(definitionUrl, apiName, methodName, modelName){
-    super();
-    this._modelName = modelName;
-    this._methodName = methodName;
-    this._apiName = apiName;
-    this._definitionUrl = definitionUrl;
-  }
-  getSchema(){
-    var self = this;
-    return new Swagger({
-      url: this._definitionUrl,
-      usePromise: true}).then(client => {
-        let result = new Schema();
-        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
-          result.parameters.push(p);
-        });
-        if (client.definitions[self._modelName]) {
-          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
-            result.fields.push({field: key, type: value.type});
-          });
-        }
-        return result;
-    });
-  }
 }

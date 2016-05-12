@@ -18,12 +18,12 @@ export class AstToJavascriptParser extends AstParser{
   _parseTree(treeNode, result){
     if (treeNode.left) {
       result.push(this._createExpression(treeNode.connector, treeNode.left));
-      this._parseTree(treeNode.right, result);
+      if (treeNode.right)
+        this._parseTree(treeNode.right, result);
     }
-    else {
+    else
       result.push(this._createExpression(treeNode.connector, treeNode));
-      return result.join(" ");
-    }
+    return result.join(" ");
   }
 
 

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.PeriscopeRouter = exports.NavigationHistory = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
+exports.AstToJavascriptParser = exports.AstParser = exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.PeriscopeRouter = exports.NavigationHistory = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
 
 var _class, _dec, _class2, _dec2, _class3, _dec3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _desc, _value, _class6;
 
@@ -2675,6 +2675,75 @@ var WidgetBehavior = exports.WidgetBehavior = function () {
   return WidgetBehavior;
 }();
 
+var SchemaProvider = exports.SchemaProvider = function () {
+  function SchemaProvider() {
+    _classCallCheck(this, SchemaProvider);
+  }
+
+  SchemaProvider.prototype.getSchema = function getSchema() {};
+
+  return SchemaProvider;
+}();
+
+var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvider) {
+  _inherits(StaticSchemaProvider, _SchemaProvider);
+
+  function StaticSchemaProvider(schema) {
+    _classCallCheck(this, StaticSchemaProvider);
+
+    var _this31 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+
+    _this31._schema = schema;
+    return _this31;
+  }
+
+  StaticSchemaProvider.prototype.getSchema = function getSchema() {
+    var _this32 = this;
+
+    return new Promise(function (resolve, reject) {
+      resolve(_this32._schema);
+    });
+  };
+
+  return StaticSchemaProvider;
+}(SchemaProvider);
+
+var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaProvider2) {
+  _inherits(SwaggerSchemaProvider, _SchemaProvider2);
+
+  function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
+    _classCallCheck(this, SwaggerSchemaProvider);
+
+    var _this33 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+
+    _this33._modelName = modelName;
+    _this33._methodName = methodName;
+    _this33._apiName = apiName;
+    _this33._definitionUrl = definitionUrl;
+    return _this33;
+  }
+
+  SwaggerSchemaProvider.prototype.getSchema = function getSchema() {
+    var self = this;
+    return new _swaggerClient2.default({
+      url: this._definitionUrl,
+      usePromise: true }).then(function (client) {
+      var result = new Schema();
+      _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, function (p) {
+        result.parameters.push(p);
+      });
+      if (client.definitions[self._modelName]) {
+        _.forOwn(client.definitions[self._modelName].properties, function (value, key) {
+          result.fields.push({ field: key, type: value.type });
+        });
+      }
+      return result;
+    });
+  };
+
+  return SwaggerSchemaProvider;
+}(SchemaProvider);
+
 var AstParser = exports.AstParser = function () {
   function AstParser() {
     _classCallCheck(this, AstParser);
@@ -2712,11 +2781,9 @@ var AstToJavascriptParser = exports.AstToJavascriptParser = function (_AstParser
   AstToJavascriptParser.prototype._parseTree = function _parseTree(treeNode, result) {
     if (treeNode.left) {
       result.push(this._createExpression(treeNode.connector, treeNode.left));
-      this._parseTree(treeNode.right, result);
-    } else {
-      result.push(this._createExpression(treeNode.connector, treeNode));
-      return result.join(" ");
-    }
+      if (treeNode.right) this._parseTree(treeNode.right, result);
+    } else result.push(this._createExpression(treeNode.connector, treeNode));
+    return result.join(" ");
   };
 
   AstToJavascriptParser.prototype._createExpression = function _createExpression(connector, node) {
@@ -2751,72 +2818,3 @@ var AstToJavascriptParser = exports.AstToJavascriptParser = function (_AstParser
 
   return AstToJavascriptParser;
 }(AstParser);
-
-var SchemaProvider = exports.SchemaProvider = function () {
-  function SchemaProvider() {
-    _classCallCheck(this, SchemaProvider);
-  }
-
-  SchemaProvider.prototype.getSchema = function getSchema() {};
-
-  return SchemaProvider;
-}();
-
-var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvider) {
-  _inherits(StaticSchemaProvider, _SchemaProvider);
-
-  function StaticSchemaProvider(schema) {
-    _classCallCheck(this, StaticSchemaProvider);
-
-    var _this32 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
-
-    _this32._schema = schema;
-    return _this32;
-  }
-
-  StaticSchemaProvider.prototype.getSchema = function getSchema() {
-    var _this33 = this;
-
-    return new Promise(function (resolve, reject) {
-      resolve(_this33._schema);
-    });
-  };
-
-  return StaticSchemaProvider;
-}(SchemaProvider);
-
-var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaProvider2) {
-  _inherits(SwaggerSchemaProvider, _SchemaProvider2);
-
-  function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
-    _classCallCheck(this, SwaggerSchemaProvider);
-
-    var _this34 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
-
-    _this34._modelName = modelName;
-    _this34._methodName = methodName;
-    _this34._apiName = apiName;
-    _this34._definitionUrl = definitionUrl;
-    return _this34;
-  }
-
-  SwaggerSchemaProvider.prototype.getSchema = function getSchema() {
-    var self = this;
-    return new _swaggerClient2.default({
-      url: this._definitionUrl,
-      usePromise: true }).then(function (client) {
-      var result = new Schema();
-      _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, function (p) {
-        result.parameters.push(p);
-      });
-      if (client.definitions[self._modelName]) {
-        _.forOwn(client.definitions[self._modelName].properties, function (value, key) {
-          result.fields.push({ field: key, type: value.type });
-        });
-      }
-      return result;
-    });
-  };
-
-  return SwaggerSchemaProvider;
-}(SchemaProvider);
