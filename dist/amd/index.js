@@ -1,4 +1,4 @@
-define(['exports', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/dsl-expression-manager-factory', './dsl/dsl-expression-manager', './dsl/expression-parser-factory', './dsl/expression-parser', './dsl/grammar', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './infrastructure/dashboard-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/periscope-router', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (exports, _cacheManager, _cacheStorage, _memoryCacheStorage, _dashboardConfiguration, _dataHolder, _dataSource, _query, _queryExpressionEvaluator, _schemaObject, _schemaProvider, _staticSchemaProvider, _swaggerSchemaProvider, _dataService, _jsonDataService, _staticJsonDataService, _dslExpressionManagerFactory, _dslExpressionManager, _expressionParserFactory, _expressionParser, _grammar, _valueFormat, _dataHelper, _guidHelper, _stringHelper, _urlHelper, _dashboardManager, _factory, _dashboardBase, _widget, _dataSourceConfigurator, _detailedView, _grid, _chart, _searchBox, _navigationHistory, _periscopeRouter, _changeRouteBehavior, _createWidgetBehavior, _dashboardBehavior, _manageNavigationStackBehavior, _replaceWidgetBehavior, _widgetEventMessage, _widgetEvent, _widgetBehavior, _dataActivatedBehavior, _dataFieldSelectedBehavior, _dataFilterChangedBehavior, _dataFilterHandleBehavior, _dataSelectedBehavior, _dataSourceChangedBehavior, _dataSourceHandleBehavior, _settingsHandleBehavior, _stateDiscriminator, _stateUrlParser, _storage, _userStateStorage) {
+define(['exports', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './infrastructure/dashboard-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/periscope-router', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (exports, _cacheManager, _cacheStorage, _memoryCacheStorage, _dashboardConfiguration, _dataHolder, _dataSource, _query, _queryExpressionEvaluator, _astParser, _astToJavascriptParser, _schemaObject, _schemaProvider, _staticSchemaProvider, _swaggerSchemaProvider, _dataService, _jsonDataService, _staticJsonDataService, _grammarExpression, _grammarTree, _grammar, _intellisenceManager, _parser, _valueFormat, _dataHelper, _guidHelper, _stringHelper, _urlHelper, _dashboardManager, _factory, _dashboardBase, _widget, _dataSourceConfigurator, _detailedView, _grid, _chart, _searchBox, _navigationHistory, _periscopeRouter, _changeRouteBehavior, _createWidgetBehavior, _dashboardBehavior, _manageNavigationStackBehavior, _replaceWidgetBehavior, _widgetEventMessage, _widgetEvent, _widgetBehavior, _dataActivatedBehavior, _dataFieldSelectedBehavior, _dataFilterChangedBehavior, _dataFilterHandleBehavior, _dataSelectedBehavior, _dataSourceChangedBehavior, _dataSourceHandleBehavior, _settingsHandleBehavior, _stateDiscriminator, _stateUrlParser, _storage, _userStateStorage) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -76,6 +76,24 @@ define(['exports', './cache/cache-manager', './cache/cache-storage', './cache/me
       }
     });
   });
+  Object.keys(_astParser).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _astParser[key];
+      }
+    });
+  });
+  Object.keys(_astToJavascriptParser).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _astToJavascriptParser[key];
+      }
+    });
+  });
   Object.keys(_schemaObject).forEach(function (key) {
     if (key === "default") return;
     Object.defineProperty(exports, key, {
@@ -139,39 +157,21 @@ define(['exports', './cache/cache-manager', './cache/cache-storage', './cache/me
       }
     });
   });
-  Object.keys(_dslExpressionManagerFactory).forEach(function (key) {
+  Object.keys(_grammarExpression).forEach(function (key) {
     if (key === "default") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
-        return _dslExpressionManagerFactory[key];
+        return _grammarExpression[key];
       }
     });
   });
-  Object.keys(_dslExpressionManager).forEach(function (key) {
+  Object.keys(_grammarTree).forEach(function (key) {
     if (key === "default") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
-        return _dslExpressionManager[key];
-      }
-    });
-  });
-  Object.keys(_expressionParserFactory).forEach(function (key) {
-    if (key === "default") return;
-    Object.defineProperty(exports, key, {
-      enumerable: true,
-      get: function () {
-        return _expressionParserFactory[key];
-      }
-    });
-  });
-  Object.keys(_expressionParser).forEach(function (key) {
-    if (key === "default") return;
-    Object.defineProperty(exports, key, {
-      enumerable: true,
-      get: function () {
-        return _expressionParser[key];
+        return _grammarTree[key];
       }
     });
   });
@@ -181,6 +181,24 @@ define(['exports', './cache/cache-manager', './cache/cache-storage', './cache/me
       enumerable: true,
       get: function () {
         return _grammar[key];
+      }
+    });
+  });
+  Object.keys(_intellisenceManager).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _intellisenceManager[key];
+      }
+    });
+  });
+  Object.keys(_parser).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _parser[key];
       }
     });
   });

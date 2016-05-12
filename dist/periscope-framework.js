@@ -75,6 +75,13 @@ export class MemoryCacheStorage extends CacheStorage{
   }
 }
 
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
+
 
 export class DataHolder {
   constructor(){
@@ -318,13 +325,6 @@ export class Query {
         (this.skip?this.skip:"0")));
   }
   
-}
-
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
 }
 
 
@@ -2038,6 +2038,50 @@ export class Widget {
 
 
 
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
     super();
@@ -2413,47 +2457,49 @@ export class WidgetBehavior {
 
 }
 
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
+export class SchemaProvider{
+  getSchema(){}
 }
 
-export class WidgetEvent {
 
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
+export class StaticSchemaProvider extends SchemaProvider{
+  constructor(schema){
+    super();
+    this._schema = schema;
   }
-
-  get originatorName()  {
-    return this._originatorName;
+  getSchema(){
+    return new Promise((resolve, reject)=>{
+      resolve(this._schema);
+    });
   }
+}
 
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
+
+import Swagger from "swagger-client";
+export class SwaggerSchemaProvider extends SchemaProvider{
+  constructor(definitionUrl, apiName, methodName, modelName){
+    super();
+    this._modelName = modelName;
+    this._methodName = methodName;
+    this._apiName = apiName;
+    this._definitionUrl = definitionUrl;
   }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
+  getSchema(){
+    var self = this;
+    return new Swagger({
+      url: this._definitionUrl,
+      usePromise: true}).then(client => {
+        let result = new Schema();
+        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
+          result.parameters.push(p);
+        });
+        if (client.definitions[self._modelName]) {
+          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
+            result.fields.push({field: key, type: value.type});
+          });
+        }
+        return result;
+    });
   }
 }
 
@@ -2568,50 +2614,4 @@ export class AstToJavascriptParser extends AstParser{
     return result;
   }
 
-}
-
-export class SchemaProvider{
-  getSchema(){}
-}
-
-
-export class StaticSchemaProvider extends SchemaProvider{
-  constructor(schema){
-    super();
-    this._schema = schema;
-  }
-  getSchema(){
-    return new Promise((resolve, reject)=>{
-      resolve(this._schema);
-    });
-  }
-}
-
-
-import Swagger from "swagger-client";
-export class SwaggerSchemaProvider extends SchemaProvider{
-  constructor(definitionUrl, apiName, methodName, modelName){
-    super();
-    this._modelName = modelName;
-    this._methodName = methodName;
-    this._apiName = apiName;
-    this._definitionUrl = definitionUrl;
-  }
-  getSchema(){
-    var self = this;
-    return new Swagger({
-      url: this._definitionUrl,
-      usePromise: true}).then(client => {
-        let result = new Schema();
-        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
-          result.parameters.push(p);
-        });
-        if (client.definitions[self._modelName]) {
-          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
-            result.fields.push({field: key, type: value.type});
-          });
-        }
-        return result;
-    });
-  }
 }

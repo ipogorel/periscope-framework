@@ -9,6 +9,8 @@ export * from './data/data-source';
 export * from './data/query';
 export * from './data/query-expression-evaluator';
 
+export * from './data/ast/parsers/ast-parser';
+export * from './data/ast/parsers/ast-to-javascript-parser';
 export * from './data/schema/schema-object';
 export * from './data/schema/providers/schema-provider';
 export * from './data/schema/providers/static-schema-provider';
@@ -18,11 +20,11 @@ export * from './data/service/data-service';
 export * from './data/service/json-data-service';
 export * from './data/service/static-json-data-service';
 
-export * from './dsl/dsl-expression-manager-factory';
-export * from './dsl/dsl-expression-manager';
-export * from './dsl/expression-parser-factory';
-export * from './dsl/expression-parser';
-export * from './dsl/grammar';
+export * from './dsl/grammar/grammar-expression';
+export * from './dsl/grammar/grammar-tree';
+export * from './dsl/grammar/grammar';
+export * from './dsl/intellisence-manager';
+export * from './dsl/parser';
 
 export * from './helpers/converters/value-format';
 export * from './helpers/data-helper';

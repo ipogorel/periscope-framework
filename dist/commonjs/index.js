@@ -100,6 +100,30 @@ Object.keys(_queryExpressionEvaluator).forEach(function (key) {
   });
 });
 
+var _astParser = require('./data/ast/parsers/ast-parser');
+
+Object.keys(_astParser).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _astParser[key];
+    }
+  });
+});
+
+var _astToJavascriptParser = require('./data/ast/parsers/ast-to-javascript-parser');
+
+Object.keys(_astToJavascriptParser).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _astToJavascriptParser[key];
+    }
+  });
+});
+
 var _schemaObject = require('./data/schema/schema-object');
 
 Object.keys(_schemaObject).forEach(function (key) {
@@ -184,55 +208,31 @@ Object.keys(_staticJsonDataService).forEach(function (key) {
   });
 });
 
-var _dslExpressionManagerFactory = require('./dsl/dsl-expression-manager-factory');
+var _grammarExpression = require('./dsl/grammar/grammar-expression');
 
-Object.keys(_dslExpressionManagerFactory).forEach(function (key) {
+Object.keys(_grammarExpression).forEach(function (key) {
   if (key === "default") return;
   Object.defineProperty(exports, key, {
     enumerable: true,
     get: function get() {
-      return _dslExpressionManagerFactory[key];
+      return _grammarExpression[key];
     }
   });
 });
 
-var _dslExpressionManager = require('./dsl/dsl-expression-manager');
+var _grammarTree = require('./dsl/grammar/grammar-tree');
 
-Object.keys(_dslExpressionManager).forEach(function (key) {
+Object.keys(_grammarTree).forEach(function (key) {
   if (key === "default") return;
   Object.defineProperty(exports, key, {
     enumerable: true,
     get: function get() {
-      return _dslExpressionManager[key];
+      return _grammarTree[key];
     }
   });
 });
 
-var _expressionParserFactory = require('./dsl/expression-parser-factory');
-
-Object.keys(_expressionParserFactory).forEach(function (key) {
-  if (key === "default") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _expressionParserFactory[key];
-    }
-  });
-});
-
-var _expressionParser = require('./dsl/expression-parser');
-
-Object.keys(_expressionParser).forEach(function (key) {
-  if (key === "default") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _expressionParser[key];
-    }
-  });
-});
-
-var _grammar = require('./dsl/grammar');
+var _grammar = require('./dsl/grammar/grammar');
 
 Object.keys(_grammar).forEach(function (key) {
   if (key === "default") return;
@@ -240,6 +240,30 @@ Object.keys(_grammar).forEach(function (key) {
     enumerable: true,
     get: function get() {
       return _grammar[key];
+    }
+  });
+});
+
+var _intellisenceManager = require('./dsl/intellisence-manager');
+
+Object.keys(_intellisenceManager).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _intellisenceManager[key];
+    }
+  });
+});
+
+var _parser = require('./dsl/parser');
+
+Object.keys(_parser).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _parser[key];
     }
   });
 });

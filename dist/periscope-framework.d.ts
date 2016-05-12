@@ -45,6 +45,9 @@ declare module 'periscope-framework' {
     removeItem(key: any): any;
     removeExpired(): any;
   }
+  export class DashboardConfiguration {
+    invoke(): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
@@ -92,9 +95,6 @@ declare module 'periscope-framework' {
       }*/
     filter: any;
     cacheKey(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
   }
   export class IntellisenceManager {
     constructor(parser: any, dataSource: any, availableFields: any);
