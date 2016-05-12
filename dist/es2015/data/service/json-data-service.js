@@ -14,8 +14,9 @@ export let JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _d
     }
 
     read(options) {
-        var url = this.url + (this.queryMapper ? this.queryMapper(options) : "");
-        return this._http.fetch(this.url).then(response => {
+        let url = this.url;
+        if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
+        return this._http.fetch(url).then(response => {
             return response.json();
         }).then(jsonData => {
             return {

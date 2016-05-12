@@ -29,9 +29,18 @@ var SearchBox = exports.SearchBox = function (_Widget) {
 
     _this.stateType = "searchBoxState";
     _this._dataFilterChanged = new _widgetEvent.WidgetEvent();
+    _this._searchString = "";
     _this.attachBehaviors();
     return _this;
   }
+
+  SearchBox.prototype.saveState = function saveState() {
+    this.state = this.searchString;
+  };
+
+  SearchBox.prototype.restoreState = function restoreState() {
+    if (this.state) this.searchString = this.state;
+  };
 
   _createClass(SearchBox, [{
     key: 'dataFilterChanged',
@@ -40,6 +49,14 @@ var SearchBox = exports.SearchBox = function (_Widget) {
     },
     set: function set(handler) {
       this._dataFilterChanged.attach(handler);
+    }
+  }, {
+    key: 'searchString',
+    get: function get() {
+      return this._searchString;
+    },
+    set: function set(value) {
+      this._searchString = value;
     }
   }]);
 

@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['aurelia-framework', 'aurelia-fetch-client', './data-service', './../../helpers/data-helper', './../query-expression-evaluator', 'lodash'], function (_export, _context) {
-  var inject, transient, HttpClient, DataService, DataHelper, QueryExpressionEvaluator, _, _dec, _dec2, _class, StaticJsonDataService;
+System.register(['./data-service', './../../helpers/data-helper', 'aurelia-framework', 'aurelia-fetch-client', './../query-expression-evaluator', 'lodash'], function (_export, _context) {
+  var DataService, DataHelper, inject, transient, HttpClient, QueryExpressionEvaluator, _, _dec, _dec2, _class, StaticJsonDataService;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -34,15 +34,15 @@ System.register(['aurelia-framework', 'aurelia-fetch-client', './data-service', 
   }
 
   return {
-    setters: [function (_aureliaFramework) {
+    setters: [function (_dataService) {
+      DataService = _dataService.DataService;
+    }, function (_helpersDataHelper) {
+      DataHelper = _helpersDataHelper.DataHelper;
+    }, function (_aureliaFramework) {
       inject = _aureliaFramework.inject;
       transient = _aureliaFramework.transient;
     }, function (_aureliaFetchClient) {
       HttpClient = _aureliaFetchClient.HttpClient;
-    }, function (_dataService) {
-      DataService = _dataService.DataService;
-    }, function (_helpersDataHelper) {
-      DataHelper = _helpersDataHelper.DataHelper;
     }, function (_queryExpressionEvaluator) {
       QueryExpressionEvaluator = _queryExpressionEvaluator.QueryExpressionEvaluator;
     }, function (_lodash) {
@@ -70,11 +70,12 @@ System.register(['aurelia-framework', 'aurelia-fetch-client', './data-service', 
           return this._http.fetch(this.url).then(function (response) {
             return response.json();
           }).then(function (jsonData) {
-            var d = jsonData;
-            d = _this2.dataMapper ? _this2.dataMapper(d) : d;
+            var d = _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData;
             if (options.filter) {
+              var f = options.filter;
+              if (_.isArray(f) && _this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
               var evaluator = new QueryExpressionEvaluator();
-              d = evaluator.evaluate(d, options.filter);
+              d = evaluator.evaluate(d, f);
             }
             var total = d.length;
 

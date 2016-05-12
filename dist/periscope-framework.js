@@ -3,10 +3,10 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {inject,resolver,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
-import {HttpClient} from 'aurelia-fetch-client';
+import {resolver,inject,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
 import {EventAggregator} from 'aurelia-event-aggregator';
 import {Router} from 'aurelia-router';
+import {HttpClient} from 'aurelia-fetch-client';
 
 export class CacheManager {
   constructor(storage) {
@@ -74,13 +74,6 @@ export class MemoryCacheStorage extends CacheStorage{
     });
   }
 }
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
 
 
 export class DataHolder {
@@ -166,7 +159,7 @@ export class Datasource {
       return this.transport.readService.read(
           {
             fields: query.fields,
-            filter: (query.serverSideFilter? query.serverSideFilter:""),
+            filter: query.filter,
             take: query.take,
             skip: query.skip,
             sort: query.sort,
@@ -255,6 +248,9 @@ export class QueryExpressionEvaluator {
 }
 
 export class Query {
+  constructor (){
+    //this.filter = [];
+  }
 
   get sort(){
     return this._sort;
@@ -298,24 +294,23 @@ export class Query {
     this._skip = value;
   }
 
-  /*get clientSideFilter() {
-    return this._clientSideFilter;
-  }
-  set clientSideFilter(value) {
-    this._clientSideFilter = value;
-  }*/
-
-
-  get serverSideFilter() {
+  /*get serverSideFilter() {
     return this._serverSideFilter;
   }
   set serverSideFilter(value) {
     this._serverSideFilter = value;
+  }*/
+
+  get filter(){
+    return this._filter;
+  }
+  set filter(value){
+    this._filter = value;
   }
 
   cacheKey(){
     return Math.abs(StringHelper.hashCode(
-        ((this.serverSideFilter)?this.serverSideFilter:"") +
+        ((this.filter)?JSON.stringify(this.filter):"") +
         (this.fields?this.fields.join(""):"") +
         (this.sort?this.sort:"") +
         (this.sortDir?this.sortDir:"") +
@@ -326,67 +321,33 @@ export class Query {
 }
 
 
-@inject(ExpressionParserFactory)
-export class DslExpressionManagerFactory {
-
-  constructor(expressionParserFactory) {
-    this.expressionParserFactory = expressionParserFactory;
-  }
-
-  createInstance(dataSource, fields) {
-    return dataSource.transport.readService.getSchema().then(schema=>{
-      let fields = schema.fields;
-      var allFields = _.map(fields,"field");
-      var numericFields = _.map(DataHelper.getNumericFields(fields),"field");
-      var stringFields = _.map(DataHelper.getStringFields(fields),"field");
-      var dateFields = _.map(DataHelper.getDateFields(fields),"field");
-      let parser = this.expressionParserFactory.createInstance(numericFields, stringFields, dateFields);
-      return new DslExpressionManager(parser, dataSource, allFields);
-    })
+export class DashboardConfiguration {
+  invoke(){
 
   }
 }
 
-export class DslExpressionManager {
 
-  constructor(parser, dataSource, fieldsList) {
+export class IntellisenceManager {
+  constructor(parser, dataSource, availableFields){
     this.dataSource = dataSource;
-    this.fields = fieldsList;
+    this.fields = availableFields;
     this.parser = parser;
   }
 
-  populate(searchStr, lastWord) {
-    let parserError = this.getParserError(searchStr);
+  populate(searchStr, lastWord){
+    let parserError = this._getParserError(searchStr);
     return this._getIntellisenseData(searchStr, lastWord, parserError);
   }
 
-  parse(searchStr){
-    var expression = this.parser.parse(searchStr);
-    return this._normalizeSerachExpression(expression);
-  }
 
-  validate(searchStr) {
-    return this.parser.validate(searchStr);
-  }
-
-  expectedToken(searchStr) {
-    let tokenName = "";
-    let parserError = this.getParserError(searchStr);
-    if (parserError!=null)
-      tokenName = this._interpreteParserError(parserError);
-    return tokenName;
-  }
-
-
-  getParserError(searchStr)
-  {
+  _getParserError(searchStr) {
     let result = null;
-    if (searchStr!="")
-    {
+    if (searchStr!="") {
       try {
-        this.parse(searchStr);
+        this.parser.parse(searchStr);
         try{
-          this.parse(searchStr + "^");
+          this.parser.parse(searchStr + "^");
         }
         catch(ex2){
           result = ex2;
@@ -397,6 +358,30 @@ export class DslExpressionManager {
       }
     }
     return result;
+  }
+
+
+
+  _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+    for (let i=(tmpArr.length-1); i>=0; i--)  {
+      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
+      if (j>=0)
+        return fieldsArray[j];
+      //return tmpArr[i].trim();
+    }
+    return "";
+  }
+
+  _interpreteParserError(ex){
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (let desc of ex.expected) {
+        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
+          return desc.description;
+        }
+      }
+    }
+    return "";
   }
 
   _getIntellisenseData (searchStr, lastWord, pegException) {
@@ -447,18 +432,24 @@ export class DslExpressionManager {
           break;
       }
     });
-
   }
 
-  _interpreteParserError(ex){
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (let desc of ex.expected) {
-        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
-          return desc.description;
-        }
-      }
-    }
-    return "";
+
+  _getFieldValuesArray(fieldName, lastWord) {
+    let query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord)
+      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(dH=>{
+      var result = _.map(dH.data,fieldName);
+      return _.uniq(result).sort();
+    })
+  }
+
+  _getStringComparisonOperatorsArray() {
+    return (["=", "in"]);
   }
 
   _getLogicalOperatorsArray() {
@@ -469,261 +460,29 @@ export class DslExpressionManager {
     return (["!=", "=", ">", "<", ">=", "<="])
   }
 
-  _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-    for (let i=(tmpArr.length-1); i>=0; i--)  {
-      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
-      if (j>=0)
-        return fieldsArray[j];
-        //return tmpArr[i].trim();
-    }
-    return "";
-
-  }
-
-  _getStringComparisonOperatorsArray() {
-    return (["=", "in"]);
-  }
-
-
-  _getFieldValuesArray(fieldName, lastWord) {
-    let query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord)
-      query.serverSideFilter = this.parse(fieldName + " = '" + lastWord + "%'");
-    else
-      query.serverSideFilter ="";
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(dH=>{
-      var result = _.map(dH.data,fieldName);
-      return _.uniq(result).sort();
-    })
-  }
-
   _normalizeData(type, dataArray) {
     return _.map(dataArray,d=>{ return { type: type, value: d }});
   }
-
-  _normalizeSerachExpression(searchExpression){
-    var expr = new RegExp('record.([a-zA-Z0-9\%\_\-]*)', 'g');
-    var match;
-    while ((match = expr.exec(searchExpression)) !== null) {
-      for (let fld of this.fields){
-        if (match[1].toLowerCase()===fld.toLowerCase())
-            searchExpression = StringHelper.replaceAll(searchExpression, match[0], 'record.' + fld);
-      }
-    }
-    return searchExpression;
-  }
-
-
 }
-
-@inject(HttpClient)
-export class ExpressionParserFactory {
-
-  constructor(http) {
-    http.configure(config => {
-      config.useStandardConfiguration();
-    });
-    this.http = http;
-  }
-
-  createInstance(numericFieldList, stringFieldList, dateFieldList) {
-    var that = this;
-    var text = new Grammar().getGrammar();
-    var parserText = text.replace('@S@', that.concatenateFieldList(stringFieldList))
-      .replace('@N@', that.concatenateFieldList(numericFieldList))
-      .replace('@D@', that.concatenateFieldList(dateFieldList));
-    return new ExpressionParser(peg.buildParser(parserText));
-  }
-
-  concatenateFieldList(fieldList){
-    for (var i = 0; i < fieldList.length; i++) {
-      fieldList[i] = '\'' + fieldList[i] + '\'i';
-    }
-    if (fieldList.length>0)
-      return fieldList.join('/ ');
-    else
-      return "'unknown_field'"
-  }
-}
-
 
 export class ExpressionParser {
 
-  constructor(pegParser)
-  {
-    this.parser =  pegParser;
+  constructor(grammarText) {
+    this.parser =  peg.buildParser(grammarText);
   }
 
-  parse(searchString)
-  {
+  parse(searchString) {
     return this.parser.parse(searchString);
   }
 
-  validate(searchString)
-  {
+  validate(searchString) {
     try{
       this.parser.parse(searchString);
       return true;
     }
-    catch(ex)
-    {
+    catch(ex) {
       return false;
     }
-  }
-
-}
-
-
-const DSL_GRAMMAR = `
-{
-function createStringExpression(fieldname, value){
- 		var prefix = "record.";
- 		var result = "";
- 		var v = value.trim().toLowerCase();
-        if (v.length>=2){
-          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
-              result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
-          else if (v.indexOf("%")===0)
-              result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
-          else if (v.lastIndexOf("%")===(value.length-1))
-              result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
-        }
-        if (result == "")
-          result = prefix + fieldname + ".toLowerCase() == '" + v + "'";
-
-        result="(" + prefix + fieldname + "!=null && " + result + ")"
-
-        return result;
- }
-  function createInExpression (fieldname, value) {
-    var result = "";
-    var values = value.split(',');
-    for (var i=0;i<values.length;i++)
-    {
-      var find = '[\\"\\']';
-      var re = new RegExp(find, 'g');
-      var v = values[i].replace(new RegExp(find, 'g'), "");
-      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();
-      result += createStringExpression(fieldname, v)
-      if (i<(values.length-1))
-        result += " || ";
-    }
-    if (result.length>0)
-      result = "(" + result + ")"
-    return result;
-  }
-}
-
-start = expression
-
-expression = c:condition j:join e:expression space? {return c+j+e;}
-           / c:condition space? {return c;}
-
-join "LOGIC_OPERATOR"
-     = and
-     / or
-
-and = space* "and"i space* {return " && ";}
-
-or = space* "or"i space* {return " || ";}
-
-
-condition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}
-          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}
-          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}
-          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}
-          / "(" space? e:expression space* ")" space* {return "(" + e +")";}
-
-
-
-valuesArray "STRING_VALUES_ARRAY"
-      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }
-
-nextValue = nv:(space* "," space* v:stringValue) {return  nv}
-
-
-
-dateValue "DATE_VALUE"
-        = quote? dt:$(date+) quote? {return "'" + dt + "'";}
-
-
-stringValue  "STRING_VALUE"
-	  = quote w:$(char+) quote {return  w }
-      / quote quote {return "";}
-
-
-numericValue  "NUMERIC_VALUE"
-       = $(numeric+)
-
-
-op "OPERATOR"
-   = op_eq
-   / ge
-   / gt
-   / le
-   / lt
-
-op_eq "STRING_OPERATOR_EQUAL"
-  = eq
-  / not_eq
-
-op_in "STRING_OPERATOR_IN"
-  = in
-
-eq = space* "=" space* {return "==";}
-
-not_eq = space* "!=" space* {return "!=";}
-
-gt = space* v:">" space* {return v;}
-
-ge = space* v:">=" space* {return v;}
-
-lt = space* v:"<" space* {return v;}
-
-le = space* v:"<=" space* {return v;}
-
-in = space* v:"in" space* {return v;}
-
-
-date = [0-9 \\:\\/]
-
-char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
-
-numeric = [0-9-\\.]
-
-space = [ \\t\\n\\r]+
-
-parentheses_l = [\\(] space*
-
-parentheses_r = space* [\\)]
-
-field "FIELD_NAME"
-      = stringField
-     / numericField
-     / dateField
-
-stringField "STRING_FIELD_NAME"
-     = @S@
-
-numericField "NUMERIC_FIELD_NAME"
-     = @N@
-
-dateField "DATE_FIELD_NAME"
-     = @D@
-
-quote = [\\'\\"]
-
-
-`;
-
-
-export class Grammar {
-  getGrammar(){
-    return DSL_GRAMMAR;
   }
 }
 
@@ -1222,7 +981,7 @@ export class DataService{
   configure(configuration){
     this.url = configuration.url;
     this.schemaProvider = configuration.schemaProvider;
-    this.queryMapper = configuration.queryMapper;
+    this.filterParser = configuration.filterParser;
     this.totalMapper = configuration.totalMapper;
     this.dataMapper = configuration.dataMapper;
   }
@@ -1242,7 +1001,7 @@ export class DataServiceConfiguration {
       this._url = options.url;
       this._schemaProvider = options.schemaProvider;
       this._totalMapper = options.totalMapper;
-      this._queryMapper = options.queryMapper;
+      this._filterParser = options.filterParser;
       this._dataMapper = options.dataMapper;
     }
   }
@@ -1259,8 +1018,8 @@ export class DataServiceConfiguration {
     return this._totalMapper;
   }
 
-  get queryMapper(){
-    return this._queryMapper;
+  get filterParser(){
+    return this._filterParser;
   }
 
   get dataMapper(){
@@ -1280,10 +1039,12 @@ export class JsonDataService extends DataService {
         this._http = http;
     }
 
-    read(options) { //options: fields,query, take, skip, sort
-        var url = this.url + (this.queryMapper? this.queryMapper(options) : "");
+    read(options) { //options: fields,filter, take, skip, sort
+        let url = this.url
+        if (options.filter)
+          url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
         return this._http
-            .fetch(this.url)
+            .fetch(url)
             .then(response => {return response.json(); })
             .then(jsonData => {
                 return {
@@ -1313,13 +1074,15 @@ export class StaticJsonDataService extends DataService {
         return response.json();
       })
       .then(jsonData => {
-        var d = jsonData;
-        d = this.dataMapper? this.dataMapper(d) : d;
+        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
         if (options.filter){
-          var evaluator = new QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, options.filter);
+          let f = options.filter;
+          if (_.isArray(f) && this.filterParser && this.filterParser.type === "clientSide")
+            f = this.filterParser.getFilter(options.filter);
+          let evaluator = new QueryExpressionEvaluator();
+          d = evaluator.evaluate(d, f);
         }
-        var total = d.length;
+        let total = d.length;
         // sort
         if (options.sort)
           d = _.orderBy(d,[options.sort],[options.sortDir]);
@@ -1336,6 +1099,360 @@ export class StaticJsonDataService extends DataService {
       });
   }
 
+}
+
+const DSL_GRAMMAR_EXPRESSION = `
+{
+function createStringExpression(fieldname, value){
+ 		var prefix = "record.";
+ 		var result = "";
+ 		var v = value.trim().toLowerCase();
+        if (v.length>=2){
+          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
+              result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
+          else if (v.indexOf("%")===0)
+              result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
+          else if (v.lastIndexOf("%")===(value.length-1))
+              result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
+        }
+        if (result == "")
+          result = prefix + fieldname + ".toLowerCase() == '" + v + "'";
+
+        result="(" + prefix + fieldname + "!=null && " + result + ")"
+
+        return result;
+ }
+  function createInExpression (fieldname, value) {
+    var result = "";
+    var values = value.split(',');
+    for (var i=0;i<values.length;i++)
+    {
+      var find = '[\\"\\']';
+      var re = new RegExp(find, 'g');
+      var v = values[i].replace(new RegExp(find, 'g'), "");
+      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();
+      result += createStringExpression(fieldname, v)
+      if (i<(values.length-1))
+        result += " || ";
+    }
+    if (result.length>0)
+      result = "(" + result + ")"
+    return result;
+  }
+}
+
+start = expression
+
+expression = c:condition j:join e:expression space? {return c+j+e;}
+           / c:condition space? {return c;}
+
+join "LOGIC_OPERATOR"
+     = and
+     / or
+
+and = space* "and"i space* {return " && ";}
+
+or = space* "or"i space* {return " || ";}
+
+
+condition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}
+          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}
+          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}
+          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}
+          / "(" space? e:expression space* ")" space* {return "(" + e +")";}
+
+
+
+valuesArray "STRING_VALUES_ARRAY"
+      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }
+
+nextValue = nv:(space* "," space* v:stringValue) {return  nv}
+
+
+
+dateValue "DATE_VALUE"
+        = quote? dt:$(date+) quote? {return "'" + dt + "'";}
+
+
+stringValue  "STRING_VALUE"
+	  = quote w:$(char+) quote {return  w }
+      / quote quote {return "";}
+
+
+numericValue  "NUMERIC_VALUE"
+       = $(numeric+)
+
+
+op "OPERATOR"
+   = op_eq
+   / ge
+   / gt
+   / le
+   / lt
+
+op_eq "STRING_OPERATOR_EQUAL"
+  = eq
+  / not_eq
+
+op_in "STRING_OPERATOR_IN"
+  = in
+
+eq = space* "=" space* {return "==";}
+
+not_eq = space* "!=" space* {return "!=";}
+
+gt = space* v:">" space* {return v;}
+
+ge = space* v:">=" space* {return v;}
+
+lt = space* v:"<" space* {return v;}
+
+le = space* v:"<=" space* {return v;}
+
+in = space* v:"in" space* {return v;}
+
+
+date = [0-9 \\:\\/]
+
+char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
+
+numeric = [0-9-\\.]
+
+space = [ \\t\\n\\r]+
+
+parentheses_l = [\\(] space*
+
+parentheses_r = space* [\\)]
+
+field "FIELD_NAME"
+      = stringField
+     / numericField
+     / dateField
+
+stringField "STRING_FIELD_NAME"
+     = @S@
+
+numericField "NUMERIC_FIELD_NAME"
+     = @N@
+
+dateField "DATE_FIELD_NAME"
+     = @D@
+
+quote = [\\'\\"]
+
+
+`;
+
+
+export class GrammarExpression extends Grammar{
+  constructor(dataFields){
+    super();
+    this.text = DSL_GRAMMAR_EXPRESSION;
+    this.dataFields = dataFields;
+  }
+
+  getGrammar(){
+    let stringFieldList = _.map(DataHelper.getStringFields(this.dataFields),"field");
+    let numericFieldList = _.map(DataHelper.getNumericFields(this.dataFields),"field");
+    let dateFieldList = _.map(DataHelper.getDateFields(this.dataFields),"field");
+    let parserText = this.text.replace('@S@', this._concatenateFields(stringFieldList))
+      .replace('@N@', this._concatenateFields(numericFieldList))
+      .replace('@D@', this._concatenateFields(dateFieldList));
+    return parserText;
+  }
+
+  _concatenateFields(fieldList){
+    for (var i = 0; i < fieldList.length; i++) {
+      fieldList[i] = '\'' + fieldList[i] + '\'i';
+    }
+    if (fieldList.length>0)
+      return fieldList.join('/ ');
+    else
+      return "'unknown_field'"
+  }
+}
+
+
+const DSL_GRAMMAR_TREE = `
+{
+  function findFirstLeftStatement(arr) {
+    if ( Array.isArray(arr) ) {
+      return findFirstLeftStatement(arr[0]["left"]);
+    } else if ( typeof arr === "object" ) {
+        return arr;
+    }
+  }
+
+  function inject(arr, connector) {
+    findFirstLeftStatement(arr)["connector"] = connector;
+    return arr;
+  }
+  
+  function createInExpression (fieldname, value) {
+    var result = []
+    var values = value.split(',');
+    for (var i=0;i<values.length;i++){
+    	if (i!=0)
+    		result.push({field:fieldname, type:'string' ,value:values[i]});
+        else
+            result.push({field:fieldname, type:'string' ,value:values[i], connector:" || "});
+    }
+    return result;
+  }
+}
+
+//Start = statement *
+Start
+  = st:statement  {return [st]}  
+  
+statement
+  = left:block cnct:connector right:statement 
+    { return { left: left, right: inject(right, cnct) }; }
+  / left: block 
+    { return left; }
+    
+block
+  = pOpen block:statement* pClose space?
+    { return block; }
+  / block:condition space?
+    { return block; }
+    
+condition = space? f:stringField o:op_eq v:stringValue 
+			{return {field:f, type:"string", operand:o, value:v}}
+            / space? f:stringField o:op_in a:valuesArray 
+            {return createInExpression(f,a)}            
+			/ space? f:numericField o:op v:numericValue 
+            {return {field:f, type:"number", operand:o, value:v}}
+          	/ space? f:dateField o:op v:dateValue
+          {return {field:f, type:"date", operand:o, value:v}}
+
+connector "LOGIC_OPERATOR"
+    = cn:(or / and) 
+      { return cn.toString(); }
+      
+and = space* "and"i space* {return " && ";}
+
+or = space* "or"i space* {return " || ";}
+
+valuesArray "STRING_VALUES_ARRAY"
+      = pOpen va:$(v:stringValue space* nextValue*)+ pClose {return  va }
+      
+nextValue = nv:(space* "," space* v:stringValue) {return  nv}      
+
+dateValue "DATE_VALUE"
+        = quote? dt:$(date+) quote? {return dt;}
+
+
+stringValue  "STRING_VALUE"
+	  = quote w:$(char+) quote {return  w }
+      / quote quote {return "";}
+
+
+numericValue  "NUMERIC_VALUE"
+       = $(numeric+)
+
+op "OPERAND"
+   = op_eq
+   / ge
+   / gt
+   / le
+   / lt
+
+op_eq "STRING_OPERATOR_EQUAL"
+  = eq
+  / not_eq
+
+op_in "STRING_OPERATOR_IN"
+  = in
+
+eq = space* "=" space* {return "==";}
+
+not_eq = space* "!=" space* {return "!=";}
+
+gt = space* v:">" space* {return v;}
+
+ge = space* v:">=" space* {return v;}
+
+lt = space* v:"<" space* {return v;}
+
+le = space* v:"<=" space* {return v;}
+
+in = space* v:"in" space* {return v;}
+
+
+date = [0-9\\:\\/]
+
+char = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i
+
+numeric = [0-9-\\.]
+
+space = [ \\t\\n\\r]+
+
+pOpen = [\\(] space*
+
+pClose = space* [\\)]
+
+field "FIELD_NAME"
+      = stringField
+     / numericField
+     / dateField
+
+stringField "STRING_FIELD_NAME"
+     = @S@
+
+numericField "NUMERIC_FIELD_NAME"
+     = @N@
+
+dateField "DATE_FIELD_NAME"
+     = @D@
+
+quote = [\\'\\"]
+`;
+
+
+export class GrammarTree extends Grammar {
+  constructor(dataFields){
+    super();
+    this.text = DSL_GRAMMAR_TREE;
+    this.dataFields = dataFields;
+  }
+
+  getGrammar(){
+    let stringFieldList = _.map(DataHelper.getStringFields(this.dataFields),"field");
+    let numericFieldList = _.map(DataHelper.getNumericFields(this.dataFields),"field");
+    let dateFieldList = _.map(DataHelper.getDateFields(this.dataFields),"field");
+    let parserText = this.text.replace('@S@', this._concatenateFields(stringFieldList))
+      .replace('@N@', this._concatenateFields(numericFieldList))
+      .replace('@D@', this._concatenateFields(dateFieldList));
+    return parserText;
+  }
+
+  _concatenateFields(fieldList){
+    for (var i = 0; i < fieldList.length; i++) {
+      fieldList[i] = '\'' + fieldList[i] + '\'i';
+    }
+    if (fieldList.length>0)
+      return fieldList.join('/ ');
+    else
+      return "'unknown_field'"
+  }
+}
+
+
+
+
+export class Grammar{
+  
+  set text(value){
+    this._text = value;
+  }
+  get text(){
+    return this._text;
+  }
+
+  getGrammar(){
+  }
+  
 }
 
 export class FormatValueConverter {
@@ -1720,8 +1837,11 @@ export class SearchBox extends Widget {
     super(settings);
     this.stateType = "searchBoxState";
     this._dataFilterChanged = new WidgetEvent();
+    this._searchString = "";
     this.attachBehaviors();
   }
+
+
 
   get dataFilterChanged() {
     return this._dataFilterChanged;
@@ -1730,8 +1850,21 @@ export class SearchBox extends Widget {
     this._dataFilterChanged.attach(handler);
   }
 
+  get searchString(){
+    return this._searchString;
+  }
+  set searchString(value) {
+    this._searchString = value;
+  }
 
+  saveState(){
+    this.state = this.searchString;
+  }
 
+  restoreState(){
+    if (this.state)
+      this.searchString = this.state;
+  }
 }
 
 export class Widget {
@@ -2058,50 +2191,6 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
   }
 }
 
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-}
-
 export class DataActivatedBehavior extends WidgetBehavior {
   constructor(chanel, eventAggregator) {
     super();
@@ -2320,6 +2409,163 @@ export class WidgetBehavior {
         break;
       }
     }
+  }
+
+}
+
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
+export class AstParser{
+  constructor(){
+    this._clientSide = "clientSide";
+    this._serverSide = "serverSide";
+  }
+  get type(){}
+  getFilter(astTree){
+    return {};
+  }
+}
+
+
+/*
+Parser should return the tree as follows
+ [
+ {
+ "left": {
+ "field": "Fs",
+ "type": "string",
+ "operand": "=",
+ "value": "ss1"
+ },
+ "right": {
+ "left": {
+ "field": "Fs",
+ "type": "string",
+ "operand": "=",
+ "value": "ss2"
+ },
+ "right": {
+ "left": {
+ "field": "Fs",
+ "type": "string",
+ "operand": "=",
+ "value": "ss3"
+ },
+ "right": {
+ "left": {
+ "field": "Fs",
+ "type": "string",
+ "operand": "=",
+ "value": "ss4"
+ },
+ "right": {
+ "field": "Fn",
+ "type": "number",
+ "operand": "=",
+ "value": "3",
+ "connector": " && "
+ },
+ "connector": " || "
+ },
+ "connector": " || "
+ },
+ "connector": " || "
+ }
+ }
+ ]
+*/
+
+
+export class AstToJavascriptParser extends AstParser{
+  constructor(){
+    super();
+  }
+
+  get type(){
+    return this._clientSide;
+  }
+
+  getFilter(astTree) {
+    if (astTree[0])
+      return this._parseTree(astTree[0],[]);
+    return "";
+  }
+
+  _parseTree(treeNode, result){
+    if (treeNode.left) {
+      result.push(this._createExpression(treeNode.connector, treeNode.left));
+      this._parseTree(treeNode.right, result);
+    }
+    else {
+      result.push(this._createExpression(treeNode.connector, treeNode));
+      return result.join(" ");
+    }
+  }
+
+
+  _createExpression(connector, node){
+
+    let result = "";
+    let prefix = "record.";
+    let fieldname = node.field;
+    let operand = node.operand;
+    let value = node.value;
+    let v = value.trim().toLowerCase();
+
+    if (v.length>=2){
+      if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
+        result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
+      else if (v.indexOf("%")===0)
+        result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
+      else if (v.lastIndexOf("%")===(value.length-1))
+        result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
+    }
+    if (result == "")
+      result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
+    result=(connector? connector:"") +" (" + prefix + fieldname + "!=null && " + result + ")";
+    return result;
   }
 
 }

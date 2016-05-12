@@ -7,13 +7,13 @@ exports.StaticJsonDataService = undefined;
 
 var _dec, _dec2, _class;
 
-var _aureliaFramework = require('aurelia-framework');
-
-var _aureliaFetchClient = require('aurelia-fetch-client');
-
 var _dataService = require('./data-service');
 
 var _dataHelper = require('./../../helpers/data-helper');
+
+var _aureliaFramework = require('aurelia-framework');
+
+var _aureliaFetchClient = require('aurelia-fetch-client');
 
 var _queryExpressionEvaluator = require('./../query-expression-evaluator');
 
@@ -50,11 +50,12 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aurelia
     return this._http.fetch(this.url).then(function (response) {
       return response.json();
     }).then(function (jsonData) {
-      var d = jsonData;
-      d = _this2.dataMapper ? _this2.dataMapper(d) : d;
+      var d = _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData;
       if (options.filter) {
+        var f = options.filter;
+        if (_.isArray(f) && _this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
         var evaluator = new _queryExpressionEvaluator.QueryExpressionEvaluator();
-        d = evaluator.evaluate(d, options.filter);
+        d = evaluator.evaluate(d, f);
       }
       var total = d.length;
 

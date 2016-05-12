@@ -37,8 +37,9 @@ var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.tr
     JsonDataService.prototype.read = function read(options) {
         var _this2 = this;
 
-        var url = this.url + (this.queryMapper ? this.queryMapper(options) : "");
-        return this._http.fetch(this.url).then(function (response) {
+        var url = this.url;
+        if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
+        return this._http.fetch(url).then(function (response) {
             return response.json();
         }).then(function (jsonData) {
             return {

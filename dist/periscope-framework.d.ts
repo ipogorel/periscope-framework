@@ -5,8 +5,8 @@ declare module 'periscope-framework' {
   import moment from 'moment';
   import lodash from 'lodash';
   import {
-    inject,
     resolver,
+    inject,
     transient,
     computedFrom,
     customElement,
@@ -16,14 +16,14 @@ declare module 'periscope-framework' {
     noView
   } from 'aurelia-framework';
   import {
-    HttpClient
-  } from 'aurelia-fetch-client';
-  import {
     EventAggregator
   } from 'aurelia-event-aggregator';
   import {
     Router
   } from 'aurelia-router';
+  import {
+    HttpClient
+  } from 'aurelia-fetch-client';
   import Swagger from 'swagger-client';
   export class CacheManager {
     constructor(storage: any);
@@ -44,9 +44,6 @@ declare module 'periscope-framework' {
     getItem(key: any): any;
     removeItem(key: any): any;
     removeExpired(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
   }
   export class DataHolder {
     constructor();
@@ -77,6 +74,9 @@ declare module 'periscope-framework' {
     evaluate(data: any, searchExpression: any): any;
   }
   export class Query {
+    constructor();
+    
+    //this.filter = [];
     sort: any;
     group: any;
     sortDir: any;
@@ -84,39 +84,26 @@ declare module 'periscope-framework' {
     fields: any;
     skip: any;
     
-    /*get clientSideFilter() {
-        return this._clientSideFilter;
+    /*get serverSideFilter() {
+        return this._serverSideFilter;
       }
-      set clientSideFilter(value) {
-        this._clientSideFilter = value;
+      set serverSideFilter(value) {
+        this._serverSideFilter = value;
       }*/
-    serverSideFilter: any;
+    filter: any;
     cacheKey(): any;
   }
-  export class DslExpressionManagerFactory {
-    constructor(expressionParserFactory: any);
-    createInstance(dataSource: any, fields: any): any;
+  export class DashboardConfiguration {
+    invoke(): any;
   }
-  export class DslExpressionManager {
-    constructor(parser: any, dataSource: any, fieldsList: any);
+  export class IntellisenceManager {
+    constructor(parser: any, dataSource: any, availableFields: any);
     populate(searchStr: any, lastWord: any): any;
-    parse(searchStr: any): any;
-    validate(searchStr: any): any;
-    expectedToken(searchStr: any): any;
-    getParserError(searchStr: any): any;
-  }
-  export class ExpressionParserFactory {
-    constructor(http: any);
-    createInstance(numericFieldList: any, stringFieldList: any, dateFieldList: any): any;
-    concatenateFieldList(fieldList: any): any;
   }
   export class ExpressionParser {
-    constructor(pegParser: any);
+    constructor(grammarText: any);
     parse(searchString: any): any;
     validate(searchString: any): any;
-  }
-  export class Grammar {
-    getGrammar(): any;
   }
   export class DataHelper {
     static getNumericFields(fields: any): any;
@@ -209,7 +196,7 @@ declare module 'periscope-framework' {
     url: any;
     schemaProvider: any;
     totalMapper: any;
-    queryMapper: any;
+    filterParser: any;
     dataMapper: any;
   }
   export class JsonDataService extends DataService {
@@ -219,6 +206,18 @@ declare module 'periscope-framework' {
   export class StaticJsonDataService extends DataService {
     constructor(http: any);
     read(options: any): any;
+  }
+  export class GrammarExpression extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class GrammarTree extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class Grammar {
+    text: any;
+    getGrammar(): any;
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

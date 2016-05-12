@@ -16,7 +16,7 @@ var DataService = exports.DataService = function () {
   DataService.prototype.configure = function configure(configuration) {
     this.url = configuration.url;
     this.schemaProvider = configuration.schemaProvider;
-    this.queryMapper = configuration.queryMapper;
+    this.filterParser = configuration.filterParser;
     this.totalMapper = configuration.totalMapper;
     this.dataMapper = configuration.dataMapper;
   };
@@ -44,7 +44,7 @@ var DataServiceConfiguration = exports.DataServiceConfiguration = function () {
       this._url = options.url;
       this._schemaProvider = options.schemaProvider;
       this._totalMapper = options.totalMapper;
-      this._queryMapper = options.queryMapper;
+      this._filterParser = options.filterParser;
       this._dataMapper = options.dataMapper;
     }
   }
@@ -65,9 +65,9 @@ var DataServiceConfiguration = exports.DataServiceConfiguration = function () {
       return this._totalMapper;
     }
   }, {
-    key: "queryMapper",
+    key: "filterParser",
     get: function get() {
-      return this._queryMapper;
+      return this._filterParser;
     }
   }, {
     key: "dataMapper",

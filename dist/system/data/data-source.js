@@ -78,7 +78,7 @@ System.register(['lodash', './data-holder'], function (_export, _context) {
           }
           return this.transport.readService.read({
             fields: query.fields,
-            filter: query.serverSideFilter ? query.serverSideFilter : "",
+            filter: query.filter,
             take: query.take,
             skip: query.skip,
             sort: query.sort,

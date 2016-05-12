@@ -1,9 +1,9 @@
 var _dec, _dec2, _class;
 
-import { inject, transient } from 'aurelia-framework';
-import { HttpClient } from 'aurelia-fetch-client';
 import { DataService } from './data-service';
 import { DataHelper } from './../../helpers/data-helper';
+import { inject, transient } from 'aurelia-framework';
+import { HttpClient } from 'aurelia-fetch-client';
 import { QueryExpressionEvaluator } from './../query-expression-evaluator';
 import * as _ from 'lodash';
 
@@ -20,13 +20,14 @@ export let StaticJsonDataService = (_dec = transient(), _dec2 = inject(HttpClien
     return this._http.fetch(this.url).then(response => {
       return response.json();
     }).then(jsonData => {
-      var d = jsonData;
-      d = this.dataMapper ? this.dataMapper(d) : d;
+      let d = this.dataMapper ? this.dataMapper(jsonData) : jsonData;
       if (options.filter) {
-        var evaluator = new QueryExpressionEvaluator();
-        d = evaluator.evaluate(d, options.filter);
+        let f = options.filter;
+        if (_.isArray(f) && this.filterParser && this.filterParser.type === "clientSide") f = this.filterParser.getFilter(options.filter);
+        let evaluator = new QueryExpressionEvaluator();
+        d = evaluator.evaluate(d, f);
       }
-      var total = d.length;
+      let total = d.length;
 
       if (options.sort) d = _.orderBy(d, [options.sort], [options.sortDir]);
       var l = options.skip + options.take;

@@ -17,7 +17,7 @@ var Query = exports.Query = function () {
   }
 
   Query.prototype.cacheKey = function cacheKey() {
-    return Math.abs(_stringHelper.StringHelper.hashCode((this.serverSideFilter ? this.serverSideFilter : "") + (this.fields ? this.fields.join("") : "") + (this.sort ? this.sort : "") + (this.sortDir ? this.sortDir : "") + (this.take ? this.take : "0") + (this.skip ? this.skip : "0")));
+    return Math.abs(_stringHelper.StringHelper.hashCode((this.filter ? JSON.stringify(this.filter) : "") + (this.fields ? this.fields.join("") : "") + (this.sort ? this.sort : "") + (this.sortDir ? this.sortDir : "") + (this.take ? this.take : "0") + (this.skip ? this.skip : "0")));
   };
 
   _createClass(Query, [{
@@ -69,12 +69,12 @@ var Query = exports.Query = function () {
       this._skip = value;
     }
   }, {
-    key: "serverSideFilter",
+    key: "filter",
     get: function get() {
-      return this._serverSideFilter;
+      return this._filter;
     },
     set: function set(value) {
-      this._serverSideFilter = value;
+      this._filter = value;
     }
   }]);
 

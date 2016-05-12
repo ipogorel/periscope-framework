@@ -1,4 +1,4 @@
-define(['exports', 'aurelia-framework', 'aurelia-fetch-client', './data-service', './../../helpers/data-helper', './../query-expression-evaluator', 'lodash'], function (exports, _aureliaFramework, _aureliaFetchClient, _dataService, _dataHelper, _queryExpressionEvaluator, _lodash) {
+define(['exports', './data-service', './../../helpers/data-helper', 'aurelia-framework', 'aurelia-fetch-client', './../query-expression-evaluator', 'lodash'], function (exports, _dataService, _dataHelper, _aureliaFramework, _aureliaFetchClient, _queryExpressionEvaluator, _lodash) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -78,11 +78,12 @@ define(['exports', 'aurelia-framework', 'aurelia-fetch-client', './data-service'
       return this._http.fetch(this.url).then(function (response) {
         return response.json();
       }).then(function (jsonData) {
-        var d = jsonData;
-        d = _this2.dataMapper ? _this2.dataMapper(d) : d;
+        var d = _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData;
         if (options.filter) {
+          var f = options.filter;
+          if (_.isArray(f) && _this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
           var evaluator = new _queryExpressionEvaluator.QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, options.filter);
+          d = evaluator.evaluate(d, f);
         }
         var total = d.length;
 

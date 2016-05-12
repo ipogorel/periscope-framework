@@ -38,7 +38,7 @@ System.register([], function (_export, _context) {
         DataService.prototype.configure = function configure(configuration) {
           this.url = configuration.url;
           this.schemaProvider = configuration.schemaProvider;
-          this.queryMapper = configuration.queryMapper;
+          this.filterParser = configuration.filterParser;
           this.totalMapper = configuration.totalMapper;
           this.dataMapper = configuration.dataMapper;
         };
@@ -68,7 +68,7 @@ System.register([], function (_export, _context) {
             this._url = options.url;
             this._schemaProvider = options.schemaProvider;
             this._totalMapper = options.totalMapper;
-            this._queryMapper = options.queryMapper;
+            this._filterParser = options.filterParser;
             this._dataMapper = options.dataMapper;
           }
         }
@@ -89,9 +89,9 @@ System.register([], function (_export, _context) {
             return this._totalMapper;
           }
         }, {
-          key: "queryMapper",
+          key: "filterParser",
           get: function get() {
-            return this._queryMapper;
+            return this._filterParser;
           }
         }, {
           key: "dataMapper",

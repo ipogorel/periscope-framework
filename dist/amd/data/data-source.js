@@ -93,7 +93,7 @@ define(['exports', 'lodash', './data-holder'], function (exports, _lodash, _data
       }
       return this.transport.readService.read({
         fields: query.fields,
-        filter: query.serverSideFilter ? query.serverSideFilter : "",
+        filter: query.filter,
         take: query.take,
         skip: query.skip,
         sort: query.sort,
