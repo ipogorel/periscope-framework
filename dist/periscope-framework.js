@@ -2038,50 +2038,6 @@ export class Widget {
 
 
 
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-}
-
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
     super();
@@ -2232,6 +2188,50 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
     super.detach(dashboard);
     if (this.subscription)
       this.subscription.dispose();
+  }
+}
+
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
   }
 }
 
@@ -2457,52 +2457,6 @@ export class WidgetBehavior {
 
 }
 
-export class SchemaProvider{
-  getSchema(){}
-}
-
-
-export class StaticSchemaProvider extends SchemaProvider{
-  constructor(schema){
-    super();
-    this._schema = schema;
-  }
-  getSchema(){
-    return new Promise((resolve, reject)=>{
-      resolve(this._schema);
-    });
-  }
-}
-
-
-import Swagger from "swagger-client";
-export class SwaggerSchemaProvider extends SchemaProvider{
-  constructor(definitionUrl, apiName, methodName, modelName){
-    super();
-    this._modelName = modelName;
-    this._methodName = methodName;
-    this._apiName = apiName;
-    this._definitionUrl = definitionUrl;
-  }
-  getSchema(){
-    var self = this;
-    return new Swagger({
-      url: this._definitionUrl,
-      usePromise: true}).then(client => {
-        let result = new Schema();
-        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
-          result.parameters.push(p);
-        });
-        if (client.definitions[self._modelName]) {
-          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
-            result.fields.push({field: key, type: value.type});
-          });
-        }
-        return result;
-    });
-  }
-}
-
 export class AstParser{
   constructor(){
     this._clientSide = "clientSide";
@@ -2598,20 +2552,74 @@ export class AstToJavascriptParser extends AstParser{
     let fieldname = node.field;
     let operand = node.operand;
     let value = node.value;
-    let v = value.trim().toLowerCase();
 
-    if (v.length>=2){
-      if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))
-        result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1,value.length-1) + "')"
-      else if (v.indexOf("%")===0)
-        result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1,value.length) + "')"
-      else if (v.lastIndexOf("%")===(value.length-1))
-        result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0,value.length-1) + "')"
+    if (node.type=='string') {
+      let v = value.trim().toLowerCase();
+      if (v.length >= 2) {
+        if ((v.indexOf("%") === 0) && (v.lastIndexOf("%") === (v.length - 1)))
+          result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1, value.length - 1) + "')"
+        else if (v.indexOf("%") === 0)
+          result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1, value.length) + "')"
+        else if (v.lastIndexOf("%") === (value.length - 1))
+          result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0, value.length - 1) + "')"
+      }
+      if (result == "")
+        result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
     }
-    if (result == "")
-      result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
+    else if (node.type=='number'){
+      result = prefix + fieldname + operand + " " + value;
+    }
+    else if (node.type=='date'){
+      result = prefix + fieldname + operand + " '" + value + "'";
+    }
     result=(connector? connector:"") +" (" + prefix + fieldname + "!=null && " + result + ")";
     return result;
   }
 
+}
+
+export class SchemaProvider{
+  getSchema(){}
+}
+
+
+export class StaticSchemaProvider extends SchemaProvider{
+  constructor(schema){
+    super();
+    this._schema = schema;
+  }
+  getSchema(){
+    return new Promise((resolve, reject)=>{
+      resolve(this._schema);
+    });
+  }
+}
+
+
+import Swagger from "swagger-client";
+export class SwaggerSchemaProvider extends SchemaProvider{
+  constructor(definitionUrl, apiName, methodName, modelName){
+    super();
+    this._modelName = modelName;
+    this._methodName = methodName;
+    this._apiName = apiName;
+    this._definitionUrl = definitionUrl;
+  }
+  getSchema(){
+    var self = this;
+    return new Swagger({
+      url: this._definitionUrl,
+      usePromise: true}).then(client => {
+        let result = new Schema();
+        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
+          result.parameters.push(p);
+        });
+        if (client.definitions[self._modelName]) {
+          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
+            result.fields.push({field: key, type: value.type});
+          });
+        }
+        return result;
+    });
+  }
 }
