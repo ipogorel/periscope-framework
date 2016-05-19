@@ -12,7 +12,6 @@ export class SearchBox extends Widget {
   }
 
 
-
   get dataFilterChanged() {
     return this._dataFilterChanged;
   }
@@ -34,5 +33,7 @@ export class SearchBox extends Widget {
   restoreState(){
     if (this.state)
       this.searchString = this.state;
+    else
+      this.searchString = "";
   }
 }

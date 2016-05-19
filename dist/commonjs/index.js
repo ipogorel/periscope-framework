@@ -448,14 +448,14 @@ Object.keys(_navigationHistory).forEach(function (key) {
   });
 });
 
-var _periscopeRouter = require('./navigator/periscope-router');
+var _historyStep = require('./navigator/history-step');
 
-Object.keys(_periscopeRouter).forEach(function (key) {
+Object.keys(_historyStep).forEach(function (key) {
   if (key === "default") return;
   Object.defineProperty(exports, key, {
     enumerable: true,
     get: function get() {
-      return _periscopeRouter[key];
+      return _historyStep[key];
     }
   });
 });

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.LayoutWidget = exports.DashboardBase = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.PeriscopeRouter = exports.NavigationHistory = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
 
 var _class, _dec, _class2, _dec2, _class3, _dec3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _desc, _value, _class6;
 
@@ -28,10 +28,6 @@ var _moment = require('moment');
 var _moment2 = _interopRequireDefault(_moment);
 
 var _aureliaFramework = require('aurelia-framework');
-
-var _aureliaEventAggregator = require('aurelia-event-aggregator');
-
-var _aureliaRouter = require('aurelia-router');
 
 var _aureliaFetchClient = require('aurelia-fetch-client');
 
@@ -890,6 +886,108 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class = functio
   return Factory;
 }()) || _class;
 
+var HistoryStep = exports.HistoryStep = (_dec = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec(_class2 = function () {
+  function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
+    _classCallCheck(this, HistoryStep);
+
+    this._navigationHistory = navigationHistory;
+    this._userStateStorage = userStateStorage;
+    this._dashboardManager = dashboardManager;
+  }
+
+  HistoryStep.prototype.run = function run(routingContext, next) {
+    var _this6 = this;
+
+    if (routingContext.getAllInstructions().some(function (i) {
+      return i.config.name === "dashboard";
+    })) {
+      var _dashboard = this._dashboardManager.find(routingContext.params.dashboard);
+      if (_dashboard) {
+        var routeWidgetsState;
+        var storageWidgetsState;
+
+        (function () {
+          if (_this6.currentRouteItem) {
+            (function () {
+              var currentWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_this6.currentRouteItem.dashboardName));
+              var url = "/" + _this6.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+
+              if (_.filter(_this6._navigationHistory.items, function (i) {
+                return StringHelper.compare(i.url, url);
+              }).length === 0) {
+                _this6._navigationHistory.add(url, _this6.currentRouteItem.title, _this6.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+              } else if (!StringHelper.compare(url, _this6.currentRouteItem.route)) {
+                _this6._navigationHistory.update(url, new Date());
+              }
+            })();
+          }
+
+          var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
+
+          routeWidgetsState = StateUrlParser.queryToState(fullUrl);
+          storageWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_dashboard.name));
+
+          for (var _iterator3 = storageWidgetsState, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+            var _ref3;
+
+            if (_isArray3) {
+              if (_i3 >= _iterator3.length) break;
+              _ref3 = _iterator3[_i3++];
+            } else {
+              _i3 = _iterator3.next();
+              if (_i3.done) break;
+              _ref3 = _i3.value;
+            }
+
+            var oldSt = _ref3;
+
+            _this6._userStateStorage.remove(oldSt.key);
+          }for (var _iterator4 = routeWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+            var _ref4;
+
+            if (_isArray4) {
+              if (_i4 >= _iterator4.length) break;
+              _ref4 = _iterator4[_i4++];
+            } else {
+              _i4 = _iterator4.next();
+              if (_i4.done) break;
+              _ref4 = _i4.value;
+            }
+
+            var newSt = _ref4;
+
+            _this6._userStateStorage.set(newSt.key, newSt.value);
+          }
+          if (_.filter(_this6._navigationHistory.items, function (i) {
+            return StringHelper.compare(i.url, fullUrl);
+          }).length === 0) {
+            _this6._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this6._userStateStorage.getAll(_dashboard.name), new Date());
+          }
+
+          _this6.currentRouteItem = {
+            dashboardName: _dashboard.name,
+            title: _dashboard.title,
+            route: fullUrl
+          };
+        })();
+      }
+    } else this.currentRouteItem = null;
+    return next();
+  };
+
+  _createClass(HistoryStep, [{
+    key: 'currentRouteItem',
+    get: function get() {
+      return this._currentRoute;
+    },
+    set: function set(value) {
+      this._currentRoute = value;
+    }
+  }]);
+
+  return HistoryStep;
+}()) || _class2);
+
 var NavigationHistory = exports.NavigationHistory = function () {
   function NavigationHistory() {
     _classCallCheck(this, NavigationHistory);
@@ -902,19 +1000,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.update = function update(url, dateTime) {
-    for (var _iterator3 = this._history, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-      var _ref3;
+    for (var _iterator5 = this._history, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+      var _ref5;
 
-      if (_isArray3) {
-        if (_i3 >= _iterator3.length) break;
-        _ref3 = _iterator3[_i3++];
+      if (_isArray5) {
+        if (_i5 >= _iterator5.length) break;
+        _ref5 = _iterator5[_i5++];
       } else {
-        _i3 = _iterator3.next();
-        if (_i3.done) break;
-        _ref3 = _i3.value;
+        _i5 = _iterator5.next();
+        if (_i5.done) break;
+        _ref5 = _i5.value;
       }
 
-      var h = _ref3;
+      var h = _ref5;
 
       if (h.url === url) {
         h.dateTime = dateTime;
@@ -924,19 +1022,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.delete = function _delete(url) {
-    for (var _iterator4 = this._history, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-      var _ref4;
+    for (var _iterator6 = this._history, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+      var _ref6;
 
-      if (_isArray4) {
-        if (_i4 >= _iterator4.length) break;
-        _ref4 = _iterator4[_i4++];
+      if (_isArray6) {
+        if (_i6 >= _iterator6.length) break;
+        _ref6 = _iterator6[_i6++];
       } else {
-        _i4 = _iterator4.next();
-        if (_i4.done) break;
-        _ref4 = _i4.value;
+        _i6 = _iterator6.next();
+        if (_i6.done) break;
+        _ref6 = _i6.value;
       }
 
-      var i = _ref4;
+      var i = _ref6;
 
       if (i.url === url) {
         this._history.splice(i, 1);
@@ -959,19 +1057,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.exists = function exists(url) {
-    for (var _iterator5 = this._history, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-      var _ref5;
+    for (var _iterator7 = this._history, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
+      var _ref7;
 
-      if (_isArray5) {
-        if (_i5 >= _iterator5.length) break;
-        _ref5 = _iterator5[_i5++];
+      if (_isArray7) {
+        if (_i7 >= _iterator7.length) break;
+        _ref7 = _iterator7[_i7++];
       } else {
-        _i5 = _iterator5.next();
-        if (_i5.done) break;
-        _ref5 = _i5.value;
+        _i7 = _iterator7.next();
+        if (_i7.done) break;
+        _ref7 = _i7.value;
       }
 
-      var i = _ref5;
+      var i = _ref7;
 
       if (i.route === url) return true;
     }
@@ -987,85 +1085,6 @@ var NavigationHistory = exports.NavigationHistory = function () {
 
   return NavigationHistory;
 }();
-
-var PeriscopeRouter = exports.PeriscopeRouter = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaEventAggregator.EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser), _dec(_class2 = function () {
-  function PeriscopeRouter(aureliaRouter, eventAggregator, userStateStorage, navigationHistory) {
-    _classCallCheck(this, PeriscopeRouter);
-
-    this._aureliaRouter = aureliaRouter;
-    this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
-    this._eventAggregator = eventAggregator;
-  }
-
-  PeriscopeRouter.prototype.navigate = function navigate(routeItem) {
-    if (this.currentRouteItem) {
-      var currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
-      var url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
-      if (_.filter(this._navigationHistory.items, function (i) {
-        return StringHelper.compare(i.url, url);
-      }).length === 0) {
-        this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-      } else if (!StringHelper.compare(url, this.currentRouteItem.route)) {
-        this._navigationHistory.update(url, new Date());
-      }
-    }
-
-    var routeWidgetsState = StateUrlParser.queryToState(routeItem.route);
-    var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(routeItem.dashboardName));
-    for (var _iterator6 = storageWidgetsState, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-      var _ref6;
-
-      if (_isArray6) {
-        if (_i6 >= _iterator6.length) break;
-        _ref6 = _iterator6[_i6++];
-      } else {
-        _i6 = _iterator6.next();
-        if (_i6.done) break;
-        _ref6 = _i6.value;
-      }
-
-      var oldSt = _ref6;
-
-      this._userStateStorage.remove(oldSt.key);
-    }for (var _iterator7 = routeWidgetsState, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
-      var _ref7;
-
-      if (_isArray7) {
-        if (_i7 >= _iterator7.length) break;
-        _ref7 = _iterator7[_i7++];
-      } else {
-        _i7 = _iterator7.next();
-        if (_i7.done) break;
-        _ref7 = _i7.value;
-      }
-
-      var newSt = _ref7;
-
-      this._userStateStorage.set(newSt.key, newSt.value);
-    }
-    if (_.filter(this._navigationHistory.items, function (i) {
-      return StringHelper.compare(i.url, routeItem.route);
-    }).length === 0) {
-      this._navigationHistory.add(routeItem.route, routeItem.title, routeItem.dashboardName, this._userStateStorage.getAll(routeItem.dashboardName), new Date());
-    }
-
-    this.currentRouteItem = routeItem;
-    this._aureliaRouter.navigate(routeItem.route);
-  };
-
-  _createClass(PeriscopeRouter, [{
-    key: 'currentRouteItem',
-    get: function get() {
-      return this._currentRoute;
-    },
-    set: function set(value) {
-      this._currentRoute = value;
-    }
-  }]);
-
-  return PeriscopeRouter;
-}()) || _class2);
 
 var StateDiscriminator = exports.StateDiscriminator = function () {
   function StateDiscriminator() {
@@ -1337,17 +1356,17 @@ var JsonDataService = exports.JsonDataService = (_dec3 = (0, _aureliaFramework.t
   function JsonDataService(http) {
     _classCallCheck(this, JsonDataService);
 
-    var _this6 = _possibleConstructorReturn(this, _DataService.call(this));
+    var _this7 = _possibleConstructorReturn(this, _DataService.call(this));
 
     http.configure(function (config) {
       config.useStandardConfiguration();
     });
-    _this6._http = http;
-    return _this6;
+    _this7._http = http;
+    return _this7;
   }
 
   JsonDataService.prototype.read = function read(options) {
-    var _this7 = this;
+    var _this8 = this;
 
     var url = this.url;
     if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
@@ -1355,8 +1374,8 @@ var JsonDataService = exports.JsonDataService = (_dec3 = (0, _aureliaFramework.t
       return response.json();
     }).then(function (jsonData) {
       return {
-        data: _this7.dataMapper ? _this7.dataMapper(jsonData) : jsonData,
-        total: _this7.totalMapper ? _this7.totalMapper(jsonData) : jsonData.length
+        data: _this8.dataMapper ? _this8.dataMapper(jsonData) : jsonData,
+        total: _this8.totalMapper ? _this8.totalMapper(jsonData) : jsonData.length
       };
     });
   };
@@ -1369,25 +1388,25 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   function StaticJsonDataService(http) {
     _classCallCheck(this, StaticJsonDataService);
 
-    var _this8 = _possibleConstructorReturn(this, _DataService2.call(this));
+    var _this9 = _possibleConstructorReturn(this, _DataService2.call(this));
 
     http.configure(function (config) {
       config.useStandardConfiguration();
     });
-    _this8._http = http;
-    return _this8;
+    _this9._http = http;
+    return _this9;
   }
 
   StaticJsonDataService.prototype.read = function read(options) {
-    var _this9 = this;
+    var _this10 = this;
 
     return this._http.fetch(this.url).then(function (response) {
       return response.json();
     }).then(function (jsonData) {
-      var d = _this9.dataMapper ? _this9.dataMapper(jsonData) : jsonData;
+      var d = _this10.dataMapper ? _this10.dataMapper(jsonData) : jsonData;
       if (options.filter) {
         var f = options.filter;
-        if (_.isArray(f) && _this9.filterParser && _this9.filterParser.type === "clientSide") f = _this9.filterParser.getFilter(options.filter);
+        if (_.isArray(f) && _this10.filterParser && _this10.filterParser.type === "clientSide") f = _this10.filterParser.getFilter(options.filter);
         var evaluator = new QueryExpressionEvaluator();
         d = evaluator.evaluate(d, f);
       }
@@ -1401,7 +1420,7 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
       });
       return {
         data: DataHelper.deserializeDates(d),
-        total: _this9.totalMapper ? _this9.totalMapper(jsonData) : total
+        total: _this10.totalMapper ? _this10.totalMapper(jsonData) : total
       };
     });
   };
@@ -1418,11 +1437,11 @@ var GrammarExpression = exports.GrammarExpression = function (_Grammar) {
   function GrammarExpression(dataFields) {
     _classCallCheck(this, GrammarExpression);
 
-    var _this10 = _possibleConstructorReturn(this, _Grammar.call(this));
+    var _this11 = _possibleConstructorReturn(this, _Grammar.call(this));
 
-    _this10.text = DSL_GRAMMAR_EXPRESSION;
-    _this10.dataFields = dataFields;
-    return _this10;
+    _this11.text = DSL_GRAMMAR_EXPRESSION;
+    _this11.dataFields = dataFields;
+    return _this11;
   }
 
   GrammarExpression.prototype.getGrammar = function getGrammar() {
@@ -1451,11 +1470,11 @@ var GrammarTree = exports.GrammarTree = function (_Grammar2) {
   function GrammarTree(dataFields) {
     _classCallCheck(this, GrammarTree);
 
-    var _this11 = _possibleConstructorReturn(this, _Grammar2.call(this));
+    var _this12 = _possibleConstructorReturn(this, _Grammar2.call(this));
 
-    _this11.text = DSL_GRAMMAR_TREE;
-    _this11.dataFields = dataFields;
-    return _this11;
+    _this12.text = DSL_GRAMMAR_TREE;
+    _this12.dataFields = dataFields;
+    return _this12;
   }
 
   GrammarTree.prototype.getGrammar = function getGrammar() {
@@ -1515,422 +1534,6 @@ var FormatValueConverter = function () {
 }();
 
 exports.FormatValueConverter = FormatValueConverter;
-
-var Chart = exports.Chart = function (_Widget) {
-  _inherits(Chart, _Widget);
-
-  function Chart(settings) {
-    _classCallCheck(this, Chart);
-
-    var _this12 = _possibleConstructorReturn(this, _Widget.call(this, settings));
-
-    _this12.categoriesField = settings.categoriesField;
-    _this12.seriesDefaults = settings.seriesDefaults;
-    _this12.stateType = "chartState";
-    _this12.attachBehaviors();
-    return _this12;
-  }
-
-  _createClass(Chart, [{
-    key: 'categoriesField',
-    get: function get() {
-      return this._categoriesField;
-    },
-    set: function set(value) {
-      this._categoriesField = value;
-    }
-  }, {
-    key: 'seriesDefaults',
-    get: function get() {
-      return this._seriesDefaults;
-    },
-    set: function set(value) {
-      this._seriesDefaults = value;
-    }
-  }]);
-
-  return Chart;
-}(Widget);
-
-var DataSourceConfigurator = exports.DataSourceConfigurator = function (_Widget2) {
-  _inherits(DataSourceConfigurator, _Widget2);
-
-  function DataSourceConfigurator(settings) {
-    _classCallCheck(this, DataSourceConfigurator);
-
-    var _this13 = _possibleConstructorReturn(this, _Widget2.call(this, settings));
-
-    _this13.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    _this13.stateType = "dataSourceConfiguratorState";
-    _this13._dataSourceChanged = new WidgetEvent();
-    _this13.attachBehaviors();
-    return _this13;
-  }
-
-  _createClass(DataSourceConfigurator, [{
-    key: 'dataSourceToConfigurate',
-    get: function get() {
-      return this._dataSourceToConfigurate;
-    },
-    set: function set(value) {
-      this._dataSourceToConfigurate = value;
-    }
-  }, {
-    key: 'dataSourceChanged',
-    get: function get() {
-      return this._dataSourceChanged;
-    },
-    set: function set(handler) {
-      this._dataSourceChanged.attach(handler);
-    }
-  }]);
-
-  return DataSourceConfigurator;
-}(Widget);
-
-var DetailedView = exports.DetailedView = function (_Widget3) {
-  _inherits(DetailedView, _Widget3);
-
-  function DetailedView(settings) {
-    _classCallCheck(this, DetailedView);
-
-    var _this14 = _possibleConstructorReturn(this, _Widget3.call(this, settings));
-
-    _this14.fields = settings.fields;
-    _this14.stateType = "detailedViewState";
-    _this14.attachBehaviors();
-    return _this14;
-  }
-
-  _createClass(DetailedView, [{
-    key: 'fields',
-    get: function get() {
-      return this._fields;
-    },
-    set: function set(value) {
-      this._fields = value;
-    }
-  }]);
-
-  return DetailedView;
-}(Widget);
-
-var Grid = exports.Grid = function (_Widget4) {
-  _inherits(Grid, _Widget4);
-
-  function Grid(settings) {
-    _classCallCheck(this, Grid);
-
-    var _this15 = _possibleConstructorReturn(this, _Widget4.call(this, settings));
-
-    _this15.columns = settings.columns ? settings.columns : [];
-    _this15.navigatable = settings.navigatable;
-    _this15.autoGenerateColumns = settings.autoGenerateColumns;
-    _this15.pageSize = settings.pageSize;
-    _this15.group = settings.group;
-
-    _this15.stateType = "gridState";
-
-    _this15._dataSelected = new WidgetEvent();
-    _this15._dataActivated = new WidgetEvent();
-    _this15._dataFieldSelected = new WidgetEvent();
-
-    _this15.attachBehaviors();
-    return _this15;
-  }
-
-  Grid.prototype.saveState = function saveState() {
-    this.state = { columns: this.columns };
-  };
-
-  Grid.prototype.restoreState = function restoreState() {
-    if (this.state) this.columns = this.state.columns;
-  };
-
-  _createClass(Grid, [{
-    key: 'columns',
-    get: function get() {
-      return this._columns;
-    },
-    set: function set(value) {
-      this._columns = value;
-    }
-  }, {
-    key: 'navigatable',
-    get: function get() {
-      return this._navigatable;
-    },
-    set: function set(value) {
-      this._navigatable = value;
-    }
-  }, {
-    key: 'autoGenerateColumns',
-    get: function get() {
-      return this._autoGenerateColumns;
-    },
-    set: function set(value) {
-      this._autoGenerateColumns = value;
-    }
-  }, {
-    key: 'pageSize',
-    get: function get() {
-      return this._pageSize;
-    },
-    set: function set(value) {
-      this._pageSize = value;
-    }
-  }, {
-    key: 'group',
-    get: function get() {
-      return this._group;
-    },
-    set: function set(value) {
-      this._group = value;
-    }
-  }, {
-    key: 'dataSelected',
-    get: function get() {
-      return this._dataSelected;
-    },
-    set: function set(handler) {
-      this._dataSelected.attach(handler);
-    }
-  }, {
-    key: 'dataActivated',
-    get: function get() {
-      return this._dataActivated;
-    },
-    set: function set(handler) {
-      this._dataActivated.attach(handler);
-    }
-  }, {
-    key: 'dataFieldSelected',
-    get: function get() {
-      return this._dataFieldSelected;
-    },
-    set: function set(handler) {
-      this._dataFieldSelected.attach(handler);
-    }
-  }]);
-
-  return Grid;
-}(Widget);
-
-var SearchBox = exports.SearchBox = function (_Widget5) {
-  _inherits(SearchBox, _Widget5);
-
-  function SearchBox(settings) {
-    _classCallCheck(this, SearchBox);
-
-    var _this16 = _possibleConstructorReturn(this, _Widget5.call(this, settings));
-
-    _this16.stateType = "searchBoxState";
-    _this16._dataFilterChanged = new WidgetEvent();
-    _this16._searchString = "";
-    _this16.attachBehaviors();
-    return _this16;
-  }
-
-  SearchBox.prototype.saveState = function saveState() {
-    this.state = this.searchString;
-  };
-
-  SearchBox.prototype.restoreState = function restoreState() {
-    if (this.state) this.searchString = this.state;
-  };
-
-  _createClass(SearchBox, [{
-    key: 'dataFilterChanged',
-    get: function get() {
-      return this._dataFilterChanged;
-    },
-    set: function set(handler) {
-      this._dataFilterChanged.attach(handler);
-    }
-  }, {
-    key: 'searchString',
-    get: function get() {
-      return this._searchString;
-    },
-    set: function set(value) {
-      this._searchString = value;
-    }
-  }]);
-
-  return SearchBox;
-}(Widget);
-
-var Widget = exports.Widget = function () {
-  function Widget(settings) {
-    _classCallCheck(this, Widget);
-
-    this._settings = settings;
-    this._behaviors = [];
-  }
-
-  Widget.prototype.attachBehavior = function attachBehavior(behavior) {
-    behavior.attachToWidget(this);
-  };
-
-  Widget.prototype.attachBehaviors = function attachBehaviors() {
-    if (this.settings.behavior) {
-      for (var _iterator11 = this.settings.behavior, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
-        var _ref11;
-
-        if (_isArray11) {
-          if (_i11 >= _iterator11.length) break;
-          _ref11 = _iterator11[_i11++];
-        } else {
-          _i11 = _iterator11.next();
-          if (_i11.done) break;
-          _ref11 = _i11.value;
-        }
-
-        var b = _ref11;
-
-        this.attachBehavior(b);
-      }
-    }
-  };
-
-  Widget.prototype.changeSettings = function changeSettings(newSettings) {
-    var _this17 = this;
-
-    if (newSettings) {
-      _.forOwn(newSettings, function (v, k) {
-        _this17.settings[k] = v;
-      });
-      this.refresh();
-    }
-  };
-
-  Widget.prototype.refresh = function refresh() {};
-
-  Widget.prototype.dispose = function dispose() {
-    while (true) {
-      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
-    }
-  };
-
-  _createClass(Widget, [{
-    key: 'self',
-    get: function get() {
-      return this;
-    }
-  }, {
-    key: 'settings',
-    get: function get() {
-      return this._settings;
-    }
-  }, {
-    key: 'behaviors',
-    get: function get() {
-      return this._behaviors;
-    }
-  }, {
-    key: 'name',
-    get: function get() {
-      return this.settings.name;
-    }
-  }, {
-    key: 'minHeight',
-    get: function get() {
-      return this.settings.minHeight;
-    },
-    set: function set(value) {
-      this.settings.minHeight = value;
-    }
-  }, {
-    key: 'state',
-    get: function get() {
-      if (this.stateStorage) {
-        var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-        var s = this.stateStorage.get(key);
-        if (s) return s.stateObject;
-      }
-      return undefined;
-    },
-    set: function set(value) {
-      if (this.stateStorage) {
-        var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-        if (!value) this.stateStorage.remove(key);else {
-          var s = { stateType: this.stateType, stateObject: value };
-          this.stateStorage.set(key, s);
-        }
-      }
-    }
-  }, {
-    key: 'stateType',
-    get: function get() {
-      return this._type;
-    },
-    set: function set(value) {
-      this._type = value;
-    }
-  }, {
-    key: 'showHeader',
-    get: function get() {
-      return this.settings.showHeader;
-    }
-  }, {
-    key: 'dataHolder',
-    set: function set(value) {
-      this._dataHolder = value;
-    },
-    get: function get() {
-      return this._dataHolder;
-    }
-  }, {
-    key: 'header',
-    get: function get() {
-      return this.settings.header;
-    },
-    set: function set(value) {
-      this.settings.header = value;
-    }
-  }, {
-    key: 'stateStorage',
-    get: function get() {
-      return this.settings.stateStorage;
-    }
-  }, {
-    key: 'dataSource',
-    set: function set(value) {
-      this.settings.dataSource = value;
-    },
-    get: function get() {
-      return this.settings.dataSource;
-    }
-  }, {
-    key: 'dataMapper',
-    get: function get() {
-      return this.settings.dataMapper;
-    }
-  }, {
-    key: 'dataFilter',
-    get: function get() {
-      return this._dataFilter;
-    },
-    set: function set(value) {
-      this._dataFilter = value;
-    }
-  }, {
-    key: 'type',
-    get: function get() {
-      return this._type;
-    }
-  }, {
-    key: 'dashboard',
-    get: function get() {
-      return this._dashboard;
-    },
-    set: function set(value) {
-      this._dashboard = value;
-    }
-  }]);
-
-  return Widget;
-}();
 
 var DashboardBase = exports.DashboardBase = function () {
   function DashboardBase() {
@@ -2159,20 +1762,436 @@ var LayoutWidget = exports.LayoutWidget = (_dec7 = (0, _aureliaFramework.compute
   return LayoutWidget;
 }(), (_applyDecoratedDescriptor(_class6.prototype, 'hasNavStack', [_dec7], Object.getOwnPropertyDescriptor(_class6.prototype, 'hasNavStack'), _class6.prototype)), _class6));
 
+var Chart = exports.Chart = function (_Widget) {
+  _inherits(Chart, _Widget);
+
+  function Chart(settings) {
+    _classCallCheck(this, Chart);
+
+    var _this13 = _possibleConstructorReturn(this, _Widget.call(this, settings));
+
+    _this13.categoriesField = settings.categoriesField;
+    _this13.seriesDefaults = settings.seriesDefaults;
+    _this13.stateType = "chartState";
+    _this13.attachBehaviors();
+    return _this13;
+  }
+
+  _createClass(Chart, [{
+    key: 'categoriesField',
+    get: function get() {
+      return this._categoriesField;
+    },
+    set: function set(value) {
+      this._categoriesField = value;
+    }
+  }, {
+    key: 'seriesDefaults',
+    get: function get() {
+      return this._seriesDefaults;
+    },
+    set: function set(value) {
+      this._seriesDefaults = value;
+    }
+  }]);
+
+  return Chart;
+}(Widget);
+
+var DataSourceConfigurator = exports.DataSourceConfigurator = function (_Widget2) {
+  _inherits(DataSourceConfigurator, _Widget2);
+
+  function DataSourceConfigurator(settings) {
+    _classCallCheck(this, DataSourceConfigurator);
+
+    var _this14 = _possibleConstructorReturn(this, _Widget2.call(this, settings));
+
+    _this14.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    _this14.stateType = "dataSourceConfiguratorState";
+    _this14._dataSourceChanged = new WidgetEvent();
+    _this14.attachBehaviors();
+    return _this14;
+  }
+
+  _createClass(DataSourceConfigurator, [{
+    key: 'dataSourceToConfigurate',
+    get: function get() {
+      return this._dataSourceToConfigurate;
+    },
+    set: function set(value) {
+      this._dataSourceToConfigurate = value;
+    }
+  }, {
+    key: 'dataSourceChanged',
+    get: function get() {
+      return this._dataSourceChanged;
+    },
+    set: function set(handler) {
+      this._dataSourceChanged.attach(handler);
+    }
+  }]);
+
+  return DataSourceConfigurator;
+}(Widget);
+
+var DetailedView = exports.DetailedView = function (_Widget3) {
+  _inherits(DetailedView, _Widget3);
+
+  function DetailedView(settings) {
+    _classCallCheck(this, DetailedView);
+
+    var _this15 = _possibleConstructorReturn(this, _Widget3.call(this, settings));
+
+    _this15.fields = settings.fields;
+    _this15.stateType = "detailedViewState";
+    _this15.attachBehaviors();
+    return _this15;
+  }
+
+  _createClass(DetailedView, [{
+    key: 'fields',
+    get: function get() {
+      return this._fields;
+    },
+    set: function set(value) {
+      this._fields = value;
+    }
+  }]);
+
+  return DetailedView;
+}(Widget);
+
+var Grid = exports.Grid = function (_Widget4) {
+  _inherits(Grid, _Widget4);
+
+  function Grid(settings) {
+    _classCallCheck(this, Grid);
+
+    var _this16 = _possibleConstructorReturn(this, _Widget4.call(this, settings));
+
+    _this16.columns = settings.columns ? settings.columns : [];
+    _this16.navigatable = settings.navigatable;
+    _this16.autoGenerateColumns = settings.autoGenerateColumns;
+    _this16.pageSize = settings.pageSize;
+    _this16.group = settings.group;
+
+    _this16.stateType = "gridState";
+
+    _this16._dataSelected = new WidgetEvent();
+    _this16._dataActivated = new WidgetEvent();
+    _this16._dataFieldSelected = new WidgetEvent();
+
+    _this16.attachBehaviors();
+    return _this16;
+  }
+
+  Grid.prototype.saveState = function saveState() {
+    this.state = { columns: this.columns };
+  };
+
+  Grid.prototype.restoreState = function restoreState() {
+    if (this.state) this.columns = this.state.columns;
+  };
+
+  _createClass(Grid, [{
+    key: 'columns',
+    get: function get() {
+      return this._columns;
+    },
+    set: function set(value) {
+      this._columns = value;
+    }
+  }, {
+    key: 'navigatable',
+    get: function get() {
+      return this._navigatable;
+    },
+    set: function set(value) {
+      this._navigatable = value;
+    }
+  }, {
+    key: 'autoGenerateColumns',
+    get: function get() {
+      return this._autoGenerateColumns;
+    },
+    set: function set(value) {
+      this._autoGenerateColumns = value;
+    }
+  }, {
+    key: 'pageSize',
+    get: function get() {
+      return this._pageSize;
+    },
+    set: function set(value) {
+      this._pageSize = value;
+    }
+  }, {
+    key: 'group',
+    get: function get() {
+      return this._group;
+    },
+    set: function set(value) {
+      this._group = value;
+    }
+  }, {
+    key: 'dataSelected',
+    get: function get() {
+      return this._dataSelected;
+    },
+    set: function set(handler) {
+      this._dataSelected.attach(handler);
+    }
+  }, {
+    key: 'dataActivated',
+    get: function get() {
+      return this._dataActivated;
+    },
+    set: function set(handler) {
+      this._dataActivated.attach(handler);
+    }
+  }, {
+    key: 'dataFieldSelected',
+    get: function get() {
+      return this._dataFieldSelected;
+    },
+    set: function set(handler) {
+      this._dataFieldSelected.attach(handler);
+    }
+  }]);
+
+  return Grid;
+}(Widget);
+
+var SearchBox = exports.SearchBox = function (_Widget5) {
+  _inherits(SearchBox, _Widget5);
+
+  function SearchBox(settings) {
+    _classCallCheck(this, SearchBox);
+
+    var _this17 = _possibleConstructorReturn(this, _Widget5.call(this, settings));
+
+    _this17.stateType = "searchBoxState";
+    _this17._dataFilterChanged = new WidgetEvent();
+    _this17._searchString = "";
+    _this17.attachBehaviors();
+    return _this17;
+  }
+
+  SearchBox.prototype.saveState = function saveState() {
+    this.state = this.searchString;
+  };
+
+  SearchBox.prototype.restoreState = function restoreState() {
+    if (this.state) this.searchString = this.state;else this.searchString = "";
+  };
+
+  _createClass(SearchBox, [{
+    key: 'dataFilterChanged',
+    get: function get() {
+      return this._dataFilterChanged;
+    },
+    set: function set(handler) {
+      this._dataFilterChanged.attach(handler);
+    }
+  }, {
+    key: 'searchString',
+    get: function get() {
+      return this._searchString;
+    },
+    set: function set(value) {
+      this._searchString = value;
+    }
+  }]);
+
+  return SearchBox;
+}(Widget);
+
+var Widget = exports.Widget = function () {
+  function Widget(settings) {
+    _classCallCheck(this, Widget);
+
+    this._settings = settings;
+    this._behaviors = [];
+  }
+
+  Widget.prototype.attachBehavior = function attachBehavior(behavior) {
+    behavior.attachToWidget(this);
+  };
+
+  Widget.prototype.attachBehaviors = function attachBehaviors() {
+    if (this.settings.behavior) {
+      for (var _iterator11 = this.settings.behavior, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
+        var _ref11;
+
+        if (_isArray11) {
+          if (_i11 >= _iterator11.length) break;
+          _ref11 = _iterator11[_i11++];
+        } else {
+          _i11 = _iterator11.next();
+          if (_i11.done) break;
+          _ref11 = _i11.value;
+        }
+
+        var b = _ref11;
+
+        this.attachBehavior(b);
+      }
+    }
+  };
+
+  Widget.prototype.changeSettings = function changeSettings(newSettings) {
+    var _this18 = this;
+
+    if (newSettings) {
+      _.forOwn(newSettings, function (v, k) {
+        _this18.settings[k] = v;
+      });
+      this.refresh();
+    }
+  };
+
+  Widget.prototype.refresh = function refresh() {};
+
+  Widget.prototype.dispose = function dispose() {
+    while (true) {
+      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+    }
+  };
+
+  _createClass(Widget, [{
+    key: 'self',
+    get: function get() {
+      return this;
+    }
+  }, {
+    key: 'settings',
+    get: function get() {
+      return this._settings;
+    }
+  }, {
+    key: 'behaviors',
+    get: function get() {
+      return this._behaviors;
+    }
+  }, {
+    key: 'name',
+    get: function get() {
+      return this.settings.name;
+    }
+  }, {
+    key: 'minHeight',
+    get: function get() {
+      return this.settings.minHeight;
+    },
+    set: function set(value) {
+      this.settings.minHeight = value;
+    }
+  }, {
+    key: 'state',
+    get: function get() {
+      if (this.stateStorage) {
+        var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+        var s = this.stateStorage.get(key);
+        if (s) return s.stateObject;
+      }
+      return undefined;
+    },
+    set: function set(value) {
+      if (this.stateStorage) {
+        var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+        if (!value) this.stateStorage.remove(key);else {
+          var s = { stateType: this.stateType, stateObject: value };
+          this.stateStorage.set(key, s);
+        }
+      }
+    }
+  }, {
+    key: 'stateType',
+    get: function get() {
+      return this._type;
+    },
+    set: function set(value) {
+      this._type = value;
+    }
+  }, {
+    key: 'showHeader',
+    get: function get() {
+      return this.settings.showHeader;
+    }
+  }, {
+    key: 'dataHolder',
+    set: function set(value) {
+      this._dataHolder = value;
+    },
+    get: function get() {
+      return this._dataHolder;
+    }
+  }, {
+    key: 'header',
+    get: function get() {
+      return this.settings.header;
+    },
+    set: function set(value) {
+      this.settings.header = value;
+    }
+  }, {
+    key: 'stateStorage',
+    get: function get() {
+      return this.settings.stateStorage;
+    }
+  }, {
+    key: 'dataSource',
+    set: function set(value) {
+      this.settings.dataSource = value;
+    },
+    get: function get() {
+      return this.settings.dataSource;
+    }
+  }, {
+    key: 'dataMapper',
+    get: function get() {
+      return this.settings.dataMapper;
+    }
+  }, {
+    key: 'dataFilter',
+    get: function get() {
+      return this._dataFilter;
+    },
+    set: function set(value) {
+      this._dataFilter = value;
+    }
+  }, {
+    key: 'type',
+    get: function get() {
+      return this._type;
+    }
+  }, {
+    key: 'dashboard',
+    get: function get() {
+      return this._dashboard;
+    },
+    set: function set(value) {
+      this._dashboard = value;
+    }
+  }]);
+
+  return Widget;
+}();
+
 var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBehavior) {
   _inherits(ChangeRouteBehavior, _DashboardBehavior);
 
   function ChangeRouteBehavior(settings) {
     _classCallCheck(this, ChangeRouteBehavior);
 
-    var _this18 = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
+    var _this19 = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-    _this18._chanel = settings.chanel;
-    _this18._eventAggregator = settings.eventAggregator;
-    _this18._newRoute = settings.newRoute;
-    _this18._router = settings.router;
-    _this18._paramsMapper = settings.paramsMapper;
-    return _this18;
+    _this19._chanel = settings.chanel;
+    _this19._eventAggregator = settings.eventAggregator;
+    _this19._newRoute = settings.newRoute;
+    _this19._router = settings.router;
+    _this19._paramsMapper = settings.paramsMapper;
+    return _this19;
   }
 
   ChangeRouteBehavior.prototype.attach = function attach(dashboard) {
@@ -2181,12 +2200,7 @@ var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBeha
     this.subscription = this._eventAggregator.subscribe(this._chanel, function (message) {
       var params = me._paramsMapper ? me._paramsMapper(message) : "";
       if (params !== "" && params.indexOf("?") != 0) params = "?" + params;
-      var navItem = {
-        route: me._newRoute.route + (params !== "" ? params : ""),
-        title: me._newRoute.title,
-        dashboardName: me._newRoute.dashboardName
-      };
-      me._router.navigate(navItem);
+      me._router.navigate(me._newRoute + (params !== "" ? params : ""));
     });
   };
 
@@ -2204,19 +2218,19 @@ var CreateWidgetBehavior = exports.CreateWidgetBehavior = function (_DashboardBe
   function CreateWidgetBehavior(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
     _classCallCheck(this, CreateWidgetBehavior);
 
-    var _this19 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
+    var _this20 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
 
-    _this19._chanel = chanel;
-    _this19._widgetType = widgetType;
-    _this19._widgetSettings = widgetSettings;
-    _this19._widgetDimensions = widgetDimensions;
-    _this19._eventAggregator = eventAggregator;
-    _this19._filterMapper = filterMapper;
-    return _this19;
+    _this20._chanel = chanel;
+    _this20._widgetType = widgetType;
+    _this20._widgetSettings = widgetSettings;
+    _this20._widgetDimensions = widgetDimensions;
+    _this20._eventAggregator = eventAggregator;
+    _this20._filterMapper = filterMapper;
+    return _this20;
   }
 
   CreateWidgetBehavior.prototype.attach = function attach(dashboard) {
-    var _this20 = this;
+    var _this21 = this;
 
     _DashboardBehavior2.prototype.attach.call(this, dashboard);
     var me = this;
@@ -2224,7 +2238,7 @@ var CreateWidgetBehavior = exports.CreateWidgetBehavior = function (_DashboardBe
       var w = dashboard.getWidgetByName(me._widgetSettings.name);
       if (!w) {
         var w = new me._widgetType(me._widgetSettings);
-        dashboard.addWidget(w, _this20._widgetDimensions);
+        dashboard.addWidget(w, _this21._widgetDimensions);
       }
       w.dataFilter = me._filterMapper ? me._filterMapper(message) : "";
       w.refresh();
@@ -2274,10 +2288,10 @@ var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = func
   function ManageNavigationStackBehavior(eventAggregator) {
     _classCallCheck(this, ManageNavigationStackBehavior);
 
-    var _this21 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
+    var _this22 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
 
-    _this21._eventAggregator = eventAggregator;
-    return _this21;
+    _this22._eventAggregator = eventAggregator;
+    return _this22;
   }
 
   ManageNavigationStackBehavior.prototype.attach = function attach(dashboard) {
@@ -2307,15 +2321,15 @@ var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_Dashboard
   function ReplaceWidgetBehavior(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
     _classCallCheck(this, ReplaceWidgetBehavior);
 
-    var _this22 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
+    var _this23 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
 
-    _this22._chanel = chanel;
-    _this22._widgetType = widgetType;
-    _this22._widgetSettings = widgetSettings;
-    _this22._eventAggregator = eventAggregator;
-    _this22._widgetToReplaceName = widgetToReplaceName;
-    _this22._mapper = mapper;
-    return _this22;
+    _this23._chanel = chanel;
+    _this23._widgetType = widgetType;
+    _this23._widgetSettings = widgetSettings;
+    _this23._eventAggregator = eventAggregator;
+    _this23._widgetToReplaceName = widgetToReplaceName;
+    _this23._mapper = mapper;
+    return _this23;
   }
 
   ReplaceWidgetBehavior.prototype.attach = function attach(dashboard) {
@@ -2402,11 +2416,11 @@ var DataActivatedBehavior = exports.DataActivatedBehavior = function (_WidgetBeh
   function DataActivatedBehavior(chanel, eventAggregator) {
     _classCallCheck(this, DataActivatedBehavior);
 
-    var _this23 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+    var _this24 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-    _this23._chanel = chanel;
-    _this23._eventAggregator = eventAggregator;
-    return _this23;
+    _this24._chanel = chanel;
+    _this24._eventAggregator = eventAggregator;
+    return _this24;
   }
 
   DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2433,11 +2447,11 @@ var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_W
   function DataFieldSelectedBehavior(chanel, eventAggregator) {
     _classCallCheck(this, DataFieldSelectedBehavior);
 
-    var _this24 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
+    var _this25 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
 
-    _this24._chanel = chanel;
-    _this24._eventAggregator = eventAggregator;
-    return _this24;
+    _this25._chanel = chanel;
+    _this25._eventAggregator = eventAggregator;
+    return _this25;
   }
 
   DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2464,11 +2478,11 @@ var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_W
   function DataFilterChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataFilterChangedBehavior);
 
-    var _this25 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
+    var _this26 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
 
-    _this25._channel = channel;
-    _this25._eventAggregator = eventAggregator;
-    return _this25;
+    _this26._channel = channel;
+    _this26._eventAggregator = eventAggregator;
+    return _this26;
   }
 
   DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2494,12 +2508,12 @@ var DataFilterHandleBehavior = exports.DataFilterHandleBehavior = function (_Wid
   function DataFilterHandleBehavior(channel, eventAggregator, filterMapper) {
     _classCallCheck(this, DataFilterHandleBehavior);
 
-    var _this26 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
+    var _this27 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
 
-    _this26._channel = channel;
-    _this26._eventAggregator = eventAggregator;
-    _this26._filterMapper = filterMapper;
-    return _this26;
+    _this27._channel = channel;
+    _this27._eventAggregator = eventAggregator;
+    _this27._filterMapper = filterMapper;
+    return _this27;
   }
 
   DataFilterHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2526,11 +2540,11 @@ var DataSelectedBehavior = exports.DataSelectedBehavior = function (_WidgetBehav
   function DataSelectedBehavior(chanel, eventAggregator) {
     _classCallCheck(this, DataSelectedBehavior);
 
-    var _this27 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
+    var _this28 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
 
-    _this27._chanel = chanel;
-    _this27._eventAggregator = eventAggregator;
-    return _this27;
+    _this28._chanel = chanel;
+    _this28._eventAggregator = eventAggregator;
+    return _this28;
   }
 
   DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2557,11 +2571,11 @@ var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_W
   function DataSourceChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceChangedBehavior);
 
-    var _this28 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
+    var _this29 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
 
-    _this28._channel = channel;
-    _this28._eventAggregator = eventAggregator;
-    return _this28;
+    _this29._channel = channel;
+    _this29._eventAggregator = eventAggregator;
+    return _this29;
   }
 
   DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2587,11 +2601,11 @@ var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_Wid
   function DataSourceHandleBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceHandleBehavior);
 
-    var _this29 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
+    var _this30 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
 
-    _this29._channel = channel;
-    _this29._eventAggregator = eventAggregator;
-    return _this29;
+    _this30._channel = channel;
+    _this30._eventAggregator = eventAggregator;
+    return _this30;
   }
 
   DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2617,12 +2631,12 @@ var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_WidgetB
   function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
     _classCallCheck(this, SettingsHandleBehavior);
 
-    var _this30 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
+    var _this31 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
 
-    _this30._channel = channel;
-    _this30._eventAggregator = eventAggregator;
-    _this30._messageMapper = messageMapper;
-    return _this30;
+    _this31._channel = channel;
+    _this31._eventAggregator = eventAggregator;
+    _this31._messageMapper = messageMapper;
+    return _this31;
   }
 
   SettingsHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2766,17 +2780,17 @@ var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvi
   function StaticSchemaProvider(schema) {
     _classCallCheck(this, StaticSchemaProvider);
 
-    var _this32 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+    var _this33 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
 
-    _this32._schema = schema;
-    return _this32;
+    _this33._schema = schema;
+    return _this33;
   }
 
   StaticSchemaProvider.prototype.getSchema = function getSchema() {
-    var _this33 = this;
+    var _this34 = this;
 
     return new Promise(function (resolve, reject) {
-      resolve(_this33._schema);
+      resolve(_this34._schema);
     });
   };
 
@@ -2789,13 +2803,13 @@ var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaPro
   function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
     _classCallCheck(this, SwaggerSchemaProvider);
 
-    var _this34 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+    var _this35 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
 
-    _this34._modelName = modelName;
-    _this34._methodName = methodName;
-    _this34._apiName = apiName;
-    _this34._definitionUrl = definitionUrl;
-    return _this34;
+    _this35._modelName = modelName;
+    _this35._methodName = methodName;
+    _this35._apiName = apiName;
+    _this35._definitionUrl = definitionUrl;
+    return _this35;
   }
 
   SwaggerSchemaProvider.prototype.getSchema = function getSchema() {

@@ -74,7 +74,7 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
     };
 
     SearchBox.prototype.restoreState = function restoreState() {
-      if (this.state) this.searchString = this.state;
+      if (this.state) this.searchString = this.state;else this.searchString = "";
     };
 
     _createClass(SearchBox, [{

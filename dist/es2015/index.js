@@ -44,7 +44,7 @@ export * from './layout/widgets/chart';
 export * from './layout/widgets/search-box';
 
 export * from './navigator/navigation-history';
-export * from './navigator/periscope-router';
+export * from './navigator/history-step';
 
 export * from './navigator/dashboardbehavior/change-route-behavior';
 export * from './navigator/dashboardbehavior/create-widget-behavior';

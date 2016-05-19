@@ -39,7 +39,7 @@ var SearchBox = exports.SearchBox = function (_Widget) {
   };
 
   SearchBox.prototype.restoreState = function restoreState() {
-    if (this.state) this.searchString = this.state;
+    if (this.state) this.searchString = this.state;else this.searchString = "";
   };
 
   _createClass(SearchBox, [{

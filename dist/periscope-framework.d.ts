@@ -8,19 +8,13 @@ declare module 'periscope-framework' {
     resolver,
     inject,
     transient,
+    computedFrom,
     customElement,
     useView,
     Decorators,
     bindable,
-    noView,
-    computedFrom
+    noView
   } from 'aurelia-framework';
-  import {
-    EventAggregator
-  } from 'aurelia-event-aggregator';
-  import {
-    Router
-  } from 'aurelia-router';
   import {
     HttpClient
   } from 'aurelia-fetch-client';
@@ -143,6 +137,11 @@ declare module 'periscope-framework' {
     get(container: any): any;
     static of(Type: any): any;
   }
+  export class HistoryStep {
+    constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
+    currentRouteItem: any;
+    run(routingContext: any, next: any): any;
+  }
   export class NavigationHistory {
     constructor();
     items: any;
@@ -152,11 +151,6 @@ declare module 'periscope-framework' {
     deleteAll(): any;
     trimRight(url: any): any;
     exists(url: any): any;
-  }
-  export class PeriscopeRouter {
-    constructor(aureliaRouter: any, eventAggregator: any, userStateStorage: any, navigationHistory: any);
-    currentRouteItem: any;
-    navigate(routeItem: any): any;
   }
   export class StateDiscriminator {
     static discriminate(widgetStates: any): any;

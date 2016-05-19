@@ -3,9 +3,7 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {resolver,inject,transient,customElement,useView,Decorators,bindable,noView,computedFrom} from 'aurelia-framework';
-import {EventAggregator} from 'aurelia-event-aggregator';
-import {Router} from 'aurelia-router';
+import {resolver,inject,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 
 export class CacheManager {
@@ -721,6 +719,66 @@ export class Factory{
   }
 }
 
+@inject(UserStateStorage, NavigationHistory, DashboardManager)
+export class HistoryStep {
+  constructor(userStateStorage, navigationHistory, dashboardManager) {
+    this._navigationHistory = navigationHistory;
+    this._userStateStorage = userStateStorage;
+    this._dashboardManager = dashboardManager;
+  }
+
+  get currentRouteItem() {
+    return this._currentRoute;
+  }
+  set currentRouteItem(value) {
+    this._currentRoute = value;
+  }
+
+  run(routingContext, next) {
+    if (routingContext.getAllInstructions().some(i => i.config.name === "dashboard")){
+      let dashboard = this._dashboardManager.find(routingContext.params.dashboard);
+      if (dashboard){
+          // update the history with the current state which is probably has changed
+          if (this.currentRouteItem){
+            let currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
+            let url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+
+            if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
+              this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+            }
+            else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
+              this._navigationHistory.update(url,new Date());
+            }
+          }
+
+          let fullUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
+
+          // synchronize a stored state and a state from the route
+          var routeWidgetsState = StateUrlParser.queryToState(fullUrl);
+          var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(dashboard.name));
+          for (let oldSt of storageWidgetsState)
+            this._userStateStorage.remove(oldSt.key);
+          for (let newSt of routeWidgetsState)
+            this._userStateStorage.set(newSt.key,newSt.value);
+
+          // add the new route to the history
+          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, fullUrl)).length===0){
+            this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, this._userStateStorage.getAll(dashboard.name), new Date());
+          }
+
+          this.currentRouteItem = {
+            dashboardName: dashboard.name,
+            title: dashboard.title,
+            route:fullUrl
+          };
+        }
+    }
+    else
+      this.currentRouteItem = null;
+    return next();
+  }
+}
+
 export class NavigationHistory {
   constructor() {
     this._history = [];
@@ -778,56 +836,6 @@ export class NavigationHistory {
     return false;
   }
 
-
-
-}
-
-@inject(Router, EventAggregator, UserStateStorage, NavigationHistory, StateUrlParser)
-export class PeriscopeRouter {
-  constructor(aureliaRouter, eventAggregator, userStateStorage, navigationHistory){
-    this._aureliaRouter = aureliaRouter;
-    this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
-    this._eventAggregator = eventAggregator;
-
-  }
-
-  get currentRouteItem() {
-    return this._currentRoute;
-  }
-  set currentRouteItem(value) {
-    this._currentRoute = value;
-  }
-
-  navigate(routeItem){
-    // update the history with the current state
-    if (this.currentRouteItem){
-      var currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
-      var url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
-      if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
-        this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-      }
-      else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
-        this._navigationHistory.update(url,new Date());
-      }
-    }
-
-    // synchronize a stored state and a state from the route
-    var routeWidgetsState = StateUrlParser.queryToState(routeItem.route);
-    var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(routeItem.dashboardName));
-    for (let oldSt of storageWidgetsState)
-      this._userStateStorage.remove(oldSt.key);
-    for (let newSt of routeWidgetsState)
-      this._userStateStorage.set(newSt.key,newSt.value);
-
-    // add the new route to the history
-    if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, routeItem.route)).length===0){ // add new history item
-      this._navigationHistory.add(routeItem.route, routeItem.title, routeItem.dashboardName, this._userStateStorage.getAll(routeItem.dashboardName), new Date());
-    }
-    // navigate to the new route
-    this.currentRouteItem = routeItem;
-    this._aureliaRouter.navigate(routeItem.route);
-  }
 
 
 }
@@ -1469,368 +1477,6 @@ export class FormatValueConverter {
   }
 }
 
-export class Chart extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.categoriesField = settings.categoriesField;
-    this.seriesDefaults = settings.seriesDefaults;
-    this.stateType = "chartState";
-    this.attachBehaviors();
-  }
-
-  get categoriesField(){
-    return this._categoriesField;
-  }
-  set categoriesField(value){
-    this._categoriesField = value;
-  }
-
-  get seriesDefaults(){
-    return this._seriesDefaults;
-  }
-  set seriesDefaults(value){
-    this._seriesDefaults = value;
-  }
-
-}
-
-export class DataSourceConfigurator extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    this.stateType = "dataSourceConfiguratorState";
-    this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-
-  get dataSourceToConfigurate(){
-    return this._dataSourceToConfigurate;
-  }
-  set dataSourceToConfigurate(value) {
-    this._dataSourceToConfigurate = value;
-  }
-
-
-  get dataSourceChanged() {
-    return this._dataSourceChanged;
-  }
-  set dataSourceChanged(handler) {
-    this._dataSourceChanged.attach(handler);
-  }
-
-
-}
-
-export class DetailedView extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.fields = settings.fields;
-    this.stateType = "detailedViewState";
-    this.attachBehaviors();
-  }
-
-  get fields(){
-    return this._fields;
-  }
-  set fields(value) {
-    this._fields = value;
-  }
-}
-
-
-export class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
-
-    this.columns = settings.columns? settings.columns : [];
-    this.navigatable = settings.navigatable;
-    this.autoGenerateColumns = settings.autoGenerateColumns;
-    this.pageSize = settings.pageSize;
-    this.group = settings.group;
-
-    this.stateType = "gridState";
-
-    this._dataSelected = new WidgetEvent();
-    this._dataActivated = new WidgetEvent();
-    this._dataFieldSelected = new WidgetEvent();
-
-    this.attachBehaviors();
-  }
-
-  get columns(){
-    return this._columns;
-  }
-  set columns(value) {
-    this._columns = value;
-  }
-
-  get navigatable(){
-    return this._navigatable;
-  }
-  set navigatable(value) {
-    this._navigatable = value;
-  }
-
-  get autoGenerateColumns(){
-    return this._autoGenerateColumns;
-  }
-  set autoGenerateColumns(value) {
-    this._autoGenerateColumns = value;
-  }
-
-  get pageSize(){
-    return this._pageSize;
-  }
-  set pageSize(value) {
-    this._pageSize = value;
-  }
-
-  get group(){
-    return this._group;
-  }
-  set group(value){
-    this._group = value;
-  }
-
-  get dataSelected() {
-    return this._dataSelected;
-  }
-  set dataSelected(handler) {
-    this._dataSelected.attach(handler);
-  }
-
-  get dataActivated() {
-    return this._dataActivated;
-  }
-  set dataActivated(handler) {
-    this._dataActivated.attach(handler);
-  }
-  
-
-  get dataFieldSelected() {
-    return this._dataFieldSelected;
-  }
-  set dataFieldSelected(handler) {
-    this._dataFieldSelected.attach(handler);
-  }
-
-  saveState(){
-    this.state = {columns:this.columns};
-  }
-
-  restoreState(){
-    if (this.state)
-      this.columns = this.state.columns;
-  }
-}
-
-export class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "searchBoxState";
-    this._dataFilterChanged = new WidgetEvent();
-    this._searchString = "";
-    this.attachBehaviors();
-  }
-
-
-
-  get dataFilterChanged() {
-    return this._dataFilterChanged;
-  }
-  set dataFilterChanged(handler) {
-    this._dataFilterChanged.attach(handler);
-  }
-
-  get searchString(){
-    return this._searchString;
-  }
-  set searchString(value) {
-    this._searchString = value;
-  }
-
-  saveState(){
-    this.state = this.searchString;
-  }
-
-  restoreState(){
-    if (this.state)
-      this.searchString = this.state;
-  }
-}
-
-export class Widget {
-
-  constructor(settings) {
-    // call method in child class
-    this._settings = settings;
-    this._behaviors = [];
-
-  }
-
-  get self() {
-    return this;
-  }
-
-  get settings(){
-    return this._settings;
-  }
-
-
-  get behaviors() {
-    return this._behaviors;
-  }
-
-  get name(){
-    return this.settings.name;
-  }
-
-  get minHeight(){
-    return this.settings.minHeight;
-  }
-  set minHeight(value){
-    this.settings.minHeight = value;
-  }
-
-  get state() {
-    if (this.stateStorage) {
-      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-      var s = this.stateStorage.get(key);
-      if (s)
-        return s.stateObject;
-    }
-    return undefined;
-  }
-
-  set state(value) {
-    if (this.stateStorage) {
-      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-      if (!value)
-        this.stateStorage.remove(key);
-      else
-      {
-        var s = {stateType: this.stateType, stateObject: value};
-        this.stateStorage.set(key, s);
-      }
-    }
-  }
-
-  get stateType() {
-    return this._type;
-  }
-  set stateType(value) {
-    this._type = value;
-  }
-
-  get showHeader(){
-    return this.settings.showHeader;
-  }
-
-  set dataHolder(value){
-    this._dataHolder = value;
-  }
-  get dataHolder(){
-    return this._dataHolder;
-  }
-
-  get header() {
-    return this.settings.header;
-  }
-  set header(value) {
-    this.settings.header = value;
-  }
-
-
-  get stateStorage(){
-    return this.settings.stateStorage;
-  }
-
-
-  set dataSource(value) {
-    this.settings.dataSource = value;
-  }
-  get dataSource() {
-    return this.settings.dataSource;
-  }
-
-  get dataMapper() {
-    return this.settings.dataMapper;
-  }
-
-  get dataFilter() {
-    return this._dataFilter;
-  }
-
-  set dataFilter(value) {
-    this._dataFilter = value;
-  }
-
-  get type() {
-    return this._type;
-  }
-
-  get dashboard() {
-    return this._dashboard;
-  }
-  set dashboard(value) {
-    this._dashboard = value;
-  }
-
-
-  attachBehavior(behavior){
-    behavior.attachToWidget(this);
-  }
-
-  attachBehaviors(){
-    if (this.settings.behavior) {
-      for (let b of this.settings.behavior)
-        this.attachBehavior(b);
-    }
-  }
-
-  ///METHODS
-  changeSettings(newSettings){
-    if (newSettings) {
-      //merge settings
-      _.forOwn(newSettings, (v, k)=> {
-        this.settings[k] = v;
-      });
-      this.refresh();
-    }
-  }
-
-  refresh(){
-
-  }
-
-
-
-
-  dispose(){
-    while(true) {
-      if (this.behaviors.length>0)
-        this.behaviors[0].detach();
-      else
-        break;
-    }
-  }
-
-
-
-  /*_calculateHeight(contentContainerElement){
-    if (!contentContainerElement)
-      return this.settings.minHeight;
-    var p = $(contentContainerElement).parents(".widget-container")
-    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
-    var parentHeight = p[0].offsetHeight - headerHeight;
-    return parentHeight > this.settings.minHeight? parentHeight : this.settings.minHeight;
-  }*/
-}
-
-
-
-
 export class DashboardBase
 {
   constructor() {
@@ -2038,6 +1684,369 @@ export class LayoutWidget{
 
 }
 
+export class Chart extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.categoriesField = settings.categoriesField;
+    this.seriesDefaults = settings.seriesDefaults;
+    this.stateType = "chartState";
+    this.attachBehaviors();
+  }
+
+  get categoriesField(){
+    return this._categoriesField;
+  }
+  set categoriesField(value){
+    this._categoriesField = value;
+  }
+
+  get seriesDefaults(){
+    return this._seriesDefaults;
+  }
+  set seriesDefaults(value){
+    this._seriesDefaults = value;
+  }
+
+}
+
+export class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+    this.attachBehaviors();
+  }
+
+
+  get dataSourceToConfigurate(){
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
+  }
+
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+
+}
+
+export class DetailedView extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.fields = settings.fields;
+    this.stateType = "detailedViewState";
+    this.attachBehaviors();
+  }
+
+  get fields(){
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
+  }
+}
+
+
+export class Grid extends Widget {
+  constructor(settings) {
+    super(settings);
+
+    this.columns = settings.columns? settings.columns : [];
+    this.navigatable = settings.navigatable;
+    this.autoGenerateColumns = settings.autoGenerateColumns;
+    this.pageSize = settings.pageSize;
+    this.group = settings.group;
+
+    this.stateType = "gridState";
+
+    this._dataSelected = new WidgetEvent();
+    this._dataActivated = new WidgetEvent();
+    this._dataFieldSelected = new WidgetEvent();
+
+    this.attachBehaviors();
+  }
+
+  get columns(){
+    return this._columns;
+  }
+  set columns(value) {
+    this._columns = value;
+  }
+
+  get navigatable(){
+    return this._navigatable;
+  }
+  set navigatable(value) {
+    this._navigatable = value;
+  }
+
+  get autoGenerateColumns(){
+    return this._autoGenerateColumns;
+  }
+  set autoGenerateColumns(value) {
+    this._autoGenerateColumns = value;
+  }
+
+  get pageSize(){
+    return this._pageSize;
+  }
+  set pageSize(value) {
+    this._pageSize = value;
+  }
+
+  get group(){
+    return this._group;
+  }
+  set group(value){
+    this._group = value;
+  }
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+  
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState(){
+    this.state = {columns:this.columns};
+  }
+
+  restoreState(){
+    if (this.state)
+      this.columns = this.state.columns;
+  }
+}
+
+export class SearchBox extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.stateType = "searchBoxState";
+    this._dataFilterChanged = new WidgetEvent();
+    this._searchString = "";
+    this.attachBehaviors();
+  }
+
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+  get searchString(){
+    return this._searchString;
+  }
+  set searchString(value) {
+    this._searchString = value;
+  }
+
+  saveState(){
+    this.state = this.searchString;
+  }
+
+  restoreState(){
+    if (this.state)
+      this.searchString = this.state;
+    else
+      this.searchString = "";
+  }
+}
+
+export class Widget {
+
+  constructor(settings) {
+    // call method in child class
+    this._settings = settings;
+    this._behaviors = [];
+
+  }
+
+  get self() {
+    return this;
+  }
+
+  get settings(){
+    return this._settings;
+  }
+
+
+  get behaviors() {
+    return this._behaviors;
+  }
+
+  get name(){
+    return this.settings.name;
+  }
+
+  get minHeight(){
+    return this.settings.minHeight;
+  }
+  set minHeight(value){
+    this.settings.minHeight = value;
+  }
+
+  get state() {
+    if (this.stateStorage) {
+      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+      var s = this.stateStorage.get(key);
+      if (s)
+        return s.stateObject;
+    }
+    return undefined;
+  }
+
+  set state(value) {
+    if (this.stateStorage) {
+      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
+      if (!value)
+        this.stateStorage.remove(key);
+      else
+      {
+        var s = {stateType: this.stateType, stateObject: value};
+        this.stateStorage.set(key, s);
+      }
+    }
+  }
+
+  get stateType() {
+    return this._type;
+  }
+  set stateType(value) {
+    this._type = value;
+  }
+
+  get showHeader(){
+    return this.settings.showHeader;
+  }
+
+  set dataHolder(value){
+    this._dataHolder = value;
+  }
+  get dataHolder(){
+    return this._dataHolder;
+  }
+
+  get header() {
+    return this.settings.header;
+  }
+  set header(value) {
+    this.settings.header = value;
+  }
+
+
+  get stateStorage(){
+    return this.settings.stateStorage;
+  }
+
+
+  set dataSource(value) {
+    this.settings.dataSource = value;
+  }
+  get dataSource() {
+    return this.settings.dataSource;
+  }
+
+  get dataMapper() {
+    return this.settings.dataMapper;
+  }
+
+  get dataFilter() {
+    return this._dataFilter;
+  }
+
+  set dataFilter(value) {
+    this._dataFilter = value;
+  }
+
+  get type() {
+    return this._type;
+  }
+
+  get dashboard() {
+    return this._dashboard;
+  }
+  set dashboard(value) {
+    this._dashboard = value;
+  }
+
+
+  attachBehavior(behavior){
+    behavior.attachToWidget(this);
+  }
+
+  attachBehaviors(){
+    if (this.settings.behavior) {
+      for (let b of this.settings.behavior)
+        this.attachBehavior(b);
+    }
+  }
+
+  ///METHODS
+  changeSettings(newSettings){
+    if (newSettings) {
+      //merge settings
+      _.forOwn(newSettings, (v, k)=> {
+        this.settings[k] = v;
+      });
+      this.refresh();
+    }
+  }
+
+  refresh(){
+
+  }
+
+
+
+
+  dispose(){
+    while(true) {
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
+      else
+        break;
+    }
+  }
+
+
+
+  /*_calculateHeight(contentContainerElement){
+    if (!contentContainerElement)
+      return this.settings.minHeight;
+    var p = $(contentContainerElement).parents(".widget-container")
+    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
+    var parentHeight = p[0].offsetHeight - headerHeight;
+    return parentHeight > this.settings.minHeight? parentHeight : this.settings.minHeight;
+  }*/
+}
+
+
+
+
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
     super();
@@ -2055,13 +2064,7 @@ export class ChangeRouteBehavior extends DashboardBehavior {
       var params = me._paramsMapper ? me._paramsMapper(message) : "";
       if ((params!=="")&&(params.indexOf("?")!=0))
         params="?" + params;
-      var navItem = {
-          //route: me._newRoute.route,
-          route: me._newRoute.route + (params!==""? params : ""),
-          title: me._newRoute.title,
-          dashboardName: me._newRoute.dashboardName
-      }
-      me._router.navigate(navItem);
+      me._router.navigate(me._newRoute + (params!==""? params : ""));
     });
   }
 

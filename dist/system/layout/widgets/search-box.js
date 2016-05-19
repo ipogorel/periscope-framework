@@ -81,7 +81,7 @@ System.register(['aurelia-framework', './widget', './../../navigator/events/widg
         };
 
         SearchBox.prototype.restoreState = function restoreState() {
-          if (this.state) this.searchString = this.state;
+          if (this.state) this.searchString = this.state;else this.searchString = "";
         };
 
         _createClass(SearchBox, [{

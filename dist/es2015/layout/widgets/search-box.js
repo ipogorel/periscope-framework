@@ -30,6 +30,6 @@ export let SearchBox = class SearchBox extends Widget {
   }
 
   restoreState() {
-    if (this.state) this.searchString = this.state;
+    if (this.state) this.searchString = this.state;else this.searchString = "";
   }
 };
