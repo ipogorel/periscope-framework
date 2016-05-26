@@ -59,7 +59,6 @@ var DashboardBase = exports.DashboardBase = function () {
   DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
     this._name = dashboardConfiguration.name;
     this._title = dashboardConfiguration.title;
-    this._route = dashboardConfiguration.route;
   };
 
   DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
@@ -160,11 +159,6 @@ var DashboardBase = exports.DashboardBase = function () {
     key: 'name',
     get: function get() {
       return this._name;
-    }
-  }, {
-    key: 'route',
-    get: function get() {
-      return this._route;
     }
   }, {
     key: 'title',

@@ -91,7 +91,6 @@ define(['exports', 'aurelia-framework', 'lodash'], function (exports, _aureliaFr
     DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
       this._name = dashboardConfiguration.name;
       this._title = dashboardConfiguration.title;
-      this._route = dashboardConfiguration.route;
     };
 
     DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
@@ -192,11 +191,6 @@ define(['exports', 'aurelia-framework', 'lodash'], function (exports, _aureliaFr
       key: 'name',
       get: function get() {
         return this._name;
-      }
-    }, {
-      key: 'route',
-      get: function get() {
-        return this._route;
       }
     }, {
       key: 'title',

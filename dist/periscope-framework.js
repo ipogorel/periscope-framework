@@ -3,82 +3,8 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {resolver,inject,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
+import {inject,resolver,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
-
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
 
 
 export class DataHolder {
@@ -323,6 +249,80 @@ export class Query {
         (this.skip?this.skip:"0")));
   }
   
+}
+
+
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
 }
 
 
@@ -681,42 +681,125 @@ export class ExpressionParser {
   }
 }
 
-export class DashboardManager {
-  constructor(){
-    this._dashboards = [];
+@inject(UserStateStorage, NavigationHistory, DashboardManager)
+export class HistoryStep {
+  constructor(userStateStorage, navigationHistory, dashboardManager) {
+    this._navigationHistory = navigationHistory;
+    this._userStateStorage = userStateStorage;
+    this._dashboardManager = dashboardManager;
   }
 
-  get dashboards(){
-    return this._dashboards;
+  get currentRouteItem() {
+    return this._currentRoute;
+  }
+  set currentRouteItem(value) {
+    this._currentRoute = value;
   }
 
-  find(dashboardName){
-    return  _.find(this._dashboards, {name:dashboardName});
-  }
-  
-  createDashboard(type, dashboardConfiguration){
-    var dashboard = new type();
-    dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
-    return dashboard;
+  run(routingContext, next) {
+    if (routingContext.getAllInstructions().some(i => i.config.name === "dashboard")){
+      let dashboard = this._dashboardManager.find(routingContext.params.dashboard);
+      if (dashboard){
+          // update the history with the current state which is probably has changed
+          if (this.currentRouteItem){
+            let currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
+            let url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+
+            if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
+              this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+            }
+            else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
+              this._navigationHistory.update(url,new Date());
+            }
+          }
+
+          let fullUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
+
+          // synchronize a stored state and a state from the route
+          var routeWidgetsState = StateUrlParser.queryToState(fullUrl);
+          var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(dashboard.name));
+          for (let oldSt of storageWidgetsState)
+            this._userStateStorage.remove(oldSt.key);
+          for (let newSt of routeWidgetsState)
+            this._userStateStorage.set(newSt.key,newSt.value);
+
+          // add the new route to the history
+          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, fullUrl)).length===0){
+            this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, this._userStateStorage.getAll(dashboard.name), new Date());
+          }
+
+          this.currentRouteItem = {
+            dashboardName: dashboard.name,
+            title: dashboard.title,
+            route:fullUrl
+          };
+        }
+    }
+    else
+      this.currentRouteItem = null;
+    return next();
   }
 }
 
-@resolver
-export class Factory{
-  constructor(Type){
-    this.Type = Type;
+export class NavigationHistory {
+  constructor() {
+    this._history = [];
   }
 
-  get(container){
-    return (...rest)=>{
-      return container.invoke(this.Type, rest);
-    };
+
+
+  get items(){
+    return this._history;
   }
 
-  static of(Type){
-    return new Factory(Type);
+
+  add(url, title, dashboard, state, dateTime) {
+    this._history.push({url, title, dashboard, state, dateTime});
   }
+
+
+
+  update(url, dateTime){
+    for (let h of this._history){
+      if (h.url === url) {
+        h.dateTime = dateTime;
+        break;
+      }
+    }
+  }
+
+  delete(url){
+    for (let i of this._history){
+      if (i.url === url) {
+        this._history.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  deleteAll(){
+    this._history = [];
+  }
+
+  trimRight(url){
+    for (let i = this._history.length - 1; i >= 0; i--) {
+      if (this._history[i].url === url) {
+        this._history.splice(i + 1);
+        return;
+      }
+    }
+  }
+
+  exists(url) {
+    for (let i of this._history){
+      if (i.route === url)
+        return true;
+    }
+    return false;
+  }
+
+
+
 }
 
 
@@ -857,125 +940,42 @@ export class UserStateStorage{
 
 }
 
-@inject(UserStateStorage, NavigationHistory, DashboardManager)
-export class HistoryStep {
-  constructor(userStateStorage, navigationHistory, dashboardManager) {
-    this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
-    this._dashboardManager = dashboardManager;
+export class DashboardManager {
+  constructor(){
+    this._dashboards = [];
   }
 
-  get currentRouteItem() {
-    return this._currentRoute;
-  }
-  set currentRouteItem(value) {
-    this._currentRoute = value;
+  get dashboards(){
+    return this._dashboards;
   }
 
-  run(routingContext, next) {
-    if (routingContext.getAllInstructions().some(i => i.config.name === "dashboard")){
-      let dashboard = this._dashboardManager.find(routingContext.params.dashboard);
-      if (dashboard){
-          // update the history with the current state which is probably has changed
-          if (this.currentRouteItem){
-            let currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
-            let url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
-
-            if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
-              this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-            }
-            else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
-              this._navigationHistory.update(url,new Date());
-            }
-          }
-
-          let fullUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
-
-          // synchronize a stored state and a state from the route
-          var routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(dashboard.name));
-          for (let oldSt of storageWidgetsState)
-            this._userStateStorage.remove(oldSt.key);
-          for (let newSt of routeWidgetsState)
-            this._userStateStorage.set(newSt.key,newSt.value);
-
-          // add the new route to the history
-          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, fullUrl)).length===0){
-            this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, this._userStateStorage.getAll(dashboard.name), new Date());
-          }
-
-          this.currentRouteItem = {
-            dashboardName: dashboard.name,
-            title: dashboard.title,
-            route:fullUrl
-          };
-        }
-    }
-    else
-      this.currentRouteItem = null;
-    return next();
+  find(dashboardName){
+    return  _.find(this._dashboards, {name:dashboardName});
+  }
+  
+  createDashboard(type, dashboardConfiguration){
+    var dashboard = new type();
+    dashboard.configure(dashboardConfiguration);
+    this._dashboards.push(dashboard);
+    return dashboard;
   }
 }
 
-export class NavigationHistory {
-  constructor() {
-    this._history = [];
+@resolver
+export class Factory{
+  constructor(Type){
+    this.Type = Type;
   }
 
-
-
-  get items(){
-    return this._history;
+  get(container){
+    return (...rest)=>{
+      return container.invoke(this.Type, rest);
+    };
   }
 
-
-  add(url, title, dashboard, state, dateTime) {
-    this._history.push({url, title, dashboard, state, dateTime});
+  static of(Type){
+    return new Factory(Type);
   }
-
-
-
-  update(url, dateTime){
-    for (let h of this._history){
-      if (h.url === url) {
-        h.dateTime = dateTime;
-        break;
-      }
-    }
-  }
-
-  delete(url){
-    for (let i of this._history){
-      if (i.url === url) {
-        this._history.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-  deleteAll(){
-    this._history = [];
-  }
-
-  trimRight(url){
-    for (let i = this._history.length - 1; i >= 0; i--) {
-      if (this._history[i].url === url) {
-        this._history.splice(i + 1);
-        return;
-      }
-    }
-  }
-
-  exists(url) {
-    for (let i of this._history){
-      if (i.route === url)
-        return true;
-    }
-    return false;
-  }
-
-
-
 }
 
 export class Schema {
@@ -1489,10 +1489,6 @@ export class DashboardBase
   }
 
 
-  get route() {
-    return this._route;
-  }
-
   get title() {
     return this._title;
   }
@@ -1509,7 +1505,6 @@ export class DashboardBase
   configure(dashboardConfiguration){
     this._name = dashboardConfiguration.name;
     this._title = dashboardConfiguration.title;
-    this._route = dashboardConfiguration.route;
   }
 
 

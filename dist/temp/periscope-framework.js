@@ -3,9 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.NavigationHistory = exports.HistoryStep = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.Factory = exports.DashboardManager = exports.ExpressionParser = exports.IntellisenceManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.Factory = exports.DashboardManager = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.ExpressionParser = exports.IntellisenceManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = undefined;
 
-var _class, _dec, _class2, _dec2, _class3, _dec3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _desc, _value, _class6;
+var _dec, _class, _dec2, _class2, _class3, _dec3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _desc, _value, _class6;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -74,113 +74,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CacheManager = exports.CacheManager = function () {
-  function CacheManager(storage) {
-    _classCallCheck(this, CacheManager);
-
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  CacheManager.prototype.startCleaner = function startCleaner() {
-    var _this = this;
-
-    if (!this.cleaner) {
-      (function () {
-        var self = _this;
-        _this.cleaner = window.setInterval(function () {
-          self._cacheStorage.removeExpired();
-        }, _this._cleanInterval);
-      })();
-    }
-  };
-
-  CacheManager.prototype.stopCleaner = function stopCleaner() {
-    if (this.cleaner) window.clearInterval(this.cleaner);
-  };
-
-  CacheManager.prototype.getStorage = function getStorage() {
-    return this._cacheStorage;
-  };
-
-  _createClass(CacheManager, [{
-    key: 'cleanInterval',
-    get: function get() {
-      return this._cleanInterval;
-    }
-  }]);
-
-  return CacheManager;
-}();
-
-var CacheStorage = exports.CacheStorage = function () {
-  function CacheStorage() {
-    _classCallCheck(this, CacheStorage);
-  }
-
-  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
-
-  CacheStorage.prototype.getItem = function getItem(key) {};
-
-  CacheStorage.prototype.removeItem = function removeItem(key) {};
-
-  CacheStorage.prototype.removeExpired = function removeExpired() {};
-
-  return CacheStorage;
-}();
-
-var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
-  _inherits(MemoryCacheStorage, _CacheStorage);
-
-  function MemoryCacheStorage() {
-    _classCallCheck(this, MemoryCacheStorage);
-
-    var _this2 = _possibleConstructorReturn(this, _CacheStorage.call(this));
-
-    _this2._cache = {};
-    return _this2;
-  }
-
-  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({}, value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  };
-
-  MemoryCacheStorage.prototype.getItem = function getItem(key) {
-    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
-  };
-
-  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
-    delete this._cache[key];
-  };
-
-  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
-    var self = this;
-    _.forOwn(self._cache, function (v, k) {
-      if (self._cache[k].exp < Date.now()) {
-        self.removeItem(k);
-      }
-    });
-  };
-
-  return MemoryCacheStorage;
-}(CacheStorage);
-
-var DashboardConfiguration = exports.DashboardConfiguration = function () {
-  function DashboardConfiguration() {
-    _classCallCheck(this, DashboardConfiguration);
-  }
-
-  DashboardConfiguration.prototype.invoke = function invoke() {};
-
-  return DashboardConfiguration;
-}();
-
 var DataHolder = exports.DataHolder = function () {
   function DataHolder() {
     _classCallCheck(this, DataHolder);
@@ -237,7 +130,7 @@ var Datasource = exports.Datasource = function () {
   };
 
   Datasource.prototype.getData = function getData(query) {
-    var _this3 = this;
+    var _this = this;
 
     var dataHolder = new DataHolder();
     dataHolder.query = query;
@@ -267,7 +160,7 @@ var Datasource = exports.Datasource = function () {
     }).then(function (d) {
       dataHolder.data = _.isArray(d.data) ? d.data : [d.data];
       dataHolder.total = d.total;
-      if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this3._cache.cacheTimeSeconds);
+      if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this._cache.cacheTimeSeconds);
       return dataHolder;
     });
   };
@@ -449,6 +342,113 @@ var Query = exports.Query = function () {
   }]);
 
   return Query;
+}();
+
+var CacheManager = exports.CacheManager = function () {
+  function CacheManager(storage) {
+    _classCallCheck(this, CacheManager);
+
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  CacheManager.prototype.startCleaner = function startCleaner() {
+    var _this2 = this;
+
+    if (!this.cleaner) {
+      (function () {
+        var self = _this2;
+        _this2.cleaner = window.setInterval(function () {
+          self._cacheStorage.removeExpired();
+        }, _this2._cleanInterval);
+      })();
+    }
+  };
+
+  CacheManager.prototype.stopCleaner = function stopCleaner() {
+    if (this.cleaner) window.clearInterval(this.cleaner);
+  };
+
+  CacheManager.prototype.getStorage = function getStorage() {
+    return this._cacheStorage;
+  };
+
+  _createClass(CacheManager, [{
+    key: 'cleanInterval',
+    get: function get() {
+      return this._cleanInterval;
+    }
+  }]);
+
+  return CacheManager;
+}();
+
+var CacheStorage = exports.CacheStorage = function () {
+  function CacheStorage() {
+    _classCallCheck(this, CacheStorage);
+  }
+
+  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
+
+  CacheStorage.prototype.getItem = function getItem(key) {};
+
+  CacheStorage.prototype.removeItem = function removeItem(key) {};
+
+  CacheStorage.prototype.removeExpired = function removeExpired() {};
+
+  return CacheStorage;
+}();
+
+var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
+  _inherits(MemoryCacheStorage, _CacheStorage);
+
+  function MemoryCacheStorage() {
+    _classCallCheck(this, MemoryCacheStorage);
+
+    var _this3 = _possibleConstructorReturn(this, _CacheStorage.call(this));
+
+    _this3._cache = {};
+    return _this3;
+  }
+
+  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({}, value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  };
+
+  MemoryCacheStorage.prototype.getItem = function getItem(key) {
+    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
+  };
+
+  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
+    delete this._cache[key];
+  };
+
+  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
+    var self = this;
+    _.forOwn(self._cache, function (v, k) {
+      if (self._cache[k].exp < Date.now()) {
+        self.removeItem(k);
+      }
+    });
+  };
+
+  return MemoryCacheStorage;
+}(CacheStorage);
+
+var DashboardConfiguration = exports.DashboardConfiguration = function () {
+  function DashboardConfiguration() {
+    _classCallCheck(this, DashboardConfiguration);
+  }
+
+  DashboardConfiguration.prototype.invoke = function invoke() {};
+
+  return DashboardConfiguration;
 }();
 
 var DataHelper = exports.DataHelper = function () {
@@ -832,59 +832,205 @@ var ExpressionParser = exports.ExpressionParser = function () {
   return ExpressionParser;
 }();
 
-var DashboardManager = exports.DashboardManager = function () {
-  function DashboardManager() {
-    _classCallCheck(this, DashboardManager);
+var HistoryStep = exports.HistoryStep = (_dec = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec(_class = function () {
+  function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
+    _classCallCheck(this, HistoryStep);
 
-    this._dashboards = [];
+    this._navigationHistory = navigationHistory;
+    this._userStateStorage = userStateStorage;
+    this._dashboardManager = dashboardManager;
   }
 
-  DashboardManager.prototype.find = function find(dashboardName) {
-    return _.find(this._dashboards, { name: dashboardName });
+  HistoryStep.prototype.run = function run(routingContext, next) {
+    var _this5 = this;
+
+    if (routingContext.getAllInstructions().some(function (i) {
+      return i.config.name === "dashboard";
+    })) {
+      var _dashboard = this._dashboardManager.find(routingContext.params.dashboard);
+      if (_dashboard) {
+        var routeWidgetsState;
+        var storageWidgetsState;
+
+        (function () {
+          if (_this5.currentRouteItem) {
+            (function () {
+              var currentWidgetsState = StateDiscriminator.discriminate(_this5._userStateStorage.getAll(_this5.currentRouteItem.dashboardName));
+              var url = "/" + _this5.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+
+              if (_.filter(_this5._navigationHistory.items, function (i) {
+                return StringHelper.compare(i.url, url);
+              }).length === 0) {
+                _this5._navigationHistory.add(url, _this5.currentRouteItem.title, _this5.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+              } else if (!StringHelper.compare(url, _this5.currentRouteItem.route)) {
+                _this5._navigationHistory.update(url, new Date());
+              }
+            })();
+          }
+
+          var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
+
+          routeWidgetsState = StateUrlParser.queryToState(fullUrl);
+          storageWidgetsState = StateDiscriminator.discriminate(_this5._userStateStorage.getAll(_dashboard.name));
+
+          for (var _iterator3 = storageWidgetsState, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+            var _ref3;
+
+            if (_isArray3) {
+              if (_i3 >= _iterator3.length) break;
+              _ref3 = _iterator3[_i3++];
+            } else {
+              _i3 = _iterator3.next();
+              if (_i3.done) break;
+              _ref3 = _i3.value;
+            }
+
+            var oldSt = _ref3;
+
+            _this5._userStateStorage.remove(oldSt.key);
+          }for (var _iterator4 = routeWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+            var _ref4;
+
+            if (_isArray4) {
+              if (_i4 >= _iterator4.length) break;
+              _ref4 = _iterator4[_i4++];
+            } else {
+              _i4 = _iterator4.next();
+              if (_i4.done) break;
+              _ref4 = _i4.value;
+            }
+
+            var newSt = _ref4;
+
+            _this5._userStateStorage.set(newSt.key, newSt.value);
+          }
+          if (_.filter(_this5._navigationHistory.items, function (i) {
+            return StringHelper.compare(i.url, fullUrl);
+          }).length === 0) {
+            _this5._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this5._userStateStorage.getAll(_dashboard.name), new Date());
+          }
+
+          _this5.currentRouteItem = {
+            dashboardName: _dashboard.name,
+            title: _dashboard.title,
+            route: fullUrl
+          };
+        })();
+      }
+    } else this.currentRouteItem = null;
+    return next();
   };
 
-  DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
-    var dashboard = new type();
-    dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
-    return dashboard;
-  };
-
-  _createClass(DashboardManager, [{
-    key: 'dashboards',
+  _createClass(HistoryStep, [{
+    key: 'currentRouteItem',
     get: function get() {
-      return this._dashboards;
+      return this._currentRoute;
+    },
+    set: function set(value) {
+      this._currentRoute = value;
     }
   }]);
 
-  return DashboardManager;
-}();
+  return HistoryStep;
+}()) || _class);
 
-var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class = function () {
-  function Factory(Type) {
-    _classCallCheck(this, Factory);
+var NavigationHistory = exports.NavigationHistory = function () {
+  function NavigationHistory() {
+    _classCallCheck(this, NavigationHistory);
 
-    this.Type = Type;
+    this._history = [];
   }
 
-  Factory.prototype.get = function get(container) {
-    var _this5 = this;
+  NavigationHistory.prototype.add = function add(url, title, dashboard, state, dateTime) {
+    this._history.push({ url: url, title: title, dashboard: dashboard, state: state, dateTime: dateTime });
+  };
 
-    return function () {
-      for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
-        rest[_key] = arguments[_key];
+  NavigationHistory.prototype.update = function update(url, dateTime) {
+    for (var _iterator5 = this._history, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+      var _ref5;
+
+      if (_isArray5) {
+        if (_i5 >= _iterator5.length) break;
+        _ref5 = _iterator5[_i5++];
+      } else {
+        _i5 = _iterator5.next();
+        if (_i5.done) break;
+        _ref5 = _i5.value;
       }
 
-      return container.invoke(_this5.Type, rest);
-    };
+      var h = _ref5;
+
+      if (h.url === url) {
+        h.dateTime = dateTime;
+        break;
+      }
+    }
   };
 
-  Factory.of = function of(Type) {
-    return new Factory(Type);
+  NavigationHistory.prototype.delete = function _delete(url) {
+    for (var _iterator6 = this._history, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+      var _ref6;
+
+      if (_isArray6) {
+        if (_i6 >= _iterator6.length) break;
+        _ref6 = _iterator6[_i6++];
+      } else {
+        _i6 = _iterator6.next();
+        if (_i6.done) break;
+        _ref6 = _i6.value;
+      }
+
+      var i = _ref6;
+
+      if (i.url === url) {
+        this._history.splice(i, 1);
+        break;
+      }
+    }
   };
 
-  return Factory;
-}()) || _class;
+  NavigationHistory.prototype.deleteAll = function deleteAll() {
+    this._history = [];
+  };
+
+  NavigationHistory.prototype.trimRight = function trimRight(url) {
+    for (var i = this._history.length - 1; i >= 0; i--) {
+      if (this._history[i].url === url) {
+        this._history.splice(i + 1);
+        return;
+      }
+    }
+  };
+
+  NavigationHistory.prototype.exists = function exists(url) {
+    for (var _iterator7 = this._history, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
+      var _ref7;
+
+      if (_isArray7) {
+        if (_i7 >= _iterator7.length) break;
+        _ref7 = _iterator7[_i7++];
+      } else {
+        _i7 = _iterator7.next();
+        if (_i7.done) break;
+        _ref7 = _i7.value;
+      }
+
+      var i = _ref7;
+
+      if (i.route === url) return true;
+    }
+    return false;
+  };
+
+  _createClass(NavigationHistory, [{
+    key: 'items',
+    get: function get() {
+      return this._history;
+    }
+  }]);
+
+  return NavigationHistory;
+}();
 
 var StateDiscriminator = exports.StateDiscriminator = function () {
   function StateDiscriminator() {
@@ -893,19 +1039,19 @@ var StateDiscriminator = exports.StateDiscriminator = function () {
 
   StateDiscriminator.discriminate = function discriminate(widgetStates) {
     var result = [];
-    for (var _iterator3 = widgetStates, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-      var _ref3;
+    for (var _iterator8 = widgetStates, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
+      var _ref8;
 
-      if (_isArray3) {
-        if (_i3 >= _iterator3.length) break;
-        _ref3 = _iterator3[_i3++];
+      if (_isArray8) {
+        if (_i8 >= _iterator8.length) break;
+        _ref8 = _iterator8[_i8++];
       } else {
-        _i3 = _iterator3.next();
-        if (_i3.done) break;
-        _ref3 = _i3.value;
+        _i8 = _iterator8.next();
+        if (_i8.done) break;
+        _ref8 = _i8.value;
       }
 
-      var ws = _ref3;
+      var ws = _ref8;
 
       if (ws.value.stateType === "searchBoxState") result.push(ws);
     }
@@ -922,19 +1068,19 @@ var StateUrlParser = exports.StateUrlParser = function () {
 
   StateUrlParser.stateToQuery = function stateToQuery(widgetStates) {
     var params = [];
-    for (var _iterator4 = widgetStates, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-      var _ref4;
+    for (var _iterator9 = widgetStates, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
+      var _ref9;
 
-      if (_isArray4) {
-        if (_i4 >= _iterator4.length) break;
-        _ref4 = _iterator4[_i4++];
+      if (_isArray9) {
+        if (_i9 >= _iterator9.length) break;
+        _ref9 = _iterator9[_i9++];
       } else {
-        _i4 = _iterator4.next();
-        if (_i4.done) break;
-        _ref4 = _i4.value;
+        _i9 = _iterator9.next();
+        if (_i9.done) break;
+        _ref9 = _i9.value;
       }
 
-      var widgetState = _ref4;
+      var widgetState = _ref9;
 
       params.push({ "sk": widgetState.key, "sv": widgetState.value });
     }
@@ -946,19 +1092,19 @@ var StateUrlParser = exports.StateUrlParser = function () {
     var q = UrlHelper.getParameterByName("q", url);
     if (q) {
       var widgetStates = UrlHelper.queryToObject(q);
-      for (var _iterator5 = widgetStates, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-        var _ref5;
+      for (var _iterator10 = widgetStates, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
+        var _ref10;
 
-        if (_isArray5) {
-          if (_i5 >= _iterator5.length) break;
-          _ref5 = _iterator5[_i5++];
+        if (_isArray10) {
+          if (_i10 >= _iterator10.length) break;
+          _ref10 = _iterator10[_i10++];
         } else {
-          _i5 = _iterator5.next();
-          if (_i5.done) break;
-          _ref5 = _i5.value;
+          _i10 = _iterator10.next();
+          if (_i10.done) break;
+          _ref10 = _i10.value;
         }
 
-        var ws = _ref5;
+        var ws = _ref10;
 
         result.push({ "key": ws.sk, "value": ws.sv });
       }
@@ -1005,7 +1151,7 @@ var Storage = exports.Storage = function () {
 
 var STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-var UserStateStorage = exports.UserStateStorage = (_dec = (0, _aureliaFramework.inject)(Storage), _dec(_class2 = function () {
+var UserStateStorage = exports.UserStateStorage = (_dec2 = (0, _aureliaFramework.inject)(Storage), _dec2(_class2 = function () {
   function UserStateStorage(storage) {
     _classCallCheck(this, UserStateStorage);
 
@@ -1071,205 +1217,60 @@ var UserStateStorage = exports.UserStateStorage = (_dec = (0, _aureliaFramework.
 
   return UserStateStorage;
 }()) || _class2);
-var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec2(_class3 = function () {
-  function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
-    _classCallCheck(this, HistoryStep);
 
-    this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
-    this._dashboardManager = dashboardManager;
+var DashboardManager = exports.DashboardManager = function () {
+  function DashboardManager() {
+    _classCallCheck(this, DashboardManager);
+
+    this._dashboards = [];
   }
 
-  HistoryStep.prototype.run = function run(routingContext, next) {
+  DashboardManager.prototype.find = function find(dashboardName) {
+    return _.find(this._dashboards, { name: dashboardName });
+  };
+
+  DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
+    var dashboard = new type();
+    dashboard.configure(dashboardConfiguration);
+    this._dashboards.push(dashboard);
+    return dashboard;
+  };
+
+  _createClass(DashboardManager, [{
+    key: 'dashboards',
+    get: function get() {
+      return this._dashboards;
+    }
+  }]);
+
+  return DashboardManager;
+}();
+
+var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class3 = function () {
+  function Factory(Type) {
+    _classCallCheck(this, Factory);
+
+    this.Type = Type;
+  }
+
+  Factory.prototype.get = function get(container) {
     var _this6 = this;
 
-    if (routingContext.getAllInstructions().some(function (i) {
-      return i.config.name === "dashboard";
-    })) {
-      var _dashboard = this._dashboardManager.find(routingContext.params.dashboard);
-      if (_dashboard) {
-        var routeWidgetsState;
-        var storageWidgetsState;
-
-        (function () {
-          if (_this6.currentRouteItem) {
-            (function () {
-              var currentWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_this6.currentRouteItem.dashboardName));
-              var url = "/" + _this6.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
-
-              if (_.filter(_this6._navigationHistory.items, function (i) {
-                return StringHelper.compare(i.url, url);
-              }).length === 0) {
-                _this6._navigationHistory.add(url, _this6.currentRouteItem.title, _this6.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-              } else if (!StringHelper.compare(url, _this6.currentRouteItem.route)) {
-                _this6._navigationHistory.update(url, new Date());
-              }
-            })();
-          }
-
-          var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
-
-          routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          storageWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_dashboard.name));
-
-          for (var _iterator6 = storageWidgetsState, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-            var _ref6;
-
-            if (_isArray6) {
-              if (_i6 >= _iterator6.length) break;
-              _ref6 = _iterator6[_i6++];
-            } else {
-              _i6 = _iterator6.next();
-              if (_i6.done) break;
-              _ref6 = _i6.value;
-            }
-
-            var oldSt = _ref6;
-
-            _this6._userStateStorage.remove(oldSt.key);
-          }for (var _iterator7 = routeWidgetsState, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
-            var _ref7;
-
-            if (_isArray7) {
-              if (_i7 >= _iterator7.length) break;
-              _ref7 = _iterator7[_i7++];
-            } else {
-              _i7 = _iterator7.next();
-              if (_i7.done) break;
-              _ref7 = _i7.value;
-            }
-
-            var newSt = _ref7;
-
-            _this6._userStateStorage.set(newSt.key, newSt.value);
-          }
-          if (_.filter(_this6._navigationHistory.items, function (i) {
-            return StringHelper.compare(i.url, fullUrl);
-          }).length === 0) {
-            _this6._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this6._userStateStorage.getAll(_dashboard.name), new Date());
-          }
-
-          _this6.currentRouteItem = {
-            dashboardName: _dashboard.name,
-            title: _dashboard.title,
-            route: fullUrl
-          };
-        })();
-      }
-    } else this.currentRouteItem = null;
-    return next();
-  };
-
-  _createClass(HistoryStep, [{
-    key: 'currentRouteItem',
-    get: function get() {
-      return this._currentRoute;
-    },
-    set: function set(value) {
-      this._currentRoute = value;
-    }
-  }]);
-
-  return HistoryStep;
-}()) || _class3);
-
-var NavigationHistory = exports.NavigationHistory = function () {
-  function NavigationHistory() {
-    _classCallCheck(this, NavigationHistory);
-
-    this._history = [];
-  }
-
-  NavigationHistory.prototype.add = function add(url, title, dashboard, state, dateTime) {
-    this._history.push({ url: url, title: title, dashboard: dashboard, state: state, dateTime: dateTime });
-  };
-
-  NavigationHistory.prototype.update = function update(url, dateTime) {
-    for (var _iterator8 = this._history, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
-      var _ref8;
-
-      if (_isArray8) {
-        if (_i8 >= _iterator8.length) break;
-        _ref8 = _iterator8[_i8++];
-      } else {
-        _i8 = _iterator8.next();
-        if (_i8.done) break;
-        _ref8 = _i8.value;
+    return function () {
+      for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
+        rest[_key] = arguments[_key];
       }
 
-      var h = _ref8;
-
-      if (h.url === url) {
-        h.dateTime = dateTime;
-        break;
-      }
-    }
+      return container.invoke(_this6.Type, rest);
+    };
   };
 
-  NavigationHistory.prototype.delete = function _delete(url) {
-    for (var _iterator9 = this._history, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
-      var _ref9;
-
-      if (_isArray9) {
-        if (_i9 >= _iterator9.length) break;
-        _ref9 = _iterator9[_i9++];
-      } else {
-        _i9 = _iterator9.next();
-        if (_i9.done) break;
-        _ref9 = _i9.value;
-      }
-
-      var i = _ref9;
-
-      if (i.url === url) {
-        this._history.splice(i, 1);
-        break;
-      }
-    }
+  Factory.of = function of(Type) {
+    return new Factory(Type);
   };
 
-  NavigationHistory.prototype.deleteAll = function deleteAll() {
-    this._history = [];
-  };
-
-  NavigationHistory.prototype.trimRight = function trimRight(url) {
-    for (var i = this._history.length - 1; i >= 0; i--) {
-      if (this._history[i].url === url) {
-        this._history.splice(i + 1);
-        return;
-      }
-    }
-  };
-
-  NavigationHistory.prototype.exists = function exists(url) {
-    for (var _iterator10 = this._history, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
-      var _ref10;
-
-      if (_isArray10) {
-        if (_i10 >= _iterator10.length) break;
-        _ref10 = _iterator10[_i10++];
-      } else {
-        _i10 = _iterator10.next();
-        if (_i10.done) break;
-        _ref10 = _i10.value;
-      }
-
-      var i = _ref10;
-
-      if (i.route === url) return true;
-    }
-    return false;
-  };
-
-  _createClass(NavigationHistory, [{
-    key: 'items',
-    get: function get() {
-      return this._history;
-    }
-  }]);
-
-  return NavigationHistory;
-}();
+  return Factory;
+}()) || _class3;
 
 var Schema = exports.Schema = function Schema() {
   _classCallCheck(this, Schema);
@@ -1545,7 +1546,6 @@ var DashboardBase = exports.DashboardBase = function () {
   DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
     this._name = dashboardConfiguration.name;
     this._title = dashboardConfiguration.title;
-    this._route = dashboardConfiguration.route;
   };
 
   DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
@@ -1646,11 +1646,6 @@ var DashboardBase = exports.DashboardBase = function () {
     key: 'name',
     get: function get() {
       return this._name;
-    }
-  }, {
-    key: 'route',
-    get: function get() {
-      return this._route;
     }
   }, {
     key: 'title',

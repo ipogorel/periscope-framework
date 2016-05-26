@@ -5,8 +5,8 @@ declare module 'periscope-framework' {
   import moment from 'moment';
   import lodash from 'lodash';
   import {
-    resolver,
     inject,
+    resolver,
     transient,
     computedFrom,
     customElement,
@@ -19,29 +19,6 @@ declare module 'periscope-framework' {
     HttpClient
   } from 'aurelia-fetch-client';
   import Swagger from 'swagger-client';
-  export class CacheManager {
-    constructor(storage: any);
-    cleanInterval: any;
-    startCleaner(): any;
-    stopCleaner(): any;
-    getStorage(): any;
-  }
-  export class CacheStorage {
-    setItem(key: any, value: any, expiration: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
-  export class MemoryCacheStorage extends CacheStorage {
-    constructor();
-    setItem(key: any, value: any, seconds: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
-  }
   export class DataHolder {
     constructor();
     data: any;
@@ -90,6 +67,29 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
+  export class CacheManager {
+    constructor(storage: any);
+    cleanInterval: any;
+    startCleaner(): any;
+    stopCleaner(): any;
+    getStorage(): any;
+  }
+  export class CacheStorage {
+    setItem(key: any, value: any, expiration: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
+  export class MemoryCacheStorage extends CacheStorage {
+    constructor();
+    setItem(key: any, value: any, seconds: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
+  export class DashboardConfiguration {
+    invoke(): any;
+  }
   export class DataHelper {
     static getNumericFields(fields: any): any;
     static getStringFields(fields: any): any;
@@ -126,16 +126,20 @@ declare module 'periscope-framework' {
     parse(searchString: any): any;
     validate(searchString: any): any;
   }
-  export class DashboardManager {
-    constructor();
-    dashboards: any;
-    find(dashboardName: any): any;
-    createDashboard(type: any, dashboardConfiguration: any): any;
+  export class HistoryStep {
+    constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
+    currentRouteItem: any;
+    run(routingContext: any, next: any): any;
   }
-  export class Factory {
-    constructor(Type: any);
-    get(container: any): any;
-    static of(Type: any): any;
+  export class NavigationHistory {
+    constructor();
+    items: any;
+    add(url: any, title: any, dashboard: any, state: any, dateTime: any): any;
+    update(url: any, dateTime: any): any;
+    delete(url: any): any;
+    deleteAll(): any;
+    trimRight(url: any): any;
+    exists(url: any): any;
   }
   export class StateDiscriminator {
     static discriminate(widgetStates: any): any;
@@ -159,20 +163,16 @@ declare module 'periscope-framework' {
     clearAll(): any;
     createKey(namespace: any, key: any): any;
   }
-  export class HistoryStep {
-    constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
-    currentRouteItem: any;
-    run(routingContext: any, next: any): any;
-  }
-  export class NavigationHistory {
+  export class DashboardManager {
     constructor();
-    items: any;
-    add(url: any, title: any, dashboard: any, state: any, dateTime: any): any;
-    update(url: any, dateTime: any): any;
-    delete(url: any): any;
-    deleteAll(): any;
-    trimRight(url: any): any;
-    exists(url: any): any;
+    dashboards: any;
+    find(dashboardName: any): any;
+    createDashboard(type: any, dashboardConfiguration: any): any;
+  }
+  export class Factory {
+    constructor(Type: any);
+    get(container: any): any;
+    static of(Type: any): any;
   }
   export class Schema {
     constructor();

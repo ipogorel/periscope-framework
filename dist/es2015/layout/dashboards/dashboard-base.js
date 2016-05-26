@@ -42,10 +42,6 @@ export let DashboardBase = class DashboardBase {
     return this._name;
   }
 
-  get route() {
-    return this._route;
-  }
-
   get title() {
     return this._title;
   }
@@ -61,7 +57,6 @@ export let DashboardBase = class DashboardBase {
   configure(dashboardConfiguration) {
     this._name = dashboardConfiguration.name;
     this._title = dashboardConfiguration.title;
-    this._route = dashboardConfiguration.route;
   }
 
   getWidgetByName(widgetName) {
