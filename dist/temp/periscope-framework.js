@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.Factory = exports.DashboardManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.NavigationHistory = exports.HistoryStep = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.Factory = exports.DashboardManager = exports.ExpressionParser = exports.IntellisenceManager = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
 
 var _class, _dec, _class2, _dec2, _class3, _dec3, _dec4, _class4, _dec5, _dec6, _class5, _dec7, _desc, _value, _class6;
 
@@ -451,192 +451,6 @@ var Query = exports.Query = function () {
   return Query;
 }();
 
-var IntellisenceManager = exports.IntellisenceManager = function () {
-  function IntellisenceManager(parser, dataSource, availableFields) {
-    _classCallCheck(this, IntellisenceManager);
-
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  IntellisenceManager.prototype.populate = function populate(searchStr, lastWord) {
-    var parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  };
-
-  IntellisenceManager.prototype._getParserError = function _getParserError(searchStr) {
-    var result = null;
-    if (searchStr != "") {
-      try {
-        this.parser.parse(searchStr);
-        try {
-          this.parser.parse(searchStr + "^");
-        } catch (ex2) {
-          result = ex2;
-        }
-      } catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  };
-
-  IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-
-    var _loop = function _loop(i) {
-      var j = fieldsArray.findIndex(function (x) {
-        return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
-      });
-      if (j >= 0) return {
-          v: fieldsArray[j]
-        };
-    };
-
-    for (var i = tmpArr.length - 1; i >= 0; i--) {
-      var _ret2 = _loop(i);
-
-      if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
-    }
-    return "";
-  };
-
-  IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (var _iterator2 = ex.expected, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-        var _ref2;
-
-        if (_isArray2) {
-          if (_i2 >= _iterator2.length) break;
-          _ref2 = _iterator2[_i2++];
-        } else {
-          _i2 = _iterator2.next();
-          if (_i2.done) break;
-          _ref2 = _i2.value;
-        }
-
-        var desc = _ref2;
-
-        if (desc.type == "other" || desc.type == "end") {
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  };
-
-  IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
-    var _this4 = this;
-
-    var type = '';
-    var result = [];
-    var lastFldName = '';
-
-    if (!pegException) return new Promise(function (resolve, reject) {
-      resolve([]);
-    });
-
-    var tokenName = this._interpreteParserError(pegException);
-    return new Promise(function (resolve, reject) {
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord ? _.filter(_this4.fields, function (f) {
-            return f.toLowerCase().startsWith(lastWord.toLowerCase());
-          }) : _this4.fields;
-          resolve(_this4._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(_this4._normalizeData("operator", _this4._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
-          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this4._normalizeData("string", data));
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
-          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this4._normalizeData("array_string", data));
-          });
-          break;
-          resolve(_this4._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(_this4._normalizeData("operator", _this4._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(_this4._normalizeData("operator", _this4._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  };
-
-  IntellisenceManager.prototype._getFieldValuesArray = function _getFieldValuesArray(fieldName, lastWord) {
-    var query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord) query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(function (dH) {
-      var result = _.map(dH.data, fieldName);
-      return _.uniq(result).sort();
-    });
-  };
-
-  IntellisenceManager.prototype._getStringComparisonOperatorsArray = function _getStringComparisonOperatorsArray() {
-    return ["=", "in"];
-  };
-
-  IntellisenceManager.prototype._getLogicalOperatorsArray = function _getLogicalOperatorsArray() {
-    return ["and", "or"];
-  };
-
-  IntellisenceManager.prototype._getComparisonOperatorsArray = function _getComparisonOperatorsArray() {
-    return ["!=", "=", ">", "<", ">=", "<="];
-  };
-
-  IntellisenceManager.prototype._normalizeData = function _normalizeData(type, dataArray) {
-    return _.map(dataArray, function (d) {
-      return { type: type, value: d };
-    });
-  };
-
-  return IntellisenceManager;
-}();
-
-var ExpressionParser = exports.ExpressionParser = function () {
-  function ExpressionParser(grammarText) {
-    _classCallCheck(this, ExpressionParser);
-
-    this.parser = peg.buildParser(grammarText);
-  }
-
-  ExpressionParser.prototype.parse = function parse(searchString) {
-    return this.parser.parse(searchString);
-  };
-
-  ExpressionParser.prototype.validate = function validate(searchString) {
-    try {
-      this.parser.parse(searchString);
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  };
-
-  return ExpressionParser;
-}();
-
 var DataHelper = exports.DataHelper = function () {
   function DataHelper() {
     _classCallCheck(this, DataHelper);
@@ -832,6 +646,192 @@ var UrlHelper = exports.UrlHelper = function () {
   return UrlHelper;
 }();
 
+var IntellisenceManager = exports.IntellisenceManager = function () {
+  function IntellisenceManager(parser, dataSource, availableFields) {
+    _classCallCheck(this, IntellisenceManager);
+
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  IntellisenceManager.prototype.populate = function populate(searchStr, lastWord) {
+    var parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  };
+
+  IntellisenceManager.prototype._getParserError = function _getParserError(searchStr) {
+    var result = null;
+    if (searchStr != "") {
+      try {
+        this.parser.parse(searchStr);
+        try {
+          this.parser.parse(searchStr + "^");
+        } catch (ex2) {
+          result = ex2;
+        }
+      } catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  };
+
+  IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+
+    var _loop = function _loop(i) {
+      var j = fieldsArray.findIndex(function (x) {
+        return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
+      });
+      if (j >= 0) return {
+          v: fieldsArray[j]
+        };
+    };
+
+    for (var i = tmpArr.length - 1; i >= 0; i--) {
+      var _ret2 = _loop(i);
+
+      if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
+    }
+    return "";
+  };
+
+  IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (var _iterator2 = ex.expected, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+        var _ref2;
+
+        if (_isArray2) {
+          if (_i2 >= _iterator2.length) break;
+          _ref2 = _iterator2[_i2++];
+        } else {
+          _i2 = _iterator2.next();
+          if (_i2.done) break;
+          _ref2 = _i2.value;
+        }
+
+        var desc = _ref2;
+
+        if (desc.type == "other" || desc.type == "end") {
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  };
+
+  IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
+    var _this4 = this;
+
+    var type = '';
+    var result = [];
+    var lastFldName = '';
+
+    if (!pegException) return new Promise(function (resolve, reject) {
+      resolve([]);
+    });
+
+    var tokenName = this._interpreteParserError(pegException);
+    return new Promise(function (resolve, reject) {
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord ? _.filter(_this4.fields, function (f) {
+            return f.toLowerCase().startsWith(lastWord.toLowerCase());
+          }) : _this4.fields;
+          resolve(_this4._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(_this4._normalizeData("operator", _this4._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
+          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this4._normalizeData("string", data));
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
+          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this4._normalizeData("array_string", data));
+          });
+          break;
+          resolve(_this4._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(_this4._normalizeData("operator", _this4._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(_this4._normalizeData("operator", _this4._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  };
+
+  IntellisenceManager.prototype._getFieldValuesArray = function _getFieldValuesArray(fieldName, lastWord) {
+    var query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord) query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(function (dH) {
+      var result = _.map(dH.data, fieldName);
+      return _.uniq(result).sort();
+    });
+  };
+
+  IntellisenceManager.prototype._getStringComparisonOperatorsArray = function _getStringComparisonOperatorsArray() {
+    return ["=", "in"];
+  };
+
+  IntellisenceManager.prototype._getLogicalOperatorsArray = function _getLogicalOperatorsArray() {
+    return ["and", "or"];
+  };
+
+  IntellisenceManager.prototype._getComparisonOperatorsArray = function _getComparisonOperatorsArray() {
+    return ["!=", "=", ">", "<", ">=", "<="];
+  };
+
+  IntellisenceManager.prototype._normalizeData = function _normalizeData(type, dataArray) {
+    return _.map(dataArray, function (d) {
+      return { type: type, value: d };
+    });
+  };
+
+  return IntellisenceManager;
+}();
+
+var ExpressionParser = exports.ExpressionParser = function () {
+  function ExpressionParser(grammarText) {
+    _classCallCheck(this, ExpressionParser);
+
+    this.parser = peg.buildParser(grammarText);
+  }
+
+  ExpressionParser.prototype.parse = function parse(searchString) {
+    return this.parser.parse(searchString);
+  };
+
+  ExpressionParser.prototype.validate = function validate(searchString) {
+    try {
+      this.parser.parse(searchString);
+      return true;
+    } catch (ex) {
+      return false;
+    }
+  };
+
+  return ExpressionParser;
+}();
+
 var DashboardManager = exports.DashboardManager = function () {
   function DashboardManager() {
     _classCallCheck(this, DashboardManager);
@@ -886,206 +886,6 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class = functio
   return Factory;
 }()) || _class;
 
-var HistoryStep = exports.HistoryStep = (_dec = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec(_class2 = function () {
-  function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
-    _classCallCheck(this, HistoryStep);
-
-    this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
-    this._dashboardManager = dashboardManager;
-  }
-
-  HistoryStep.prototype.run = function run(routingContext, next) {
-    var _this6 = this;
-
-    if (routingContext.getAllInstructions().some(function (i) {
-      return i.config.name === "dashboard";
-    })) {
-      var _dashboard = this._dashboardManager.find(routingContext.params.dashboard);
-      if (_dashboard) {
-        var routeWidgetsState;
-        var storageWidgetsState;
-
-        (function () {
-          if (_this6.currentRouteItem) {
-            (function () {
-              var currentWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_this6.currentRouteItem.dashboardName));
-              var url = "/" + _this6.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
-
-              if (_.filter(_this6._navigationHistory.items, function (i) {
-                return StringHelper.compare(i.url, url);
-              }).length === 0) {
-                _this6._navigationHistory.add(url, _this6.currentRouteItem.title, _this6.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-              } else if (!StringHelper.compare(url, _this6.currentRouteItem.route)) {
-                _this6._navigationHistory.update(url, new Date());
-              }
-            })();
-          }
-
-          var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
-
-          routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          storageWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_dashboard.name));
-
-          for (var _iterator3 = storageWidgetsState, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-            var _ref3;
-
-            if (_isArray3) {
-              if (_i3 >= _iterator3.length) break;
-              _ref3 = _iterator3[_i3++];
-            } else {
-              _i3 = _iterator3.next();
-              if (_i3.done) break;
-              _ref3 = _i3.value;
-            }
-
-            var oldSt = _ref3;
-
-            _this6._userStateStorage.remove(oldSt.key);
-          }for (var _iterator4 = routeWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-            var _ref4;
-
-            if (_isArray4) {
-              if (_i4 >= _iterator4.length) break;
-              _ref4 = _iterator4[_i4++];
-            } else {
-              _i4 = _iterator4.next();
-              if (_i4.done) break;
-              _ref4 = _i4.value;
-            }
-
-            var newSt = _ref4;
-
-            _this6._userStateStorage.set(newSt.key, newSt.value);
-          }
-          if (_.filter(_this6._navigationHistory.items, function (i) {
-            return StringHelper.compare(i.url, fullUrl);
-          }).length === 0) {
-            _this6._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this6._userStateStorage.getAll(_dashboard.name), new Date());
-          }
-
-          _this6.currentRouteItem = {
-            dashboardName: _dashboard.name,
-            title: _dashboard.title,
-            route: fullUrl
-          };
-        })();
-      }
-    } else this.currentRouteItem = null;
-    return next();
-  };
-
-  _createClass(HistoryStep, [{
-    key: 'currentRouteItem',
-    get: function get() {
-      return this._currentRoute;
-    },
-    set: function set(value) {
-      this._currentRoute = value;
-    }
-  }]);
-
-  return HistoryStep;
-}()) || _class2);
-
-var NavigationHistory = exports.NavigationHistory = function () {
-  function NavigationHistory() {
-    _classCallCheck(this, NavigationHistory);
-
-    this._history = [];
-  }
-
-  NavigationHistory.prototype.add = function add(url, title, dashboard, state, dateTime) {
-    this._history.push({ url: url, title: title, dashboard: dashboard, state: state, dateTime: dateTime });
-  };
-
-  NavigationHistory.prototype.update = function update(url, dateTime) {
-    for (var _iterator5 = this._history, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-      var _ref5;
-
-      if (_isArray5) {
-        if (_i5 >= _iterator5.length) break;
-        _ref5 = _iterator5[_i5++];
-      } else {
-        _i5 = _iterator5.next();
-        if (_i5.done) break;
-        _ref5 = _i5.value;
-      }
-
-      var h = _ref5;
-
-      if (h.url === url) {
-        h.dateTime = dateTime;
-        break;
-      }
-    }
-  };
-
-  NavigationHistory.prototype.delete = function _delete(url) {
-    for (var _iterator6 = this._history, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-      var _ref6;
-
-      if (_isArray6) {
-        if (_i6 >= _iterator6.length) break;
-        _ref6 = _iterator6[_i6++];
-      } else {
-        _i6 = _iterator6.next();
-        if (_i6.done) break;
-        _ref6 = _i6.value;
-      }
-
-      var i = _ref6;
-
-      if (i.url === url) {
-        this._history.splice(i, 1);
-        break;
-      }
-    }
-  };
-
-  NavigationHistory.prototype.deleteAll = function deleteAll() {
-    this._history = [];
-  };
-
-  NavigationHistory.prototype.trimRight = function trimRight(url) {
-    for (var i = this._history.length - 1; i >= 0; i--) {
-      if (this._history[i].url === url) {
-        this._history.splice(i + 1);
-        return;
-      }
-    }
-  };
-
-  NavigationHistory.prototype.exists = function exists(url) {
-    for (var _iterator7 = this._history, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
-      var _ref7;
-
-      if (_isArray7) {
-        if (_i7 >= _iterator7.length) break;
-        _ref7 = _iterator7[_i7++];
-      } else {
-        _i7 = _iterator7.next();
-        if (_i7.done) break;
-        _ref7 = _i7.value;
-      }
-
-      var i = _ref7;
-
-      if (i.route === url) return true;
-    }
-    return false;
-  };
-
-  _createClass(NavigationHistory, [{
-    key: 'items',
-    get: function get() {
-      return this._history;
-    }
-  }]);
-
-  return NavigationHistory;
-}();
-
 var StateDiscriminator = exports.StateDiscriminator = function () {
   function StateDiscriminator() {
     _classCallCheck(this, StateDiscriminator);
@@ -1093,19 +893,19 @@ var StateDiscriminator = exports.StateDiscriminator = function () {
 
   StateDiscriminator.discriminate = function discriminate(widgetStates) {
     var result = [];
-    for (var _iterator8 = widgetStates, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
-      var _ref8;
+    for (var _iterator3 = widgetStates, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+      var _ref3;
 
-      if (_isArray8) {
-        if (_i8 >= _iterator8.length) break;
-        _ref8 = _iterator8[_i8++];
+      if (_isArray3) {
+        if (_i3 >= _iterator3.length) break;
+        _ref3 = _iterator3[_i3++];
       } else {
-        _i8 = _iterator8.next();
-        if (_i8.done) break;
-        _ref8 = _i8.value;
+        _i3 = _iterator3.next();
+        if (_i3.done) break;
+        _ref3 = _i3.value;
       }
 
-      var ws = _ref8;
+      var ws = _ref3;
 
       if (ws.value.stateType === "searchBoxState") result.push(ws);
     }
@@ -1122,19 +922,19 @@ var StateUrlParser = exports.StateUrlParser = function () {
 
   StateUrlParser.stateToQuery = function stateToQuery(widgetStates) {
     var params = [];
-    for (var _iterator9 = widgetStates, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
-      var _ref9;
+    for (var _iterator4 = widgetStates, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+      var _ref4;
 
-      if (_isArray9) {
-        if (_i9 >= _iterator9.length) break;
-        _ref9 = _iterator9[_i9++];
+      if (_isArray4) {
+        if (_i4 >= _iterator4.length) break;
+        _ref4 = _iterator4[_i4++];
       } else {
-        _i9 = _iterator9.next();
-        if (_i9.done) break;
-        _ref9 = _i9.value;
+        _i4 = _iterator4.next();
+        if (_i4.done) break;
+        _ref4 = _i4.value;
       }
 
-      var widgetState = _ref9;
+      var widgetState = _ref4;
 
       params.push({ "sk": widgetState.key, "sv": widgetState.value });
     }
@@ -1146,19 +946,19 @@ var StateUrlParser = exports.StateUrlParser = function () {
     var q = UrlHelper.getParameterByName("q", url);
     if (q) {
       var widgetStates = UrlHelper.queryToObject(q);
-      for (var _iterator10 = widgetStates, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
-        var _ref10;
+      for (var _iterator5 = widgetStates, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+        var _ref5;
 
-        if (_isArray10) {
-          if (_i10 >= _iterator10.length) break;
-          _ref10 = _iterator10[_i10++];
+        if (_isArray5) {
+          if (_i5 >= _iterator5.length) break;
+          _ref5 = _iterator5[_i5++];
         } else {
-          _i10 = _iterator10.next();
-          if (_i10.done) break;
-          _ref10 = _i10.value;
+          _i5 = _iterator5.next();
+          if (_i5.done) break;
+          _ref5 = _i5.value;
         }
 
-        var ws = _ref10;
+        var ws = _ref5;
 
         result.push({ "key": ws.sk, "value": ws.sv });
       }
@@ -1205,7 +1005,7 @@ var Storage = exports.Storage = function () {
 
 var STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-var UserStateStorage = exports.UserStateStorage = (_dec2 = (0, _aureliaFramework.inject)(Storage), _dec2(_class3 = function () {
+var UserStateStorage = exports.UserStateStorage = (_dec = (0, _aureliaFramework.inject)(Storage), _dec(_class2 = function () {
   function UserStateStorage(storage) {
     _classCallCheck(this, UserStateStorage);
 
@@ -1270,7 +1070,206 @@ var UserStateStorage = exports.UserStateStorage = (_dec2 = (0, _aureliaFramework
   };
 
   return UserStateStorage;
+}()) || _class2);
+var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec2(_class3 = function () {
+  function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
+    _classCallCheck(this, HistoryStep);
+
+    this._navigationHistory = navigationHistory;
+    this._userStateStorage = userStateStorage;
+    this._dashboardManager = dashboardManager;
+  }
+
+  HistoryStep.prototype.run = function run(routingContext, next) {
+    var _this6 = this;
+
+    if (routingContext.getAllInstructions().some(function (i) {
+      return i.config.name === "dashboard";
+    })) {
+      var _dashboard = this._dashboardManager.find(routingContext.params.dashboard);
+      if (_dashboard) {
+        var routeWidgetsState;
+        var storageWidgetsState;
+
+        (function () {
+          if (_this6.currentRouteItem) {
+            (function () {
+              var currentWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_this6.currentRouteItem.dashboardName));
+              var url = "/" + _this6.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+
+              if (_.filter(_this6._navigationHistory.items, function (i) {
+                return StringHelper.compare(i.url, url);
+              }).length === 0) {
+                _this6._navigationHistory.add(url, _this6.currentRouteItem.title, _this6.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+              } else if (!StringHelper.compare(url, _this6.currentRouteItem.route)) {
+                _this6._navigationHistory.update(url, new Date());
+              }
+            })();
+          }
+
+          var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
+
+          routeWidgetsState = StateUrlParser.queryToState(fullUrl);
+          storageWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_dashboard.name));
+
+          for (var _iterator6 = storageWidgetsState, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+            var _ref6;
+
+            if (_isArray6) {
+              if (_i6 >= _iterator6.length) break;
+              _ref6 = _iterator6[_i6++];
+            } else {
+              _i6 = _iterator6.next();
+              if (_i6.done) break;
+              _ref6 = _i6.value;
+            }
+
+            var oldSt = _ref6;
+
+            _this6._userStateStorage.remove(oldSt.key);
+          }for (var _iterator7 = routeWidgetsState, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
+            var _ref7;
+
+            if (_isArray7) {
+              if (_i7 >= _iterator7.length) break;
+              _ref7 = _iterator7[_i7++];
+            } else {
+              _i7 = _iterator7.next();
+              if (_i7.done) break;
+              _ref7 = _i7.value;
+            }
+
+            var newSt = _ref7;
+
+            _this6._userStateStorage.set(newSt.key, newSt.value);
+          }
+          if (_.filter(_this6._navigationHistory.items, function (i) {
+            return StringHelper.compare(i.url, fullUrl);
+          }).length === 0) {
+            _this6._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this6._userStateStorage.getAll(_dashboard.name), new Date());
+          }
+
+          _this6.currentRouteItem = {
+            dashboardName: _dashboard.name,
+            title: _dashboard.title,
+            route: fullUrl
+          };
+        })();
+      }
+    } else this.currentRouteItem = null;
+    return next();
+  };
+
+  _createClass(HistoryStep, [{
+    key: 'currentRouteItem',
+    get: function get() {
+      return this._currentRoute;
+    },
+    set: function set(value) {
+      this._currentRoute = value;
+    }
+  }]);
+
+  return HistoryStep;
 }()) || _class3);
+
+var NavigationHistory = exports.NavigationHistory = function () {
+  function NavigationHistory() {
+    _classCallCheck(this, NavigationHistory);
+
+    this._history = [];
+  }
+
+  NavigationHistory.prototype.add = function add(url, title, dashboard, state, dateTime) {
+    this._history.push({ url: url, title: title, dashboard: dashboard, state: state, dateTime: dateTime });
+  };
+
+  NavigationHistory.prototype.update = function update(url, dateTime) {
+    for (var _iterator8 = this._history, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
+      var _ref8;
+
+      if (_isArray8) {
+        if (_i8 >= _iterator8.length) break;
+        _ref8 = _iterator8[_i8++];
+      } else {
+        _i8 = _iterator8.next();
+        if (_i8.done) break;
+        _ref8 = _i8.value;
+      }
+
+      var h = _ref8;
+
+      if (h.url === url) {
+        h.dateTime = dateTime;
+        break;
+      }
+    }
+  };
+
+  NavigationHistory.prototype.delete = function _delete(url) {
+    for (var _iterator9 = this._history, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
+      var _ref9;
+
+      if (_isArray9) {
+        if (_i9 >= _iterator9.length) break;
+        _ref9 = _iterator9[_i9++];
+      } else {
+        _i9 = _iterator9.next();
+        if (_i9.done) break;
+        _ref9 = _i9.value;
+      }
+
+      var i = _ref9;
+
+      if (i.url === url) {
+        this._history.splice(i, 1);
+        break;
+      }
+    }
+  };
+
+  NavigationHistory.prototype.deleteAll = function deleteAll() {
+    this._history = [];
+  };
+
+  NavigationHistory.prototype.trimRight = function trimRight(url) {
+    for (var i = this._history.length - 1; i >= 0; i--) {
+      if (this._history[i].url === url) {
+        this._history.splice(i + 1);
+        return;
+      }
+    }
+  };
+
+  NavigationHistory.prototype.exists = function exists(url) {
+    for (var _iterator10 = this._history, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
+      var _ref10;
+
+      if (_isArray10) {
+        if (_i10 >= _iterator10.length) break;
+        _ref10 = _iterator10[_i10++];
+      } else {
+        _i10 = _iterator10.next();
+        if (_i10.done) break;
+        _ref10 = _i10.value;
+      }
+
+      var i = _ref10;
+
+      if (i.route === url) return true;
+    }
+    return false;
+  };
+
+  _createClass(NavigationHistory, [{
+    key: 'items',
+    get: function get() {
+      return this._history;
+    }
+  }]);
+
+  return NavigationHistory;
+}();
 
 var Schema = exports.Schema = function Schema() {
   _classCallCheck(this, Schema);
@@ -1428,6 +1427,26 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   return StaticJsonDataService;
 }(DataService)) || _class5) || _class5);
 
+var FormatValueConverter = function () {
+  function FormatValueConverter() {
+    _classCallCheck(this, FormatValueConverter);
+  }
+
+  FormatValueConverter.format = function format(value, _format) {
+    if (DataHelper.isDate(value)) return (0, _moment2.default)(value).format(_format);
+    if (DataHelper.isNumber(value)) return (0, _numeral2.default)(value).format(_format);
+    return value;
+  };
+
+  FormatValueConverter.prototype.toView = function toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  };
+
+  return FormatValueConverter;
+}();
+
+exports.FormatValueConverter = FormatValueConverter;
+
 
 var DSL_GRAMMAR_EXPRESSION = '\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = "record.";\n \t\tvar result = "";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))\n              result = prefix + fieldname + ".toLowerCase().includes(\'" + v.substring(1,value.length-1) + "\')"\n          else if (v.indexOf("%")===0)\n              result = prefix + fieldname + ".toLowerCase().endsWith(\'" + v.substring(1,value.length) + "\')"\n          else if (v.lastIndexOf("%")===(value.length-1))\n              result = prefix + fieldname + ".toLowerCase().startsWith(\'" + v.substring(0,value.length-1) + "\')"\n        }\n        if (result == "")\n          result = prefix + fieldname + ".toLowerCase() == \'" + v + "\'";\n\n        result="(" + prefix + fieldname + "!=null && " + result + ")"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = "";\n    var values = value.split(\',\');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = \'[\\"\\\']\';\n      var re = new RegExp(find, \'g\');\n      var v = values[i].replace(new RegExp(find, \'g\'), "");\n      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += " || ";\n    }\n    if (result.length>0)\n      result = "(" + result + ")"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin "LOGIC_OPERATOR"\n     = and\n     / or\n\nand = space* "and"i space* {return " && ";}\n\nor = space* "or"i space* {return " || ";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}\n          / "(" space? e:expression space* ")" space* {return "(" + e +")";}\n\n\n\nvaluesArray "STRING_VALUES_ARRAY"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* "," space* v:stringValue) {return  nv}\n\n\n\ndateValue "DATE_VALUE"\n        = quote? dt:$(date+) quote? {return "\'" + dt + "\'";}\n\n\nstringValue  "STRING_VALUE"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return "";}\n\n\nnumericValue  "NUMERIC_VALUE"\n       = $(numeric+)\n\n\nop "OPERATOR"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq "STRING_OPERATOR_EQUAL"\n  = eq\n  / not_eq\n\nop_in "STRING_OPERATOR_IN"\n  = in\n\neq = space* "=" space* {return "==";}\n\nnot_eq = space* "!=" space* {return "!=";}\n\ngt = space* v:">" space* {return v;}\n\nge = space* v:">=" space* {return v;}\n\nlt = space* v:"<" space* {return v;}\n\nle = space* v:"<=" space* {return v;}\n\nin = space* v:"in" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield "FIELD_NAME"\n      = stringField\n     / numericField\n     / dateField\n\nstringField "STRING_FIELD_NAME"\n     = @S@\n\nnumericField "NUMERIC_FIELD_NAME"\n     = @N@\n\ndateField "DATE_FIELD_NAME"\n     = @D@\n\nquote = [\\\'\\"]\n\n\n';
 
@@ -1514,26 +1533,6 @@ var Grammar = exports.Grammar = function () {
 
   return Grammar;
 }();
-
-var FormatValueConverter = function () {
-  function FormatValueConverter() {
-    _classCallCheck(this, FormatValueConverter);
-  }
-
-  FormatValueConverter.format = function format(value, _format) {
-    if (DataHelper.isDate(value)) return (0, _moment2.default)(value).format(_format);
-    if (DataHelper.isNumber(value)) return (0, _numeral2.default)(value).format(_format);
-    return value;
-  };
-
-  FormatValueConverter.prototype.toView = function toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  };
-
-  return FormatValueConverter;
-}();
-
-exports.FormatValueConverter = FormatValueConverter;
 
 var DashboardBase = exports.DashboardBase = function () {
   function DashboardBase() {

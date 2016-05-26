@@ -326,164 +326,6 @@ export class Query {
 }
 
 
-export class IntellisenceManager {
-  constructor(parser, dataSource, availableFields){
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  populate(searchStr, lastWord){
-    let parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  }
-
-
-  _getParserError(searchStr) {
-    let result = null;
-    if (searchStr!="") {
-      try {
-        this.parser.parse(searchStr);
-        try{
-          this.parser.parse(searchStr + "^");
-        }
-        catch(ex2){
-          result = ex2;
-        }
-      }
-      catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  }
-
-
-
-  _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-    for (let i=(tmpArr.length-1); i>=0; i--)  {
-      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
-      if (j>=0)
-        return fieldsArray[j];
-      //return tmpArr[i].trim();
-    }
-    return "";
-  }
-
-  _interpreteParserError(ex){
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (let desc of ex.expected) {
-        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  }
-
-  _getIntellisenseData (searchStr, lastWord, pegException) {
-    let type='';
-    let result = [];
-    let lastFldName = '';
-
-    if (!pegException)
-      return new Promise((resolve, reject)=>{ resolve([])});
-
-    let tokenName = this._interpreteParserError(pegException);
-    return new Promise((resolve, reject)=>{
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
-          resolve(this._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("string", data))
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("array_string", data))
-          });
-          break;
-          resolve(this._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  }
-
-
-  _getFieldValuesArray(fieldName, lastWord) {
-    let query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord)
-      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(dH=>{
-      var result = _.map(dH.data,fieldName);
-      return _.uniq(result).sort();
-    })
-  }
-
-  _getStringComparisonOperatorsArray() {
-    return (["=", "in"]);
-  }
-
-  _getLogicalOperatorsArray() {
-    return (["and", "or"]);
-  }
-
-  _getComparisonOperatorsArray() {
-    return (["!=", "=", ">", "<", ">=", "<="])
-  }
-
-  _normalizeData(type, dataArray) {
-    return _.map(dataArray,d=>{ return { type: type, value: d }});
-  }
-}
-
-export class ExpressionParser {
-
-  constructor(grammarText) {
-    this.parser =  peg.buildParser(grammarText);
-  }
-
-  parse(searchString) {
-    return this.parser.parse(searchString);
-  }
-
-  validate(searchString) {
-    try{
-      this.parser.parse(searchString);
-      return true;
-    }
-    catch(ex) {
-      return false;
-    }
-  }
-}
-
 export class DataHelper {
   static getNumericFields(fields){
     return _.filter(fields, f => {
@@ -681,6 +523,164 @@ export class UrlHelper {
 
 }
 
+export class IntellisenceManager {
+  constructor(parser, dataSource, availableFields){
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  populate(searchStr, lastWord){
+    let parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  }
+
+
+  _getParserError(searchStr) {
+    let result = null;
+    if (searchStr!="") {
+      try {
+        this.parser.parse(searchStr);
+        try{
+          this.parser.parse(searchStr + "^");
+        }
+        catch(ex2){
+          result = ex2;
+        }
+      }
+      catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  }
+
+
+
+  _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+    for (let i=(tmpArr.length-1); i>=0; i--)  {
+      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
+      if (j>=0)
+        return fieldsArray[j];
+      //return tmpArr[i].trim();
+    }
+    return "";
+  }
+
+  _interpreteParserError(ex){
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (let desc of ex.expected) {
+        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  }
+
+  _getIntellisenseData (searchStr, lastWord, pegException) {
+    let type='';
+    let result = [];
+    let lastFldName = '';
+
+    if (!pegException)
+      return new Promise((resolve, reject)=>{ resolve([])});
+
+    let tokenName = this._interpreteParserError(pegException);
+    return new Promise((resolve, reject)=>{
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
+          resolve(this._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("string", data))
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("array_string", data))
+          });
+          break;
+          resolve(this._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  }
+
+
+  _getFieldValuesArray(fieldName, lastWord) {
+    let query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord)
+      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(dH=>{
+      var result = _.map(dH.data,fieldName);
+      return _.uniq(result).sort();
+    })
+  }
+
+  _getStringComparisonOperatorsArray() {
+    return (["=", "in"]);
+  }
+
+  _getLogicalOperatorsArray() {
+    return (["and", "or"]);
+  }
+
+  _getComparisonOperatorsArray() {
+    return (["!=", "=", ">", "<", ">=", "<="])
+  }
+
+  _normalizeData(type, dataArray) {
+    return _.map(dataArray,d=>{ return { type: type, value: d }});
+  }
+}
+
+export class ExpressionParser {
+
+  constructor(grammarText) {
+    this.parser =  peg.buildParser(grammarText);
+  }
+
+  parse(searchString) {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString) {
+    try{
+      this.parser.parse(searchString);
+      return true;
+    }
+    catch(ex) {
+      return false;
+    }
+  }
+}
+
 export class DashboardManager {
   constructor(){
     this._dashboards = [];
@@ -717,127 +717,6 @@ export class Factory{
   static of(Type){
     return new Factory(Type);
   }
-}
-
-@inject(UserStateStorage, NavigationHistory, DashboardManager)
-export class HistoryStep {
-  constructor(userStateStorage, navigationHistory, dashboardManager) {
-    this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
-    this._dashboardManager = dashboardManager;
-  }
-
-  get currentRouteItem() {
-    return this._currentRoute;
-  }
-  set currentRouteItem(value) {
-    this._currentRoute = value;
-  }
-
-  run(routingContext, next) {
-    if (routingContext.getAllInstructions().some(i => i.config.name === "dashboard")){
-      let dashboard = this._dashboardManager.find(routingContext.params.dashboard);
-      if (dashboard){
-          // update the history with the current state which is probably has changed
-          if (this.currentRouteItem){
-            let currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
-            let url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
-
-            if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
-              this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-            }
-            else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
-              this._navigationHistory.update(url,new Date());
-            }
-          }
-
-          let fullUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
-
-          // synchronize a stored state and a state from the route
-          var routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(dashboard.name));
-          for (let oldSt of storageWidgetsState)
-            this._userStateStorage.remove(oldSt.key);
-          for (let newSt of routeWidgetsState)
-            this._userStateStorage.set(newSt.key,newSt.value);
-
-          // add the new route to the history
-          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, fullUrl)).length===0){
-            this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, this._userStateStorage.getAll(dashboard.name), new Date());
-          }
-
-          this.currentRouteItem = {
-            dashboardName: dashboard.name,
-            title: dashboard.title,
-            route:fullUrl
-          };
-        }
-    }
-    else
-      this.currentRouteItem = null;
-    return next();
-  }
-}
-
-export class NavigationHistory {
-  constructor() {
-    this._history = [];
-  }
-
-
-
-  get items(){
-    return this._history;
-  }
-
-
-  add(url, title, dashboard, state, dateTime) {
-    this._history.push({url, title, dashboard, state, dateTime});
-  }
-
-
-
-  update(url, dateTime){
-    for (let h of this._history){
-      if (h.url === url) {
-        h.dateTime = dateTime;
-        break;
-      }
-    }
-  }
-
-  delete(url){
-    for (let i of this._history){
-      if (i.url === url) {
-        this._history.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-  deleteAll(){
-    this._history = [];
-  }
-
-  trimRight(url){
-    for (let i = this._history.length - 1; i >= 0; i--) {
-      if (this._history[i].url === url) {
-        this._history.splice(i + 1);
-        return;
-      }
-    }
-  }
-
-  exists(url) {
-    for (let i of this._history){
-      if (i.route === url)
-        return true;
-    }
-    return false;
-  }
-
-
-
 }
 
 
@@ -978,6 +857,127 @@ export class UserStateStorage{
 
 }
 
+@inject(UserStateStorage, NavigationHistory, DashboardManager)
+export class HistoryStep {
+  constructor(userStateStorage, navigationHistory, dashboardManager) {
+    this._navigationHistory = navigationHistory;
+    this._userStateStorage = userStateStorage;
+    this._dashboardManager = dashboardManager;
+  }
+
+  get currentRouteItem() {
+    return this._currentRoute;
+  }
+  set currentRouteItem(value) {
+    this._currentRoute = value;
+  }
+
+  run(routingContext, next) {
+    if (routingContext.getAllInstructions().some(i => i.config.name === "dashboard")){
+      let dashboard = this._dashboardManager.find(routingContext.params.dashboard);
+      if (dashboard){
+          // update the history with the current state which is probably has changed
+          if (this.currentRouteItem){
+            let currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
+            let url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+
+            if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
+              this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+            }
+            else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
+              this._navigationHistory.update(url,new Date());
+            }
+          }
+
+          let fullUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
+
+          // synchronize a stored state and a state from the route
+          var routeWidgetsState = StateUrlParser.queryToState(fullUrl);
+          var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(dashboard.name));
+          for (let oldSt of storageWidgetsState)
+            this._userStateStorage.remove(oldSt.key);
+          for (let newSt of routeWidgetsState)
+            this._userStateStorage.set(newSt.key,newSt.value);
+
+          // add the new route to the history
+          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, fullUrl)).length===0){
+            this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, this._userStateStorage.getAll(dashboard.name), new Date());
+          }
+
+          this.currentRouteItem = {
+            dashboardName: dashboard.name,
+            title: dashboard.title,
+            route:fullUrl
+          };
+        }
+    }
+    else
+      this.currentRouteItem = null;
+    return next();
+  }
+}
+
+export class NavigationHistory {
+  constructor() {
+    this._history = [];
+  }
+
+
+
+  get items(){
+    return this._history;
+  }
+
+
+  add(url, title, dashboard, state, dateTime) {
+    this._history.push({url, title, dashboard, state, dateTime});
+  }
+
+
+
+  update(url, dateTime){
+    for (let h of this._history){
+      if (h.url === url) {
+        h.dateTime = dateTime;
+        break;
+      }
+    }
+  }
+
+  delete(url){
+    for (let i of this._history){
+      if (i.url === url) {
+        this._history.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  deleteAll(){
+    this._history = [];
+  }
+
+  trimRight(url){
+    for (let i = this._history.length - 1; i >= 0; i--) {
+      if (this._history[i].url === url) {
+        this._history.splice(i + 1);
+        return;
+      }
+    }
+  }
+
+  exists(url) {
+    for (let i of this._history){
+      if (i.route === url)
+        return true;
+    }
+    return false;
+  }
+
+
+
+}
+
 export class Schema {
   constructor(){
     this.fields = [];
@@ -1107,6 +1107,20 @@ export class StaticJsonDataService extends DataService {
       });
   }
 
+}
+
+export class FormatValueConverter {
+  static format(value, format){
+    if (DataHelper.isDate(value))
+      return moment(value).format(format);
+    if (DataHelper.isNumber(value))
+      return numeral(value).format(format);
+    return value;
+  }
+
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  }
 }
 
 const DSL_GRAMMAR_EXPRESSION = `
@@ -1461,20 +1475,6 @@ export class Grammar{
   getGrammar(){
   }
   
-}
-
-export class FormatValueConverter {
-  static format(value, format){
-    if (DataHelper.isDate(value))
-      return moment(value).format(format);
-    if (DataHelper.isNumber(value))
-      return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
 }
 
 export class DashboardBase

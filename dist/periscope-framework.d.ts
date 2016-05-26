@@ -90,15 +90,6 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
-  export class IntellisenceManager {
-    constructor(parser: any, dataSource: any, availableFields: any);
-    populate(searchStr: any, lastWord: any): any;
-  }
-  export class ExpressionParser {
-    constructor(grammarText: any);
-    parse(searchString: any): any;
-    validate(searchString: any): any;
-  }
   export class DataHelper {
     static getNumericFields(fields: any): any;
     static getStringFields(fields: any): any;
@@ -126,6 +117,15 @@ declare module 'periscope-framework' {
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
   }
+  export class IntellisenceManager {
+    constructor(parser: any, dataSource: any, availableFields: any);
+    populate(searchStr: any, lastWord: any): any;
+  }
+  export class ExpressionParser {
+    constructor(grammarText: any);
+    parse(searchString: any): any;
+    validate(searchString: any): any;
+  }
   export class DashboardManager {
     constructor();
     dashboards: any;
@@ -136,21 +136,6 @@ declare module 'periscope-framework' {
     constructor(Type: any);
     get(container: any): any;
     static of(Type: any): any;
-  }
-  export class HistoryStep {
-    constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
-    currentRouteItem: any;
-    run(routingContext: any, next: any): any;
-  }
-  export class NavigationHistory {
-    constructor();
-    items: any;
-    add(url: any, title: any, dashboard: any, state: any, dateTime: any): any;
-    update(url: any, dateTime: any): any;
-    delete(url: any): any;
-    deleteAll(): any;
-    trimRight(url: any): any;
-    exists(url: any): any;
   }
   export class StateDiscriminator {
     static discriminate(widgetStates: any): any;
@@ -173,6 +158,21 @@ declare module 'periscope-framework' {
     remove(key: any): any;
     clearAll(): any;
     createKey(namespace: any, key: any): any;
+  }
+  export class HistoryStep {
+    constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
+    currentRouteItem: any;
+    run(routingContext: any, next: any): any;
+  }
+  export class NavigationHistory {
+    constructor();
+    items: any;
+    add(url: any, title: any, dashboard: any, state: any, dateTime: any): any;
+    update(url: any, dateTime: any): any;
+    delete(url: any): any;
+    deleteAll(): any;
+    trimRight(url: any): any;
+    exists(url: any): any;
   }
   export class Schema {
     constructor();
@@ -200,18 +200,6 @@ declare module 'periscope-framework' {
   export class StaticJsonDataService extends DataService {
     constructor(http: any);
     read(options: any): any;
-  }
-  export class GrammarExpression extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class GrammarTree extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class Grammar {
-    text: any;
-    getGrammar(): any;
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

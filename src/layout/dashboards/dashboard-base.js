@@ -14,10 +14,6 @@ export class DashboardBase
   }
 
 
-  get route() {
-    return this._route;
-  }
-
   get title() {
     return this._title;
   }
@@ -34,7 +30,6 @@ export class DashboardBase
   configure(dashboardConfiguration){
     this._name = dashboardConfiguration.name;
     this._title = dashboardConfiguration.title;
-    this._route = dashboardConfiguration.route;
   }
 
 
