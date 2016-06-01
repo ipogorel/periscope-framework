@@ -3,8 +3,75 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {inject,resolver,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
+import {resolver,inject,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
+
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
 
 
 export class DataHolder {
@@ -252,79 +319,170 @@ export class Query {
 }
 
 
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
-
 export class DashboardConfiguration {
   invoke(){
 
   }
 }
 
+
+export class IntellisenceManager {
+  constructor(parser, dataSource, availableFields){
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  populate(searchStr, lastWord){
+    let parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  }
+
+
+  _getParserError(searchStr) {
+    let result = null;
+    if (searchStr!="") {
+      try {
+        this.parser.parse(searchStr);
+        try{
+          this.parser.parse(searchStr + "^");
+        }
+        catch(ex2){
+          result = ex2;
+        }
+      }
+      catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  }
+
+
+
+  _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+    for (let i=(tmpArr.length-1); i>=0; i--)  {
+      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
+      if (j>=0)
+        return fieldsArray[j];
+      //return tmpArr[i].trim();
+    }
+    return "";
+  }
+
+  _interpreteParserError(ex){
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (let desc of ex.expected) {
+        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  }
+
+  _getIntellisenseData (searchStr, lastWord, pegException) {
+    let type='';
+    let result = [];
+    let lastFldName = '';
+
+    if (!pegException)
+      return new Promise((resolve, reject)=>{ resolve([])});
+
+    let tokenName = this._interpreteParserError(pegException);
+    return new Promise((resolve, reject)=>{
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
+          resolve(this._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("string", data))
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("array_string", data))
+          });
+          break;
+          resolve(this._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  }
+
+
+  _getFieldValuesArray(fieldName, lastWord) {
+    let query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord)
+      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(dH=>{
+      var result = _.map(dH.data,fieldName);
+      return _.uniq(result).sort();
+    })
+  }
+
+  _getStringComparisonOperatorsArray() {
+    return (["=", "in"]);
+  }
+
+  _getLogicalOperatorsArray() {
+    return (["and", "or"]);
+  }
+
+  _getComparisonOperatorsArray() {
+    return (["!=", "=", ">", "<", ">=", "<="])
+  }
+
+  _normalizeData(type, dataArray) {
+    return _.map(dataArray,d=>{ return { type: type, value: d }});
+  }
+}
+
+export class ExpressionParser {
+
+  constructor(grammarText) {
+    this.parser =  peg.buildParser(grammarText);
+  }
+
+  parse(searchString) {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString) {
+    try{
+      this.parser.parse(searchString);
+      return true;
+    }
+    catch(ex) {
+      return false;
+    }
+  }
+}
 
 export class DataHelper {
   static getNumericFields(fields){
@@ -523,161 +681,41 @@ export class UrlHelper {
 
 }
 
-export class IntellisenceManager {
-  constructor(parser, dataSource, availableFields){
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
+export class DashboardManager {
+  constructor(){
+    this._dashboards = [];
   }
 
-  populate(searchStr, lastWord){
-    let parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  get dashboards(){
+    return this._dashboards;
   }
 
-
-  _getParserError(searchStr) {
-    let result = null;
-    if (searchStr!="") {
-      try {
-        this.parser.parse(searchStr);
-        try{
-          this.parser.parse(searchStr + "^");
-        }
-        catch(ex2){
-          result = ex2;
-        }
-      }
-      catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
+  find(dashboardName){
+    return  _.find(this._dashboards, {name:dashboardName});
   }
-
-
-
-  _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-    for (let i=(tmpArr.length-1); i>=0; i--)  {
-      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
-      if (j>=0)
-        return fieldsArray[j];
-      //return tmpArr[i].trim();
-    }
-    return "";
-  }
-
-  _interpreteParserError(ex){
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (let desc of ex.expected) {
-        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  }
-
-  _getIntellisenseData (searchStr, lastWord, pegException) {
-    let type='';
-    let result = [];
-    let lastFldName = '';
-
-    if (!pegException)
-      return new Promise((resolve, reject)=>{ resolve([])});
-
-    let tokenName = this._interpreteParserError(pegException);
-    return new Promise((resolve, reject)=>{
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
-          resolve(this._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("string", data))
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("array_string", data))
-          });
-          break;
-          resolve(this._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  }
-
-
-  _getFieldValuesArray(fieldName, lastWord) {
-    let query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord)
-      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(dH=>{
-      var result = _.map(dH.data,fieldName);
-      return _.uniq(result).sort();
-    })
-  }
-
-  _getStringComparisonOperatorsArray() {
-    return (["=", "in"]);
-  }
-
-  _getLogicalOperatorsArray() {
-    return (["and", "or"]);
-  }
-
-  _getComparisonOperatorsArray() {
-    return (["!=", "=", ">", "<", ">=", "<="])
-  }
-
-  _normalizeData(type, dataArray) {
-    return _.map(dataArray,d=>{ return { type: type, value: d }});
+  
+  createDashboard(type, dashboardConfiguration){
+    var dashboard = new type();
+    dashboard.configure(dashboardConfiguration);
+    this._dashboards.push(dashboard);
+    return dashboard;
   }
 }
 
-export class ExpressionParser {
-
-  constructor(grammarText) {
-    this.parser =  peg.buildParser(grammarText);
+@resolver
+export class Factory{
+  constructor(Type){
+    this.Type = Type;
   }
 
-  parse(searchString) {
-    return this.parser.parse(searchString);
+  get(container){
+    return (...rest)=>{
+      return container.invoke(this.Type, rest);
+    };
   }
 
-  validate(searchString) {
-    try{
-      this.parser.parse(searchString);
-      return true;
-    }
-    catch(ex) {
-      return false;
-    }
+  static of(Type){
+    return new Factory(Type);
   }
 }
 
@@ -940,44 +978,6 @@ export class UserStateStorage{
 
 }
 
-export class DashboardManager {
-  constructor(){
-    this._dashboards = [];
-  }
-
-  get dashboards(){
-    return this._dashboards;
-  }
-
-  find(dashboardName){
-    return  _.find(this._dashboards, {name:dashboardName});
-  }
-  
-  createDashboard(type, dashboardConfiguration){
-    var dashboard = new type();
-    dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
-    return dashboard;
-  }
-}
-
-@resolver
-export class Factory{
-  constructor(Type){
-    this.Type = Type;
-  }
-
-  get(container){
-    return (...rest)=>{
-      return container.invoke(this.Type, rest);
-    };
-  }
-
-  static of(Type){
-    return new Factory(Type);
-  }
-}
-
 export class Schema {
   constructor(){
     this.fields = [];
@@ -1107,20 +1107,6 @@ export class StaticJsonDataService extends DataService {
       });
   }
 
-}
-
-export class FormatValueConverter {
-  static format(value, format){
-    if (DataHelper.isDate(value))
-      return moment(value).format(format);
-    if (DataHelper.isNumber(value))
-      return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
 }
 
 const DSL_GRAMMAR_EXPRESSION = `
@@ -1309,8 +1295,15 @@ const DSL_GRAMMAR_TREE = `
     findFirstLeftStatement(arr)["connector"] = connector;
     return arr;
   }
+  function toArray (value) {
+    var res = value.split(',');
+    var re = new RegExp('[\\'\\"]', 'g');
+    for (var i=0;i<res.length;i++)
+      res[i] = res[i].replace(re, "").trim();
+    return res;
+  }
   
-  function createInExpression (fieldname, value) {
+  /*function createInExpression (fieldname, value) {
     var result = []
     var values = value.split(',');
     for (var i=0;i<values.length;i++){
@@ -1320,12 +1313,12 @@ const DSL_GRAMMAR_TREE = `
             result.push({field:fieldname, type:'string' ,value:values[i], connector:" || "});
     }
     return result;
-  }
+  }*/
 }
 
 //Start = statement *
 Start
-  = st:statement  {return [st]}  
+  = st:statement  {return st}  
   
 statement
   = left:block cnct:connector right:statement 
@@ -1335,15 +1328,15 @@ statement
     
 block
   = pOpen block:statement* pClose space?
-    { return block; }
+    { return block[0]; }
   / block:condition space?
     { return block; }
     
 condition = space? f:stringField o:op_eq v:stringValue 
 			{return {field:f, type:"string", operand:o, value:v}}
             / space? f:stringField o:op_in a:valuesArray 
-            {return createInExpression(f,a)}            
-			/ space? f:numericField o:op v:numericValue 
+       {return {field:f, type:"string", operand:o, value:toArray(a)}}            
+			  / space? f:numericField o:op v:numericValue 
             {return {field:f, type:"number", operand:o, value:v}}
           	/ space? f:dateField o:op v:dateValue
           {return {field:f, type:"date", operand:o, value:v}}
@@ -1463,6 +1456,8 @@ export class GrammarTree extends Grammar {
 
 
 
+
+
 export class Grammar{
   
   set text(value){
@@ -1475,6 +1470,433 @@ export class Grammar{
   getGrammar(){
   }
   
+}
+
+export class FormatValueConverter {
+  static format(value, format){
+    if (DataHelper.isDate(value))
+      return moment(value).format(format);
+    if (DataHelper.isNumber(value))
+      return numeral(value).format(format);
+    return value;
+  }
+
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  }
+}
+
+export class ChangeRouteBehavior extends DashboardBehavior {
+  constructor(settings) {
+    super();
+    this._chanel = settings.chanel;
+    this._eventAggregator = settings.eventAggregator;
+    this._newRoute = settings.newRoute;
+    this._router = settings.router;
+    this._paramsMapper = settings.paramsMapper;
+  }
+
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      var params = me._paramsMapper ? me._paramsMapper(message) : "";
+      if ((params!=="")&&(params.indexOf("?")!=0))
+        params="?" + params;
+      me._router.navigate(me._newRoute + (params!==""? params : ""));
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class CreateWidgetBehavior extends DashboardBehavior {
+
+  constructor(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
+    super();
+    this._chanel = chanel;
+    this._widgetType = widgetType;
+    this._widgetSettings = widgetSettings;
+    this._widgetDimensions = widgetDimensions;
+    this._eventAggregator = eventAggregator;
+    this._filterMapper = filterMapper;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      //make sure the widget exists
+      var w = dashboard.getWidgetByName(me._widgetSettings.name);
+      if(!w){ //widget not exist.
+        var w = new me._widgetType(me._widgetSettings);
+        dashboard.addWidget(w, this._widgetDimensions);
+      }
+      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
+      w.refresh();
+
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+
+
+}
+
+export class DashboardBehavior {
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.dashboard.behaviors.length; i++) {
+      if(this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+}
+
+export class ManageNavigationStackBehavior extends DashboardBehavior {
+  constructor(eventAggregator) {
+    super();
+    
+    this._eventAggregator = eventAggregator;
+  }
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+
+    //this._eventAggregator.subscribe(BackButtonEvent, event => {
+    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
+      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
+      if (originatorWidget) {
+        var previousWidget = message.navigationStack.pop();
+        dashboard.replaceWidget(originatorWidget,previousWidget);
+      }
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class ReplaceWidgetBehavior extends DashboardBehavior  {
+
+  constructor(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
+    super();
+    this._chanel = chanel;
+    this._widgetType = widgetType;
+    this._widgetSettings = widgetSettings;
+    this._eventAggregator = eventAggregator;
+    this._widgetToReplaceName = widgetToReplaceName;
+    this._mapper = mapper;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      if (me._mapper)
+        w.dataFilter =  me._mapper(message);
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
+export class DataActivatedBehavior extends WidgetBehavior {
+  constructor(chanel, eventAggregator) {
+    super();
+    this._chanel = chanel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget.dataActivated =  function(currentRecord) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.activatedData = currentRecord;
+      me._eventAggregator.publish(me._chanel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataFieldSelectedBehavior extends WidgetBehavior {
+  constructor(chanel, eventAggregator) {
+    super();
+    this._chanel = chanel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget.dataFieldSelected =  function(fieldName) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.fieldName = fieldName;
+      me._eventAggregator.publish(me._chanel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+
+export class DataFilterChangedBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget) {
+    super.attachToWidget(widget);
+    var me = this;
+    widget.dataFilterChanged = function(filter)
+    {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.dataFilter = filter;
+      me._eventAggregator.publish(me._channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataFilterHandleBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator, filterMapper) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+    this._filterMapper = filterMapper;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
+      me.widget.dataFilter = filterToApply;
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class DataSelectedBehavior extends WidgetBehavior {
+  constructor(chanel, eventAggregator) {
+    super();
+    this._chanel = chanel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget.dataSelected =  function(currentRecord) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.selectedData = currentRecord;
+      me._eventAggregator.publish(me._chanel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataSourceChangedBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget) {
+    super.attachToWidget(widget);
+    var me = this;
+    widget.dataSourceChanged = function(dataSource)
+    {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.dataSource = dataSource;
+      me._eventAggregator.publish(me._channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataSourceHandleBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      me.widget.dataSource = message.dataSource;
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class SettingsHandleBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator, messageMapper) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+    this._messageMapper = messageMapper;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
+      _.forOwn(settingsToApply, (v, k)=>{
+        //me.widget.changeSettings(settingsToApply);
+        me.widget[k] = v;
+      });
+      //me.widget.changeSettings(settingsToApply);
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class WidgetBehavior {
+
+  get widget() {
+    return this._widget;
+  }
+
+  attachToWidget(widget) {
+    this._widget = widget;
+    this._widget.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.widget.behaviors.length; i++) {
+      if(this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
 }
 
 export class DashboardBase
@@ -2042,419 +2464,6 @@ export class Widget {
 
 
 
-export class ChangeRouteBehavior extends DashboardBehavior {
-  constructor(settings) {
-    super();
-    this._chanel = settings.chanel;
-    this._eventAggregator = settings.eventAggregator;
-    this._newRoute = settings.newRoute;
-    this._router = settings.router;
-    this._paramsMapper = settings.paramsMapper;
-  }
-
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      var params = me._paramsMapper ? me._paramsMapper(message) : "";
-      if ((params!=="")&&(params.indexOf("?")!=0))
-        params="?" + params;
-      me._router.navigate(me._newRoute + (params!==""? params : ""));
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class CreateWidgetBehavior extends DashboardBehavior {
-
-  constructor(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
-    super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._widgetDimensions = widgetDimensions;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      //make sure the widget exists
-      var w = dashboard.getWidgetByName(me._widgetSettings.name);
-      if(!w){ //widget not exist.
-        var w = new me._widgetType(me._widgetSettings);
-        dashboard.addWidget(w, this._widgetDimensions);
-      }
-      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
-      w.refresh();
-
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-
-
-}
-
-export class DashboardBehavior {
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.dashboard.behaviors.length; i++) {
-      if(this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-}
-
-export class ManageNavigationStackBehavior extends DashboardBehavior {
-  constructor(eventAggregator) {
-    super();
-    
-    this._eventAggregator = eventAggregator;
-  }
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-
-    //this._eventAggregator.subscribe(BackButtonEvent, event => {
-    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
-      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
-      if (originatorWidget) {
-        var previousWidget = message.navigationStack.pop();
-        dashboard.replaceWidget(originatorWidget,previousWidget);
-      }
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class ReplaceWidgetBehavior extends DashboardBehavior  {
-
-  constructor(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
-    super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._eventAggregator = eventAggregator;
-    this._widgetToReplaceName = widgetToReplaceName;
-    this._mapper = mapper;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
-      var w = new me._widgetType(me._widgetSettings);
-      dashboard.replaceWidget(originatorWidget, w);
-      if (me._mapper)
-        w.dataFilter =  me._mapper(message);
-      w.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-}
-
-export class DataActivatedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
-    super();
-    this._chanel = chanel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget.dataActivated =  function(currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.activatedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataFieldSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
-    super();
-    this._chanel = chanel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget.dataFieldSelected =  function(fieldName) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.fieldName = fieldName;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-
-export class DataFilterChangedBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget) {
-    super.attachToWidget(widget);
-    var me = this;
-    widget.dataFilterChanged = function(filter)
-    {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.dataFilter = filter;
-      me._eventAggregator.publish(me._channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataFilterHandleBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator, filterMapper) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
-      me.widget.dataFilter = filterToApply;
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class DataSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
-    super();
-    this._chanel = chanel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget.dataSelected =  function(currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.selectedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataSourceChangedBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget) {
-    super.attachToWidget(widget);
-    var me = this;
-    widget.dataSourceChanged = function(dataSource)
-    {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.dataSource = dataSource;
-      me._eventAggregator.publish(me._channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataSourceHandleBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      me.widget.dataSource = message.dataSource;
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class SettingsHandleBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator, messageMapper) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-    this._messageMapper = messageMapper;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
-      _.forOwn(settingsToApply, (v, k)=>{
-        //me.widget.changeSettings(settingsToApply);
-        me.widget[k] = v;
-      });
-      //me.widget.changeSettings(settingsToApply);
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class WidgetBehavior {
-
-  get widget() {
-    return this._widget;
-  }
-
-  attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.widget.behaviors.length; i++) {
-      if(this.widget.behaviors[i] === this) {
-        this.widget.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-}
-
 export class AstParser{
   constructor(){
     this._clientSide = "clientSide";
@@ -2526,8 +2535,8 @@ export class AstToJavascriptParser extends AstParser{
   }
 
   getFilter(astTree) {
-    if (astTree[0])
-      return this._parseTree(astTree[0],[]);
+    if (astTree)
+      return this._parseTree(astTree,[]);
     return "";
   }
 
@@ -2544,7 +2553,6 @@ export class AstToJavascriptParser extends AstParser{
 
 
   _createExpression(connector, node){
-
     let result = "";
     let prefix = "record.";
     let fieldname = node.field;
@@ -2552,17 +2560,25 @@ export class AstToJavascriptParser extends AstParser{
     let value = node.value;
 
     if (node.type=='string') {
-      let v = value.trim().toLowerCase();
-      if (v.length >= 2) {
-        if ((v.indexOf("%") === 0) && (v.lastIndexOf("%") === (v.length - 1)))
-          result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1, value.length - 1) + "')"
-        else if (v.indexOf("%") === 0)
-          result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1, value.length) + "')"
-        else if (v.lastIndexOf("%") === (value.length - 1))
-          result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0, value.length - 1) + "')"
+      if (operand==='in') {
+        result = _.map(value, val=>{
+          return prefix + fieldname + ".toLowerCase() == '" + val.trim().toLowerCase() + "'"
+        }).join(" || ");
+
       }
-      if (result == "")
-        result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
+      else {
+        let v = value.trim().toLowerCase();
+        if (v.length >= 2) {
+          if ((v.indexOf("%") === 0) && (v.lastIndexOf("%") === (v.length - 1)))
+            result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1, value.length - 1) + "')"
+          else if (v.indexOf("%") === 0)
+            result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1, value.length) + "')"
+          else if (v.lastIndexOf("%") === (value.length - 1))
+            result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0, value.length - 1) + "')"
+        }
+        if (result == "")
+          result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
+      }
     }
     else if (node.type=='number'){
       result = prefix + fieldname + operand + " " + value;
@@ -2570,7 +2586,7 @@ export class AstToJavascriptParser extends AstParser{
     else if (node.type=='date'){
       result = prefix + fieldname + operand + " '" + value + "'";
     }
-    result=(connector? connector:"") +" (" + prefix + fieldname + "!=null && " + result + ")";
+    result=(connector? connector:"") +" (" + prefix + fieldname + "!=null && (" + result + "))";
     return result;
   }
 

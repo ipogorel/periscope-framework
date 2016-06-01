@@ -15,8 +15,15 @@ const DSL_GRAMMAR_TREE = `
     findFirstLeftStatement(arr)["connector"] = connector;
     return arr;
   }
+  function toArray (value) {
+    var res = value.split(',');
+    var re = new RegExp('[\\'\\"]', 'g');
+    for (var i=0;i<res.length;i++)
+      res[i] = res[i].replace(re, "").trim();
+    return res;
+  }
   
-  function createInExpression (fieldname, value) {
+  /*function createInExpression (fieldname, value) {
     var result = []
     var values = value.split(',');
     for (var i=0;i<values.length;i++){
@@ -26,12 +33,12 @@ const DSL_GRAMMAR_TREE = `
             result.push({field:fieldname, type:'string' ,value:values[i], connector:" || "});
     }
     return result;
-  }
+  }*/
 }
 
 //Start = statement *
 Start
-  = st:statement  {return [st]}  
+  = st:statement  {return st}  
   
 statement
   = left:block cnct:connector right:statement 
@@ -41,15 +48,15 @@ statement
     
 block
   = pOpen block:statement* pClose space?
-    { return block; }
+    { return block[0]; }
   / block:condition space?
     { return block; }
     
 condition = space? f:stringField o:op_eq v:stringValue 
 			{return {field:f, type:"string", operand:o, value:v}}
             / space? f:stringField o:op_in a:valuesArray 
-            {return createInExpression(f,a)}            
-			/ space? f:numericField o:op v:numericValue 
+       {return {field:f, type:"string", operand:o, value:toArray(a)}}            
+			  / space? f:numericField o:op v:numericValue 
             {return {field:f, type:"number", operand:o, value:v}}
           	/ space? f:dateField o:op v:dateValue
           {return {field:f, type:"date", operand:o, value:v}}
@@ -165,4 +172,6 @@ export class GrammarTree extends Grammar {
       return "'unknown_field'"
   }
 }
+
+
 

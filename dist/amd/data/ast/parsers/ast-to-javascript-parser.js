@@ -64,7 +64,7 @@ define(["exports", "./ast-parser"], function (exports, _astParser) {
     }
 
     AstToJavascriptParser.prototype.getFilter = function getFilter(astTree) {
-      if (astTree[0]) return this._parseTree(astTree[0], []);
+      if (astTree) return this._parseTree(astTree, []);
       return "";
     };
 
@@ -77,7 +77,6 @@ define(["exports", "./ast-parser"], function (exports, _astParser) {
     };
 
     AstToJavascriptParser.prototype._createExpression = function _createExpression(connector, node) {
-
       var result = "";
       var prefix = "record.";
       var fieldname = node.field;
@@ -85,17 +84,23 @@ define(["exports", "./ast-parser"], function (exports, _astParser) {
       var value = node.value;
 
       if (node.type == 'string') {
-        var v = value.trim().toLowerCase();
-        if (v.length >= 2) {
-          if (v.indexOf("%") === 0 && v.lastIndexOf("%") === v.length - 1) result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1, value.length - 1) + "')";else if (v.indexOf("%") === 0) result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1, value.length) + "')";else if (v.lastIndexOf("%") === value.length - 1) result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0, value.length - 1) + "')";
+        if (operand === 'in') {
+          result = _.map(value, function (val) {
+            return prefix + fieldname + ".toLowerCase() == '" + val.trim().toLowerCase() + "'";
+          }).join(" || ");
+        } else {
+          var v = value.trim().toLowerCase();
+          if (v.length >= 2) {
+            if (v.indexOf("%") === 0 && v.lastIndexOf("%") === v.length - 1) result = prefix + fieldname + ".toLowerCase().includes('" + v.substring(1, value.length - 1) + "')";else if (v.indexOf("%") === 0) result = prefix + fieldname + ".toLowerCase().endsWith('" + v.substring(1, value.length) + "')";else if (v.lastIndexOf("%") === value.length - 1) result = prefix + fieldname + ".toLowerCase().startsWith('" + v.substring(0, value.length - 1) + "')";
+          }
+          if (result == "") result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
         }
-        if (result == "") result = prefix + fieldname + ".toLowerCase() " + operand + " '" + v + "'";
       } else if (node.type == 'number') {
         result = prefix + fieldname + operand + " " + value;
       } else if (node.type == 'date') {
         result = prefix + fieldname + operand + " '" + value + "'";
       }
-      result = (connector ? connector : "") + " (" + prefix + fieldname + "!=null && " + result + ")";
+      result = (connector ? connector : "") + " (" + prefix + fieldname + "!=null && (" + result + "))";
       return result;
     };
 

@@ -5,8 +5,8 @@ declare module 'periscope-framework' {
   import moment from 'moment';
   import lodash from 'lodash';
   import {
-    inject,
     resolver,
+    inject,
     transient,
     computedFrom,
     customElement,
@@ -19,6 +19,26 @@ declare module 'periscope-framework' {
     HttpClient
   } from 'aurelia-fetch-client';
   import Swagger from 'swagger-client';
+  export class CacheManager {
+    constructor(storage: any);
+    cleanInterval: any;
+    startCleaner(): any;
+    stopCleaner(): any;
+    getStorage(): any;
+  }
+  export class CacheStorage {
+    setItem(key: any, value: any, expiration: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
+  export class MemoryCacheStorage extends CacheStorage {
+    constructor();
+    setItem(key: any, value: any, seconds: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
@@ -67,28 +87,17 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
-  export class CacheManager {
-    constructor(storage: any);
-    cleanInterval: any;
-    startCleaner(): any;
-    stopCleaner(): any;
-    getStorage(): any;
-  }
-  export class CacheStorage {
-    setItem(key: any, value: any, expiration: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
-  export class MemoryCacheStorage extends CacheStorage {
-    constructor();
-    setItem(key: any, value: any, seconds: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
   export class DashboardConfiguration {
     invoke(): any;
+  }
+  export class IntellisenceManager {
+    constructor(parser: any, dataSource: any, availableFields: any);
+    populate(searchStr: any, lastWord: any): any;
+  }
+  export class ExpressionParser {
+    constructor(grammarText: any);
+    parse(searchString: any): any;
+    validate(searchString: any): any;
   }
   export class DataHelper {
     static getNumericFields(fields: any): any;
@@ -117,14 +126,16 @@ declare module 'periscope-framework' {
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
   }
-  export class IntellisenceManager {
-    constructor(parser: any, dataSource: any, availableFields: any);
-    populate(searchStr: any, lastWord: any): any;
+  export class DashboardManager {
+    constructor();
+    dashboards: any;
+    find(dashboardName: any): any;
+    createDashboard(type: any, dashboardConfiguration: any): any;
   }
-  export class ExpressionParser {
-    constructor(grammarText: any);
-    parse(searchString: any): any;
-    validate(searchString: any): any;
+  export class Factory {
+    constructor(Type: any);
+    get(container: any): any;
+    static of(Type: any): any;
   }
   export class HistoryStep {
     constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
@@ -163,17 +174,6 @@ declare module 'periscope-framework' {
     clearAll(): any;
     createKey(namespace: any, key: any): any;
   }
-  export class DashboardManager {
-    constructor();
-    dashboards: any;
-    find(dashboardName: any): any;
-    createDashboard(type: any, dashboardConfiguration: any): any;
-  }
-  export class Factory {
-    constructor(Type: any);
-    get(container: any): any;
-    static of(Type: any): any;
-  }
   export class Schema {
     constructor();
   }
@@ -200,6 +200,18 @@ declare module 'periscope-framework' {
   export class StaticJsonDataService extends DataService {
     constructor(http: any);
     read(options: any): any;
+  }
+  export class GrammarExpression extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class GrammarTree extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class Grammar {
+    text: any;
+    getGrammar(): any;
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;
