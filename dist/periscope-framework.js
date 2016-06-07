@@ -3,8 +3,228 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {resolver,inject,transient,computedFrom,customElement,useView,Decorators,bindable,noView} from 'aurelia-framework';
+import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
+
+@inject(Element, PermissionsManager)
+export class PermissionsCustomAttribute {
+
+  constructor(element, permissionsManager){
+    this.element = element;
+    this.permissionsManager = permissionsManager;
+  }
+
+  bind() {
+    if (!this.value)
+      return;
+    let widgetName = "";
+    let permissions = []
+    if (_.isString(this.value)) {
+      widgetName = this.element.au.permissions.scope.bindingContext.name; // get widget name
+      permissions = this.value.split(",");
+    }
+    else if (_.isPlainObject(this.value)){
+      widgetName = this.value.widgetName;
+      permissions = this.value.permissions;
+    }
+    for (let p of permissions){
+      this.permissionsManager.hasPermisson(p, widgetName).then(result=>{
+        if (!result){
+          if (p==='r')
+            this.element.hidden = true;
+          if (p==='w')
+            this.element.disabled = true;
+        }
+        else{
+          if (p==='r')
+            this.element.hidden = false;
+          if (p==='w')
+            this.element.disabled = false;
+        }
+      })
+    }
+  }
+}
+
+export class PermissionsManagerConfiguration {
+  permissionsMatrix = [];
+  roleProvider;
+
+  withPermissionsMatrix(matrix){
+    this.permissionsMatrix = matrix;
+    return this;
+  }
+
+  withRoleProvider(roleProvider){
+    this.roleProvider = roleProvider;
+    return this;
+  }
+}
+
+export class PermissionsManager {
+  constructor(){
+    this._permissionsMatrix = [];
+  }
+
+
+  configure(config){
+    let normalizedConfig = new PermissionsManagerConfiguration();
+    config(normalizedConfig);
+    this._permissionsMatrix = normalizedConfig.permissionsMatrix;
+    this._roleProvider = normalizedConfig.roleProvider;
+  }
+
+  hasPermisson(permission, resourceName){
+    return this._roleProvider.getRoles().then(roles=>{
+      for (let r of roles){
+        let w = _.find(this._permissionsMatrix, p => {
+          return (p.resource === resourceName && _.indexOf(p.roles,r)>=0)
+        });
+        if (w)
+          return _.indexOf(w.permissions,permission)>=0;
+      }
+      return false;
+    })
+  }
+}
+
+/*
+[
+  {
+    widget: "widgetName1",
+    role: "roleName1",
+    permissions:["r","w"]
+  },
+  {
+   widget: "widgetName1",
+   role: "roleName2",
+   permissions:["r"]
+  }
+]
+*/
+
+export class RoleProviderConfiguration {
+  authService;
+  dataSource;
+  queryPattern;
+  userRolesArray;
+
+  withAuthService(authService){
+    this.authService = authService;
+    return this;
+  }
+
+  withDataSource(dataSource){
+    this.dataSource = dataSource;
+    return this;
+  }
+
+  withQueryPattern(queryPattern){
+    this.queryPattern = queryPattern;
+    return this;
+  }
+
+  withRolesArray(userRolesArray){
+    this.userRolesArray = userRolesArray;
+    return this;
+  }
+}
+
+export class RoleProvider {
+  _currentToken = "";
+  _currentUsername = "";
+
+  _authService;
+  _dataSource;
+  _queryPattern;
+
+  isConfigured = false;
+
+  constructor(authService) {
+    this._authService = authService;
+  }
+
+  configure(config){
+    let normalizedConfig = new RoleProviderConfiguration();
+    config(normalizedConfig);
+    this._authService = normalizedConfig.authService;
+    this._dataSource = normalizedConfig.dataSource;
+    this._queryPattern = normalizedConfig.queryPattern;
+    this._userRolesArray = normalizedConfig.userRolesArray;
+    if (this._authService && ((this._queryPattern && this._dataSource)||(this._userRolesArray)))
+      this.isConfigured = true;
+  }
+
+  getRoles(){
+    if (!this.isConfigured)
+      throw "role provider is not configured";
+    let roles = [];
+    if (!this._authService.isAuthenticated()){
+      return new Promise((resolve, reject)=>{
+        resolve(roles);
+      });
+    }
+
+    let t = this._authService.getTokenPayload();
+    if (!t || !t.sub)
+      throw "Wrong token. Make sure your token follows JWT format";
+
+    //TODO Implement cache for this!!!
+    let q = new Query();
+    q.filter = this._queryPattern
+    //this._dataSource.getData()
+
+    let userroles = this._userRolesArray;
+    let user = _.find(userroles,{"username": t.sub});
+    if (user)
+      roles = user.roles;
+
+    return new Promise((resolve, reject)=>{
+      resolve(roles);
+    });
+    /*return this._getUser().then(r => {
+      let username = this._currentUsername;
+      let user = _.find(const_userroles,{"username": username});
+      if (!user)
+        return [];
+      return user.roles;
+    });*/
+  }
+
+  _getUser(){
+    if (this._currentToken != this.authService.getTokenPayload()) {
+
+      /*if (this._liveRequest) {
+        return this._liveRequest.then(response => {
+          this._currentToken = this.authService.getTokenPayload();
+          this._currentUsername = response.email;
+          this._liveRequest = null;
+          return this._currentUsername;
+        });
+      }
+      this._liveRequest = this.authService.getMe();
+      return this._liveRequest;*/
+
+      if (this._liveRequest) {
+        this._liveRequest = this._liveRequest.then(response => {
+          if (response && response.email) {
+            this._currentToken = this.authService.getTokenPayload();
+            this._currentUsername = response.email;
+          }
+         });
+        return this._liveRequest;
+       }
+       this._liveRequest = this.authService.getMe();
+       return this._liveRequest;
+    }
+    else{
+      return new Promise((resolve, reject)=>{
+        resolve(this._currentUsername);
+      });
+    }
+  }
+}
+
 
 export class CacheManager {
   constructor(storage) {
@@ -72,6 +292,13 @@ export class MemoryCacheStorage extends CacheStorage{
     });
   }
 }
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
 
 
 export class DataHolder {
@@ -316,13 +543,6 @@ export class Query {
         (this.skip?this.skip:"0")));
   }
   
-}
-
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
 }
 
 
@@ -1486,419 +1706,6 @@ export class FormatValueConverter {
   }
 }
 
-export class ChangeRouteBehavior extends DashboardBehavior {
-  constructor(settings) {
-    super();
-    this._chanel = settings.chanel;
-    this._eventAggregator = settings.eventAggregator;
-    this._newRoute = settings.newRoute;
-    this._router = settings.router;
-    this._paramsMapper = settings.paramsMapper;
-  }
-
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      var params = me._paramsMapper ? me._paramsMapper(message) : "";
-      if ((params!=="")&&(params.indexOf("?")!=0))
-        params="?" + params;
-      me._router.navigate(me._newRoute + (params!==""? params : ""));
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class CreateWidgetBehavior extends DashboardBehavior {
-
-  constructor(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
-    super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._widgetDimensions = widgetDimensions;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      //make sure the widget exists
-      var w = dashboard.getWidgetByName(me._widgetSettings.name);
-      if(!w){ //widget not exist.
-        var w = new me._widgetType(me._widgetSettings);
-        dashboard.addWidget(w, this._widgetDimensions);
-      }
-      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
-      w.refresh();
-
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-
-
-}
-
-export class DashboardBehavior {
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.dashboard.behaviors.length; i++) {
-      if(this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-}
-
-export class ManageNavigationStackBehavior extends DashboardBehavior {
-  constructor(eventAggregator) {
-    super();
-    
-    this._eventAggregator = eventAggregator;
-  }
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-
-    //this._eventAggregator.subscribe(BackButtonEvent, event => {
-    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
-      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
-      if (originatorWidget) {
-        var previousWidget = message.navigationStack.pop();
-        dashboard.replaceWidget(originatorWidget,previousWidget);
-      }
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class ReplaceWidgetBehavior extends DashboardBehavior  {
-
-  constructor(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
-    super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._eventAggregator = eventAggregator;
-    this._widgetToReplaceName = widgetToReplaceName;
-    this._mapper = mapper;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
-      var w = new me._widgetType(me._widgetSettings);
-      dashboard.replaceWidget(originatorWidget, w);
-      if (me._mapper)
-        w.dataFilter =  me._mapper(message);
-      w.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
-}
-
-export class DataActivatedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
-    super();
-    this._chanel = chanel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget.dataActivated =  function(currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.activatedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataFieldSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
-    super();
-    this._chanel = chanel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget.dataFieldSelected =  function(fieldName) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.fieldName = fieldName;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-
-export class DataFilterChangedBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget) {
-    super.attachToWidget(widget);
-    var me = this;
-    widget.dataFilterChanged = function(filter)
-    {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.dataFilter = filter;
-      me._eventAggregator.publish(me._channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataFilterHandleBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator, filterMapper) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
-      me.widget.dataFilter = filterToApply;
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class DataSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
-    super();
-    this._chanel = chanel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget.dataSelected =  function(currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.selectedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataSourceChangedBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget) {
-    super.attachToWidget(widget);
-    var me = this;
-    widget.dataSourceChanged = function(dataSource)
-    {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.dataSource = dataSource;
-      me._eventAggregator.publish(me._channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataSourceHandleBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      me.widget.dataSource = message.dataSource;
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class SettingsHandleBehavior extends WidgetBehavior
-{
-  constructor(channel, eventAggregator, messageMapper) {
-    super();
-    this._channel = channel;
-    this._eventAggregator = eventAggregator;
-    this._messageMapper = messageMapper;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
-      _.forOwn(settingsToApply, (v, k)=>{
-        //me.widget.changeSettings(settingsToApply);
-        me.widget[k] = v;
-      });
-      //me.widget.changeSettings(settingsToApply);
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class WidgetBehavior {
-
-  get widget() {
-    return this._widget;
-  }
-
-  attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.widget.behaviors.length; i++) {
-      if(this.widget.behaviors[i] === this) {
-        this.widget.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-}
-
 export class DashboardBase
 {
   constructor() {
@@ -2463,6 +2270,419 @@ export class Widget {
 
 
 
+
+export class ChangeRouteBehavior extends DashboardBehavior {
+  constructor(settings) {
+    super();
+    this._chanel = settings.chanel;
+    this._eventAggregator = settings.eventAggregator;
+    this._newRoute = settings.newRoute;
+    this._router = settings.router;
+    this._paramsMapper = settings.paramsMapper;
+  }
+
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      var params = me._paramsMapper ? me._paramsMapper(message) : "";
+      if ((params!=="")&&(params.indexOf("?")!=0))
+        params="?" + params;
+      me._router.navigate(me._newRoute + (params!==""? params : ""));
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class CreateWidgetBehavior extends DashboardBehavior {
+
+  constructor(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
+    super();
+    this._chanel = chanel;
+    this._widgetType = widgetType;
+    this._widgetSettings = widgetSettings;
+    this._widgetDimensions = widgetDimensions;
+    this._eventAggregator = eventAggregator;
+    this._filterMapper = filterMapper;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      //make sure the widget exists
+      var w = dashboard.getWidgetByName(me._widgetSettings.name);
+      if(!w){ //widget not exist.
+        var w = new me._widgetType(me._widgetSettings);
+        dashboard.addWidget(w, this._widgetDimensions);
+      }
+      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
+      w.refresh();
+
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+
+
+}
+
+export class DashboardBehavior {
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.dashboard.behaviors.length; i++) {
+      if(this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+}
+
+export class ManageNavigationStackBehavior extends DashboardBehavior {
+  constructor(eventAggregator) {
+    super();
+    
+    this._eventAggregator = eventAggregator;
+  }
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+
+    //this._eventAggregator.subscribe(BackButtonEvent, event => {
+    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
+      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
+      if (originatorWidget) {
+        var previousWidget = message.navigationStack.pop();
+        dashboard.replaceWidget(originatorWidget,previousWidget);
+      }
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class ReplaceWidgetBehavior extends DashboardBehavior  {
+
+  constructor(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
+    super();
+    this._chanel = chanel;
+    this._widgetType = widgetType;
+    this._widgetSettings = widgetSettings;
+    this._eventAggregator = eventAggregator;
+    this._widgetToReplaceName = widgetToReplaceName;
+    this._mapper = mapper;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      if (me._mapper)
+        w.dataFilter =  me._mapper(message);
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class DataActivatedBehavior extends WidgetBehavior {
+  constructor(chanel, eventAggregator) {
+    super();
+    this._chanel = chanel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget.dataActivated =  function(currentRecord) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.activatedData = currentRecord;
+      me._eventAggregator.publish(me._chanel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataFieldSelectedBehavior extends WidgetBehavior {
+  constructor(chanel, eventAggregator) {
+    super();
+    this._chanel = chanel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget.dataFieldSelected =  function(fieldName) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.fieldName = fieldName;
+      me._eventAggregator.publish(me._chanel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+
+export class DataFilterChangedBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget) {
+    super.attachToWidget(widget);
+    var me = this;
+    widget.dataFilterChanged = function(filter)
+    {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.dataFilter = filter;
+      me._eventAggregator.publish(me._channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataFilterHandleBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator, filterMapper) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+    this._filterMapper = filterMapper;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
+      me.widget.dataFilter = filterToApply;
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class DataSelectedBehavior extends WidgetBehavior {
+  constructor(chanel, eventAggregator) {
+    super();
+    this._chanel = chanel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget.dataSelected =  function(currentRecord) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.selectedData = currentRecord;
+      me._eventAggregator.publish(me._chanel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataSourceChangedBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget) {
+    super.attachToWidget(widget);
+    var me = this;
+    widget.dataSourceChanged = function(dataSource)
+    {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.dataSource = dataSource;
+      me._eventAggregator.publish(me._channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataSourceHandleBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      me.widget.dataSource = message.dataSource;
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class SettingsHandleBehavior extends WidgetBehavior
+{
+  constructor(channel, eventAggregator, messageMapper) {
+    super();
+    this._channel = channel;
+    this._eventAggregator = eventAggregator;
+    this._messageMapper = messageMapper;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
+      _.forOwn(settingsToApply, (v, k)=>{
+        //me.widget.changeSettings(settingsToApply);
+        me.widget[k] = v;
+      });
+      //me.widget.changeSettings(settingsToApply);
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class WidgetBehavior {
+
+  get widget() {
+    return this._widget;
+  }
+
+  attachToWidget(widget) {
+    this._widget = widget;
+    this._widget.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.widget.behaviors.length; i++) {
+      if(this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+}
+
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
 
 export class AstParser{
   constructor(){

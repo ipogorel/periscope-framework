@@ -5,20 +5,71 @@ declare module 'periscope-framework' {
   import moment from 'moment';
   import lodash from 'lodash';
   import {
-    resolver,
     inject,
+    bindable,
+    resolver,
     transient,
     computedFrom,
     customElement,
     useView,
     Decorators,
-    bindable,
     noView
   } from 'aurelia-framework';
   import {
     HttpClient
   } from 'aurelia-fetch-client';
   import Swagger from 'swagger-client';
+  export class PermissionsCustomAttribute {
+    constructor(element: any, permissionsManager: any);
+    bind(): any;
+  }
+  export class PermissionsManagerConfiguration {
+    permissionsMatrix: any;
+    roleProvider: any;
+    withPermissionsMatrix(matrix: any): any;
+    withRoleProvider(roleProvider: any): any;
+  }
+  export class PermissionsManager {
+    constructor();
+    configure(config: any): any;
+    hasPermisson(permission: any, resourceName: any): any;
+  }
+  
+  /*
+  [
+    {
+      widget: "widgetName1",
+      role: "roleName1",
+      permissions:["r","w"]
+    },
+    {
+     widget: "widgetName1",
+     role: "roleName2",
+     permissions:["r"]
+    }
+  ]
+  */
+  export class RoleProviderConfiguration {
+    authService: any;
+    dataSource: any;
+    queryPattern: any;
+    userRolesArray: any;
+    withAuthService(authService: any): any;
+    withDataSource(dataSource: any): any;
+    withQueryPattern(queryPattern: any): any;
+    withRolesArray(userRolesArray: any): any;
+  }
+  export class RoleProvider {
+    _currentToken: any;
+    _currentUsername: any;
+    _authService: any;
+    _dataSource: any;
+    _queryPattern: any;
+    isConfigured: any;
+    constructor(authService: any);
+    configure(config: any): any;
+    getRoles(): any;
+  }
   export class CacheManager {
     constructor(storage: any);
     cleanInterval: any;
@@ -38,6 +89,9 @@ declare module 'periscope-framework' {
     getItem(key: any): any;
     removeItem(key: any): any;
     removeExpired(): any;
+  }
+  export class DashboardConfiguration {
+    invoke(): any;
   }
   export class DataHolder {
     constructor();
@@ -86,9 +140,6 @@ declare module 'periscope-framework' {
       }*/
     filter: any;
     cacheKey(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
   }
   export class IntellisenceManager {
     constructor(parser: any, dataSource: any, availableFields: any);

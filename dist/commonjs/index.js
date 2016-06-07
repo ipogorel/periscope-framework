@@ -4,6 +4,42 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _permissionsCustomAttribute = require('./authorization/permissions-custom-attribute');
+
+Object.keys(_permissionsCustomAttribute).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _permissionsCustomAttribute[key];
+    }
+  });
+});
+
+var _permissionsManager = require('./authorization/permissions-manager');
+
+Object.keys(_permissionsManager).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _permissionsManager[key];
+    }
+  });
+});
+
+var _roleProvider = require('./authorization/role-provider');
+
+Object.keys(_roleProvider).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _roleProvider[key];
+    }
+  });
+});
+
 var _cacheManager = require('./cache/cache-manager');
 
 Object.keys(_cacheManager).forEach(function (key) {
