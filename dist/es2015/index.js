@@ -36,6 +36,8 @@ export * from './helpers/guid-helper';
 export * from './helpers/string-helper';
 export * from './helpers/url-helper';
 
+export * from './http/default-http-client';
+
 export * from './infrastructure/dashboard-manager';
 export * from './infrastructure/factory';
 
@@ -75,5 +77,5 @@ export * from './state/storage';
 export * from './state/user-state-storage';
 
 export function configure(aurelia) {
-  aurelia.globalResources("./helpers/converters/value-format");
+  aurelia.globalResources("./helpers/converters/value-format", "./authorization/permissions-custom-attribute");
 }

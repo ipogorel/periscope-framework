@@ -5,6 +5,7 @@
     this.filterParser = configuration.filterParser;
     this.totalMapper = configuration.totalMapper;
     this.dataMapper = configuration.dataMapper;
+    this.httpClient = configuration.httpClient;
   }
   getSchema(){
     return this.schemaProvider.getSchema();
@@ -17,18 +18,23 @@
 
 export class DataServiceConfiguration {
 
-  constructor(options){
-    if (options) {
-      this._url = options.url;
-      this._schemaProvider = options.schemaProvider;
-      this._totalMapper = options.totalMapper;
-      this._filterParser = options.filterParser;
-      this._dataMapper = options.dataMapper;
+  constructor(configuration){
+    if (configuration) {
+      this._url = configuration.url;
+      this._schemaProvider = configuration.schemaProvider;
+      this._totalMapper = configuration.totalMapper;
+      this._filterParser = configuration.filterParser;
+      this._dataMapper = configuration.dataMapper;
+      this._httpClient = configuration.httpClient
     }
   }
 
   get url() {
     return this._url;
+  }
+
+  get httpClient() {
+    return this._httpClient;
   }
 
   get schemaProvider(){

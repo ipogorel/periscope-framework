@@ -364,6 +364,18 @@ Object.keys(_urlHelper).forEach(function (key) {
   });
 });
 
+var _defaultHttpClient = require('./http/default-http-client');
+
+Object.keys(_defaultHttpClient).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _defaultHttpClient[key];
+    }
+  });
+});
+
 var _dashboardManager = require('./infrastructure/dashboard-manager');
 
 Object.keys(_dashboardManager).forEach(function (key) {
@@ -737,5 +749,5 @@ Object.keys(_userStateStorage).forEach(function (key) {
 });
 exports.configure = configure;
 function configure(aurelia) {
-  aurelia.globalResources("./helpers/converters/value-format");
+  aurelia.globalResources("./helpers/converters/value-format", "./authorization/permissions-custom-attribute");
 }

@@ -177,6 +177,9 @@ declare module 'periscope-framework' {
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
   }
+  export class DefaultHttpClient extends HttpClient {
+    constructor(auth: any);
+  }
   export class DashboardManager {
     constructor();
     dashboards: any;
@@ -237,19 +240,20 @@ declare module 'periscope-framework' {
     delete(id: any): any;
   }
   export class DataServiceConfiguration {
-    constructor(options: any);
+    constructor(configuration: any);
     url: any;
+    httpClient: any;
     schemaProvider: any;
     totalMapper: any;
     filterParser: any;
     dataMapper: any;
   }
   export class JsonDataService extends DataService {
-    constructor(http: any);
+    constructor();
     read(options: any): any;
   }
   export class StaticJsonDataService extends DataService {
-    constructor(http: any);
+    constructor();
     read(options: any): any;
   }
   export class GrammarExpression extends Grammar {

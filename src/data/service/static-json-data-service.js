@@ -6,19 +6,14 @@ import {QueryExpressionEvaluator} from './../query-expression-evaluator';
 import * as _ from 'lodash';
 
 @transient()
-@inject(HttpClient)
 export class StaticJsonDataService extends DataService {
-  constructor(http) {
+  constructor() {
     super();
-    http.configure(config => {
-      config.useStandardConfiguration();
-    });
-    this._http = http;
   }
   
 
   read(options) {
-    return this._http
+    return this.httpClient
       .fetch(this.url)
       .then(response => {
         return response.json();
@@ -27,7 +22,7 @@ export class StaticJsonDataService extends DataService {
         let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
         if (options.filter){
           let f = options.filter;
-          if (_.isArray(f) && this.filterParser && this.filterParser.type === "clientSide")
+          if (this.filterParser && this.filterParser.type === "clientSide")
             f = this.filterParser.getFilter(options.filter);
           let evaluator = new QueryExpressionEvaluator();
           d = evaluator.evaluate(d, f);

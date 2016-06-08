@@ -1,7 +1,7 @@
 'use strict';
 
 System.register(['./data-service', './../../helpers/data-helper', 'aurelia-framework', 'aurelia-fetch-client', './../query-expression-evaluator', 'lodash'], function (_export, _context) {
-  var DataService, DataHelper, inject, transient, HttpClient, QueryExpressionEvaluator, _, _dec, _dec2, _class, StaticJsonDataService;
+  var DataService, DataHelper, inject, transient, HttpClient, QueryExpressionEvaluator, _, _dec, _class, StaticJsonDataService;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -49,31 +49,25 @@ System.register(['./data-service', './../../helpers/data-helper', 'aurelia-frame
       _ = _lodash;
     }],
     execute: function () {
-      _export('StaticJsonDataService', StaticJsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
+      _export('StaticJsonDataService', StaticJsonDataService = (_dec = transient(), _dec(_class = function (_DataService) {
         _inherits(StaticJsonDataService, _DataService);
 
-        function StaticJsonDataService(http) {
+        function StaticJsonDataService() {
           _classCallCheck(this, StaticJsonDataService);
 
-          var _this = _possibleConstructorReturn(this, _DataService.call(this));
-
-          http.configure(function (config) {
-            config.useStandardConfiguration();
-          });
-          _this._http = http;
-          return _this;
+          return _possibleConstructorReturn(this, _DataService.call(this));
         }
 
         StaticJsonDataService.prototype.read = function read(options) {
           var _this2 = this;
 
-          return this._http.fetch(this.url).then(function (response) {
+          return this.httpClient.fetch(this.url).then(function (response) {
             return response.json();
           }).then(function (jsonData) {
             var d = _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData;
             if (options.filter) {
               var f = options.filter;
-              if (_.isArray(f) && _this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
+              if (_this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
               var evaluator = new QueryExpressionEvaluator();
               d = evaluator.evaluate(d, f);
             }
@@ -93,7 +87,7 @@ System.register(['./data-service', './../../helpers/data-helper', 'aurelia-frame
         };
 
         return StaticJsonDataService;
-      }(DataService)) || _class) || _class));
+      }(DataService)) || _class));
 
       _export('StaticJsonDataService', StaticJsonDataService);
     }

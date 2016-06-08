@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['./data-service', 'aurelia-framework', 'aurelia-fetch-client'], function (_export, _context) {
-    var DataService, inject, transient, HttpClient, _dec, _dec2, _class, JsonDataService;
+System.register(['./data-service', 'aurelia-framework'], function (_export, _context) {
+    var DataService, inject, transient, _dec, _class, JsonDataService;
 
     function _classCallCheck(instance, Constructor) {
         if (!(instance instanceof Constructor)) {
@@ -39,23 +39,15 @@ System.register(['./data-service', 'aurelia-framework', 'aurelia-fetch-client'],
         }, function (_aureliaFramework) {
             inject = _aureliaFramework.inject;
             transient = _aureliaFramework.transient;
-        }, function (_aureliaFetchClient) {
-            HttpClient = _aureliaFetchClient.HttpClient;
         }],
         execute: function () {
-            _export('JsonDataService', JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
+            _export('JsonDataService', JsonDataService = (_dec = transient(), _dec(_class = function (_DataService) {
                 _inherits(JsonDataService, _DataService);
 
-                function JsonDataService(http) {
+                function JsonDataService() {
                     _classCallCheck(this, JsonDataService);
 
-                    var _this = _possibleConstructorReturn(this, _DataService.call(this));
-
-                    http.configure(function (config) {
-                        config.useStandardConfiguration();
-                    });
-                    _this._http = http;
-                    return _this;
+                    return _possibleConstructorReturn(this, _DataService.call(this));
                 }
 
                 JsonDataService.prototype.read = function read(options) {
@@ -63,7 +55,7 @@ System.register(['./data-service', 'aurelia-framework', 'aurelia-fetch-client'],
 
                     var url = this.url;
                     if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
-                    return this._http.fetch(url).then(function (response) {
+                    return this.httpClient.fetch(url).then(function (response) {
                         return response.json();
                     }).then(function (jsonData) {
                         return {
@@ -74,7 +66,7 @@ System.register(['./data-service', 'aurelia-framework', 'aurelia-fetch-client'],
                 };
 
                 return JsonDataService;
-            }(DataService)) || _class) || _class));
+            }(DataService)) || _class));
 
             _export('JsonDataService', JsonDataService);
         }

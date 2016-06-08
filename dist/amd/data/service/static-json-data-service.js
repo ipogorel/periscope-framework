@@ -55,33 +55,27 @@ define(['exports', './data-service', './../../helpers/data-helper', 'aurelia-fra
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var _dec, _dec2, _class;
+  var _dec, _class;
 
-  var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec2 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
+  var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec(_class = function (_DataService) {
     _inherits(StaticJsonDataService, _DataService);
 
-    function StaticJsonDataService(http) {
+    function StaticJsonDataService() {
       _classCallCheck(this, StaticJsonDataService);
 
-      var _this = _possibleConstructorReturn(this, _DataService.call(this));
-
-      http.configure(function (config) {
-        config.useStandardConfiguration();
-      });
-      _this._http = http;
-      return _this;
+      return _possibleConstructorReturn(this, _DataService.call(this));
     }
 
     StaticJsonDataService.prototype.read = function read(options) {
       var _this2 = this;
 
-      return this._http.fetch(this.url).then(function (response) {
+      return this.httpClient.fetch(this.url).then(function (response) {
         return response.json();
       }).then(function (jsonData) {
         var d = _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData;
         if (options.filter) {
           var f = options.filter;
-          if (_.isArray(f) && _this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
+          if (_this2.filterParser && _this2.filterParser.type === "clientSide") f = _this2.filterParser.getFilter(options.filter);
           var evaluator = new _queryExpressionEvaluator.QueryExpressionEvaluator();
           d = evaluator.evaluate(d, f);
         }
@@ -101,5 +95,5 @@ define(['exports', './data-service', './../../helpers/data-helper', 'aurelia-fra
     };
 
     return StaticJsonDataService;
-  }(_dataService.DataService)) || _class) || _class);
+  }(_dataService.DataService)) || _class);
 });

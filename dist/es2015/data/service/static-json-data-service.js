@@ -1,4 +1,4 @@
-var _dec, _dec2, _class;
+var _dec, _class;
 
 import { DataService } from './data-service';
 import { DataHelper } from './../../helpers/data-helper';
@@ -7,23 +7,19 @@ import { HttpClient } from 'aurelia-fetch-client';
 import { QueryExpressionEvaluator } from './../query-expression-evaluator';
 import * as _ from 'lodash';
 
-export let StaticJsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = class StaticJsonDataService extends DataService {
-  constructor(http) {
+export let StaticJsonDataService = (_dec = transient(), _dec(_class = class StaticJsonDataService extends DataService {
+  constructor() {
     super();
-    http.configure(config => {
-      config.useStandardConfiguration();
-    });
-    this._http = http;
   }
 
   read(options) {
-    return this._http.fetch(this.url).then(response => {
+    return this.httpClient.fetch(this.url).then(response => {
       return response.json();
     }).then(jsonData => {
       let d = this.dataMapper ? this.dataMapper(jsonData) : jsonData;
       if (options.filter) {
         let f = options.filter;
-        if (_.isArray(f) && this.filterParser && this.filterParser.type === "clientSide") f = this.filterParser.getFilter(options.filter);
+        if (this.filterParser && this.filterParser.type === "clientSide") f = this.filterParser.getFilter(options.filter);
         let evaluator = new QueryExpressionEvaluator();
         d = evaluator.evaluate(d, f);
       }
@@ -42,4 +38,4 @@ export let StaticJsonDataService = (_dec = transient(), _dec2 = inject(HttpClien
     });
   }
 
-}) || _class) || _class);
+}) || _class);

@@ -901,6 +901,21 @@ export class UrlHelper {
 
 }
 
+export class DefaultHttpClient extends HttpClient {
+  constructor(auth) {
+    super();
+    this.configure(config => {
+      config
+        .useStandardConfiguration()
+        .withDefaults({
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+    });
+  }
+}
+
 export class DashboardManager {
   constructor(){
     this._dashboards = [];
@@ -1212,6 +1227,7 @@ export class DataService{
     this.filterParser = configuration.filterParser;
     this.totalMapper = configuration.totalMapper;
     this.dataMapper = configuration.dataMapper;
+    this.httpClient = configuration.httpClient;
   }
   getSchema(){
     return this.schemaProvider.getSchema();
@@ -1224,18 +1240,23 @@ export class DataService{
 
 export class DataServiceConfiguration {
 
-  constructor(options){
-    if (options) {
-      this._url = options.url;
-      this._schemaProvider = options.schemaProvider;
-      this._totalMapper = options.totalMapper;
-      this._filterParser = options.filterParser;
-      this._dataMapper = options.dataMapper;
+  constructor(configuration){
+    if (configuration) {
+      this._url = configuration.url;
+      this._schemaProvider = configuration.schemaProvider;
+      this._totalMapper = configuration.totalMapper;
+      this._filterParser = configuration.filterParser;
+      this._dataMapper = configuration.dataMapper;
+      this._httpClient = configuration.httpClient
     }
   }
 
   get url() {
     return this._url;
+  }
+
+  get httpClient() {
+    return this._httpClient;
   }
 
   get schemaProvider(){
@@ -1257,21 +1278,16 @@ export class DataServiceConfiguration {
 }
 
 @transient()
-@inject(HttpClient)
 export class JsonDataService extends DataService {
-    constructor(http) {
+    constructor() {
       super();
-        http.configure(config => {
-            config.useStandardConfiguration();
-        });
-        this._http = http;
     }
 
     read(options) { //options: fields,filter, take, skip, sort
         let url = this.url
         if (options.filter)
           url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
-        return this._http
+        return this.httpClient
             .fetch(url)
             .then(response => {return response.json(); })
             .then(jsonData => {
@@ -1284,19 +1300,14 @@ export class JsonDataService extends DataService {
 }
 
 @transient()
-@inject(HttpClient)
 export class StaticJsonDataService extends DataService {
-  constructor(http) {
+  constructor() {
     super();
-    http.configure(config => {
-      config.useStandardConfiguration();
-    });
-    this._http = http;
   }
   
 
   read(options) {
-    return this._http
+    return this.httpClient
       .fetch(this.url)
       .then(response => {
         return response.json();
@@ -1305,7 +1316,7 @@ export class StaticJsonDataService extends DataService {
         let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
         if (options.filter){
           let f = options.filter;
-          if (_.isArray(f) && this.filterParser && this.filterParser.type === "clientSide")
+          if (this.filterParser && this.filterParser.type === "clientSide")
             f = this.filterParser.getFilter(options.filter);
           let evaluator = new QueryExpressionEvaluator();
           d = evaluator.evaluate(d, f);
@@ -2418,6 +2429,50 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
   }
 }
 
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._handlers = [];
+    this._originatorName = widgetName;
+  }
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this._handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this._handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this._handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this._handlers.length; i++) {
+      this._handlers[i].apply(this, arguments);
+    }
+  }
+}
+
 export class DataActivatedBehavior extends WidgetBehavior {
   constructor(chanel, eventAggregator) {
     super();
@@ -2638,50 +2693,6 @@ export class WidgetBehavior {
     }
   }
 
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._handlers = [];
-    this._originatorName = widgetName;
-  }
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this._handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this._handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
-    }
-  }
 }
 
 export class AstParser{

@@ -41,6 +41,7 @@ System.register([], function (_export, _context) {
           this.filterParser = configuration.filterParser;
           this.totalMapper = configuration.totalMapper;
           this.dataMapper = configuration.dataMapper;
+          this.httpClient = configuration.httpClient;
         };
 
         DataService.prototype.getSchema = function getSchema() {
@@ -61,15 +62,16 @@ System.register([], function (_export, _context) {
       _export("DataService", DataService);
 
       _export("DataServiceConfiguration", DataServiceConfiguration = function () {
-        function DataServiceConfiguration(options) {
+        function DataServiceConfiguration(configuration) {
           _classCallCheck(this, DataServiceConfiguration);
 
-          if (options) {
-            this._url = options.url;
-            this._schemaProvider = options.schemaProvider;
-            this._totalMapper = options.totalMapper;
-            this._filterParser = options.filterParser;
-            this._dataMapper = options.dataMapper;
+          if (configuration) {
+            this._url = configuration.url;
+            this._schemaProvider = configuration.schemaProvider;
+            this._totalMapper = configuration.totalMapper;
+            this._filterParser = configuration.filterParser;
+            this._dataMapper = configuration.dataMapper;
+            this._httpClient = configuration.httpClient;
           }
         }
 
@@ -77,6 +79,11 @@ System.register([], function (_export, _context) {
           key: "url",
           get: function get() {
             return this._url;
+          }
+        }, {
+          key: "httpClient",
+          get: function get() {
+            return this._httpClient;
           }
         }, {
           key: "schemaProvider",

@@ -1,4 +1,4 @@
-define(['exports', './data-service', 'aurelia-framework', 'aurelia-fetch-client'], function (exports, _dataService, _aureliaFramework, _aureliaFetchClient) {
+define(['exports', './data-service', 'aurelia-framework'], function (exports, _dataService, _aureliaFramework) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
@@ -36,21 +36,15 @@ define(['exports', './data-service', 'aurelia-framework', 'aurelia-fetch-client'
         if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
     }
 
-    var _dec, _dec2, _class;
+    var _dec, _class;
 
-    var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec2 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
+    var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec(_class = function (_DataService) {
         _inherits(JsonDataService, _DataService);
 
-        function JsonDataService(http) {
+        function JsonDataService() {
             _classCallCheck(this, JsonDataService);
 
-            var _this = _possibleConstructorReturn(this, _DataService.call(this));
-
-            http.configure(function (config) {
-                config.useStandardConfiguration();
-            });
-            _this._http = http;
-            return _this;
+            return _possibleConstructorReturn(this, _DataService.call(this));
         }
 
         JsonDataService.prototype.read = function read(options) {
@@ -58,7 +52,7 @@ define(['exports', './data-service', 'aurelia-framework', 'aurelia-fetch-client'
 
             var url = this.url;
             if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
-            return this._http.fetch(url).then(function (response) {
+            return this.httpClient.fetch(url).then(function (response) {
                 return response.json();
             }).then(function (jsonData) {
                 return {
@@ -69,5 +63,5 @@ define(['exports', './data-service', 'aurelia-framework', 'aurelia-fetch-client'
         };
 
         return JsonDataService;
-    }(_dataService.DataService)) || _class) || _class);
+    }(_dataService.DataService)) || _class);
 });

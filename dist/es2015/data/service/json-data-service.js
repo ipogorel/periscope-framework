@@ -1,22 +1,17 @@
-var _dec, _dec2, _class;
+var _dec, _class;
 
 import { DataService } from './data-service';
 import { inject, transient } from 'aurelia-framework';
-import { HttpClient } from 'aurelia-fetch-client';
 
-export let JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = class JsonDataService extends DataService {
-    constructor(http) {
+export let JsonDataService = (_dec = transient(), _dec(_class = class JsonDataService extends DataService {
+    constructor() {
         super();
-        http.configure(config => {
-            config.useStandardConfiguration();
-        });
-        this._http = http;
     }
 
     read(options) {
         let url = this.url;
         if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
-        return this._http.fetch(url).then(response => {
+        return this.httpClient.fetch(url).then(response => {
             return response.json();
         }).then(jsonData => {
             return {
@@ -25,4 +20,4 @@ export let JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _d
             };
         });
     }
-}) || _class) || _class);
+}) || _class);
