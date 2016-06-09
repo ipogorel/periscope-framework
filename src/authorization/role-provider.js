@@ -42,18 +42,18 @@ export class RoleProvider {
     if (!t || !t.sub)
       throw "Wrong token. Make sure your token follows JWT format";
 
-    //TODO Implement cache for this!!!
-    let q = new Query();
-    q.filter = this._queryPattern
-    //this._dataSource.getData()
+    return this._authService.getMe().then(response=>{
+      let username = response.email;
+      //TODO Implement cache for this!!!
+      let q = new Query();
+      q.filter = this._queryPattern
+      //this._dataSource.getData()
 
-    let userroles = this._userRolesArray;
-    let user = _.find(userroles,{"username": t.sub});
-    if (user)
-      roles = user.roles;
-
-    return new Promise((resolve, reject)=>{
-      resolve(roles);
+      let userroles = this._userRolesArray;
+      let user = _.find(userroles,{"username": username});
+      if (user)
+        roles = user.roles;
+      return roles;
     });
     /*return this._getUser().then(r => {
       let username = this._currentUsername;

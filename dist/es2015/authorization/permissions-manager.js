@@ -14,14 +14,21 @@ export let PermissionsManager = class PermissionsManager {
   }
 
   hasPermisson(permission, resourceName) {
-    return this._roleProvider.getRoles().then(roles => {
-      for (let r of roles) {
-        let w = _.find(this._permissionsMatrix, p => {
-          return p.resource === resourceName && _.indexOf(p.roles, r) >= 0;
-        });
-        if (w) return _.indexOf(w.permissions, permission) >= 0;
-      }
-      return false;
-    });
+    let resource = _.find(this._permissionsMatrix, { 'resource': resourceName });
+    if (_.indexOf(resource.roles, "*") >= 0 && _.indexOf(resource.permissions, permission) >= 0) {
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
+    } else {
+      return this._roleProvider.getRoles().then(roles => {
+        for (let r of roles) {
+          let w = _.find(this._permissionsMatrix, p => {
+            return p.resource === resourceName && _.indexOf(p.roles, r) >= 0;
+          });
+          if (w) return _.indexOf(w.permissions, permission) >= 0;
+        }
+        return false;
+      });
+    }
   }
 };
