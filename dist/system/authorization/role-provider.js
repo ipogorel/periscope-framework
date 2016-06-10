@@ -40,8 +40,6 @@ System.register(['lodash', './../data/query', './role-provider-configuration'], 
         };
 
         RoleProvider.prototype.getRoles = function getRoles() {
-          var _this = this;
-
           if (!this.isConfigured) throw "role provider is not configured";
           var roles = [];
           if (!this._authService.isAuthenticated()) {
@@ -54,29 +52,22 @@ System.register(['lodash', './../data/query', './role-provider-configuration'], 
           if (!t || !t.sub) throw "Wrong token. Make sure your token follows JWT format";
 
           return this._authService.getMe().then(function (response) {
-            var username = response.email;
 
-            var q = new Query();
-            q.filter = _this._queryPattern;
-
-
-            var userroles = _this._userRolesArray;
-            var user = _.find(userroles, { "username": username });
-            if (user) roles = user.roles;
+            if (response.role) roles = [response.role];
             return roles;
           });
         };
 
         RoleProvider.prototype._getUser = function _getUser() {
-          var _this2 = this;
+          var _this = this;
 
           if (this._currentToken != this.authService.getTokenPayload()) {
 
             if (this._liveRequest) {
               this._liveRequest = this._liveRequest.then(function (response) {
                 if (response && response.email) {
-                  _this2._currentToken = _this2.authService.getTokenPayload();
-                  _this2._currentUsername = response.email;
+                  _this._currentToken = _this.authService.getTokenPayload();
+                  _this._currentUsername = response.email;
                 }
               });
               return this._liveRequest;
@@ -85,7 +76,7 @@ System.register(['lodash', './../data/query', './role-provider-configuration'], 
             return this._liveRequest;
           } else {
             return new Promise(function (resolve, reject) {
-              resolve(_this2._currentUsername);
+              resolve(_this._currentUsername);
             });
           }
         };

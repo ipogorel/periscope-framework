@@ -16,6 +16,11 @@ export class PermissionsManager {
 
   hasPermisson(permission, resourceName){
     let resource = _.find(this._permissionsMatrix,{ 'resource': resourceName});
+    if (!resource){
+      return new Promise((resolve, reject)=>{
+        resolve(false);
+      });
+    }
     if (_.indexOf(resource.roles,"*")>=0 && _.indexOf(resource.permissions,permission)>=0){ // permission has set for all roles
       return new Promise((resolve, reject)=>{
         resolve(true);

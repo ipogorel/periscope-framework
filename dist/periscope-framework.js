@@ -76,6 +76,11 @@ export class PermissionsManager {
 
   hasPermisson(permission, resourceName){
     let resource = _.find(this._permissionsMatrix,{ 'resource': resourceName});
+    if (!resource){
+      return new Promise((resolve, reject)=>{
+        resolve(false);
+      });
+    }
     if (_.indexOf(resource.roles,"*")>=0 && _.indexOf(resource.permissions,permission)>=0){ // permission has set for all roles
       return new Promise((resolve, reject)=>{
         resolve(true);
@@ -178,25 +183,22 @@ export class RoleProvider {
       throw "Wrong token. Make sure your token follows JWT format";
 
     return this._authService.getMe().then(response=>{
-      let username = response.email;
-      //TODO Implement cache for this!!!
-      let q = new Query();
-      q.filter = this._queryPattern
-      //this._dataSource.getData()
 
-      let userroles = this._userRolesArray;
-      let user = _.find(userroles,{"username": username});
-      if (user)
-        roles = user.roles;
+      /*let q = new Query();
+       q.filter = this._queryPattern
+       this._dataSource.getData().roles
+
+       let username = response.email;
+       let userroles = this._userRolesArray;
+       let user = _.find(userroles,{"username": username});
+       if (user)
+       roles = user.roles;
+       return roles;*/
+
+      if (response.role)
+        roles = [response.role];
       return roles;
     });
-    /*return this._getUser().then(r => {
-      let username = this._currentUsername;
-      let user = _.find(const_userroles,{"username": username});
-      if (!user)
-        return [];
-      return user.roles;
-    });*/
   }
 
   _getUser(){

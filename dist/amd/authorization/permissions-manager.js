@@ -55,6 +55,11 @@ define(['exports', 'lodash', './permissions-manager-configuration'], function (e
       var _this = this;
 
       var resource = _.find(this._permissionsMatrix, { 'resource': resourceName });
+      if (!resource) {
+        return new Promise(function (resolve, reject) {
+          resolve(false);
+        });
+      }
       if (_.indexOf(resource.roles, "*") >= 0 && _.indexOf(resource.permissions, permission) >= 0) {
         return new Promise(function (resolve, reject) {
           resolve(true);
