@@ -5,8 +5,8 @@ import { RoleProviderConfiguration } from './role-provider-configuration';
 export let RoleProvider = class RoleProvider {
 
   constructor(authService) {
-    this._currentToken = "";
-    this._currentUsername = "";
+    this._liveRequest = null;
+    this._cache = {};
     this.isConfigured = false;
 
     this._authService = authService;
@@ -17,9 +17,9 @@ export let RoleProvider = class RoleProvider {
     config(normalizedConfig);
     this._authService = normalizedConfig.authService;
     this._dataSource = normalizedConfig.dataSource;
-    this._queryPattern = normalizedConfig.queryPattern;
+    this._query = normalizedConfig.query;
     this._userRolesArray = normalizedConfig.userRolesArray;
-    if (this._authService && (this._queryPattern && this._dataSource || this._userRolesArray)) this.isConfigured = true;
+    if (this._authService && this._dataSource) this.isConfigured = true;
   }
 
   getRoles() {
@@ -34,31 +34,45 @@ export let RoleProvider = class RoleProvider {
     let t = this._authService.getTokenPayload();
     if (!t || !t.sub) throw "Wrong token. Make sure your token follows JWT format";
 
-    return this._authService.getMe().then(response => {
-
-      if (response.role) roles = [response.role];
+    let key = JSON.stringify(t);
+    return this._getUserRoles(key).then(d => {
+      let r = this._cache[key];
+      if (r) roles = r;
       return roles;
     });
   }
 
-  _getUser() {
-    if (this._currentToken != this.authService.getTokenPayload()) {
+  _fromCache(token) {
+    if (token in this._cache) return this._cache[token];
+    throw "username not found: " + token;
+  }
 
-      if (this._liveRequest) {
-        this._liveRequest = this._liveRequest.then(response => {
-          if (response && response.email) {
-            this._currentToken = this.authService.getTokenPayload();
-            this._currentUsername = response.email;
-          }
-        });
-        return this._liveRequest;
-      }
-      this._liveRequest = this.authService.getMe();
-      return this._liveRequest;
-    } else {
-      return new Promise((resolve, reject) => {
-        resolve(this._currentUsername);
+  _getUserRoles(token) {
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest.then(l => {
+        this._fromCache(token);
+      }).then(data => {
+        return data;
+      }, err => {
+        this._processData(token);
       });
+      return this._liveRequest;
     }
+    try {
+      let userName = this._fromCache(token);
+      return new Promise((resolve, reject) => {
+        resolve(userName);
+      });
+    } catch (ex) {}
+    this._liveRequest = this._processData(token);
+    return this._liveRequest;
+  }
+
+  _processData(token) {
+    let q = new Query();
+    if (this._query) q.filter = this._query;
+    return this._dataSource.getData(q).then(d => {
+      this._cache[token] = d.data;
+    });
   }
 };

@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.RoleProvider = undefined;
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 var _lodash = require('lodash');
 
 var _ = _interopRequireWildcard(_lodash);
@@ -21,8 +23,8 @@ var RoleProvider = exports.RoleProvider = function () {
   function RoleProvider(authService) {
     _classCallCheck(this, RoleProvider);
 
-    this._currentToken = "";
-    this._currentUsername = "";
+    this._liveRequest = null;
+    this._cache = {};
     this.isConfigured = false;
 
     this._authService = authService;
@@ -33,12 +35,14 @@ var RoleProvider = exports.RoleProvider = function () {
     config(normalizedConfig);
     this._authService = normalizedConfig.authService;
     this._dataSource = normalizedConfig.dataSource;
-    this._queryPattern = normalizedConfig.queryPattern;
+    this._query = normalizedConfig.query;
     this._userRolesArray = normalizedConfig.userRolesArray;
-    if (this._authService && (this._queryPattern && this._dataSource || this._userRolesArray)) this.isConfigured = true;
+    if (this._authService && this._dataSource) this.isConfigured = true;
   };
 
   RoleProvider.prototype.getRoles = function getRoles() {
+    var _this = this;
+
     if (!this.isConfigured) throw "role provider is not configured";
     var roles = [];
     if (!this._authService.isAuthenticated()) {
@@ -50,34 +54,56 @@ var RoleProvider = exports.RoleProvider = function () {
     var t = this._authService.getTokenPayload();
     if (!t || !t.sub) throw "Wrong token. Make sure your token follows JWT format";
 
-    return this._authService.getMe().then(function (response) {
-
-      if (response.role) roles = [response.role];
+    var key = JSON.stringify(t);
+    return this._getUserRoles(key).then(function (d) {
+      var r = _this._cache[key];
+      if (r) roles = r;
       return roles;
     });
   };
 
-  RoleProvider.prototype._getUser = function _getUser() {
-    var _this = this;
+  RoleProvider.prototype._fromCache = function _fromCache(token) {
+    if (token in this._cache) return this._cache[token];
+    throw "username not found: " + token;
+  };
 
-    if (this._currentToken != this.authService.getTokenPayload()) {
+  RoleProvider.prototype._getUserRoles = function _getUserRoles(token) {
+    var _this2 = this;
 
-      if (this._liveRequest) {
-        this._liveRequest = this._liveRequest.then(function (response) {
-          if (response && response.email) {
-            _this._currentToken = _this.authService.getTokenPayload();
-            _this._currentUsername = response.email;
-          }
-        });
-        return this._liveRequest;
-      }
-      this._liveRequest = this.authService.getMe();
-      return this._liveRequest;
-    } else {
-      return new Promise(function (resolve, reject) {
-        resolve(_this._currentUsername);
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest.then(function (l) {
+        _this2._fromCache(token);
+      }).then(function (data) {
+        return data;
+      }, function (err) {
+        _this2._processData(token);
       });
+      return this._liveRequest;
     }
+    try {
+      var _ret = function () {
+        var userName = _this2._fromCache(token);
+        return {
+          v: new Promise(function (resolve, reject) {
+            resolve(userName);
+          })
+        };
+      }();
+
+      if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+    } catch (ex) {}
+    this._liveRequest = this._processData(token);
+    return this._liveRequest;
+  };
+
+  RoleProvider.prototype._processData = function _processData(token) {
+    var _this3 = this;
+
+    var q = new _query.Query();
+    if (this._query) q.filter = this._query;
+    return this._dataSource.getData(q).then(function (d) {
+      _this3._cache[token] = d.data;
+    });
   };
 
   return RoleProvider;

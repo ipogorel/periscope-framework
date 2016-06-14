@@ -52,19 +52,17 @@ declare module 'periscope-framework' {
   export class RoleProviderConfiguration {
     authService: any;
     dataSource: any;
-    queryPattern: any;
-    userRolesArray: any;
+    query: any;
     withAuthService(authService: any): any;
     withDataSource(dataSource: any): any;
-    withQueryPattern(queryPattern: any): any;
-    withRolesArray(userRolesArray: any): any;
+    withQuery(query: any): any;
   }
   export class RoleProvider {
-    _currentToken: any;
-    _currentUsername: any;
+    _liveRequest: any;
+    _cache: any;
     _authService: any;
     _dataSource: any;
-    _queryPattern: any;
+    _query: any;
     isConfigured: any;
     constructor(authService: any);
     configure(config: any): any;

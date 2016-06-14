@@ -1,8 +1,7 @@
 export class RoleProviderConfiguration {
   authService;
   dataSource;
-  queryPattern;
-  userRolesArray;
+  query;
 
   withAuthService(authService){
     this.authService = authService;
@@ -14,13 +13,9 @@ export class RoleProviderConfiguration {
     return this;
   }
 
-  withQueryPattern(queryPattern){
-    this.queryPattern = queryPattern;
+  withQuery(query){
+    this.query = query;
     return this;
   }
 
-  withRolesArray(userRolesArray){
-    this.userRolesArray = userRolesArray;
-    return this;
-  }
 }

@@ -26,13 +26,8 @@ define(["exports"], function (exports) {
       return this;
     };
 
-    RoleProviderConfiguration.prototype.withQueryPattern = function withQueryPattern(queryPattern) {
-      this.queryPattern = queryPattern;
-      return this;
-    };
-
-    RoleProviderConfiguration.prototype.withRolesArray = function withRolesArray(userRolesArray) {
-      this.userRolesArray = userRolesArray;
+    RoleProviderConfiguration.prototype.withQuery = function withQuery(query) {
+      this.query = query;
       return this;
     };
 

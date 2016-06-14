@@ -10,13 +10,9 @@ export let RoleProviderConfiguration = class RoleProviderConfiguration {
     return this;
   }
 
-  withQueryPattern(queryPattern) {
-    this.queryPattern = queryPattern;
+  withQuery(query) {
+    this.query = query;
     return this;
   }
 
-  withRolesArray(userRolesArray) {
-    this.userRolesArray = userRolesArray;
-    return this;
-  }
 };

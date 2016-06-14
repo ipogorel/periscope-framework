@@ -119,8 +119,7 @@ export class PermissionsManager {
 export class RoleProviderConfiguration {
   authService;
   dataSource;
-  queryPattern;
-  userRolesArray;
+  query;
 
   withAuthService(authService){
     this.authService = authService;
@@ -132,24 +131,21 @@ export class RoleProviderConfiguration {
     return this;
   }
 
-  withQueryPattern(queryPattern){
-    this.queryPattern = queryPattern;
+  withQuery(query){
+    this.query = query;
     return this;
   }
 
-  withRolesArray(userRolesArray){
-    this.userRolesArray = userRolesArray;
-    return this;
-  }
 }
 
 export class RoleProvider {
-  _currentToken = "";
-  _currentUsername = "";
+  _liveRequest = null;
+  _cache = {};
+
 
   _authService;
   _dataSource;
-  _queryPattern;
+  _query;
 
   isConfigured = false;
 
@@ -162,9 +158,9 @@ export class RoleProvider {
     config(normalizedConfig);
     this._authService = normalizedConfig.authService;
     this._dataSource = normalizedConfig.dataSource;
-    this._queryPattern = normalizedConfig.queryPattern;
+    this._query = normalizedConfig.query;
     this._userRolesArray = normalizedConfig.userRolesArray;
-    if (this._authService && ((this._queryPattern && this._dataSource)||(this._userRolesArray)))
+    if (this._authService && this._dataSource)
       this.isConfigured = true;
   }
 
@@ -182,56 +178,50 @@ export class RoleProvider {
     if (!t || !t.sub)
       throw "Wrong token. Make sure your token follows JWT format";
 
-    return this._authService.getMe().then(response=>{
-
-      /*let q = new Query();
-       q.filter = this._queryPattern
-       this._dataSource.getData().roles
-
-       let username = response.email;
-       let userroles = this._userRolesArray;
-       let user = _.find(userroles,{"username": username});
-       if (user)
-       roles = user.roles;
-       return roles;*/
-
-      if (response.role)
-        roles = [response.role];
+    let key = JSON.stringify(t);
+    return this._getUserRoles(key).then(d=>{
+      let r = this._cache[key]
+      if (r)
+        roles = r;
       return roles;
     });
+
   }
 
-  _getUser(){
-    if (this._currentToken != this.authService.getTokenPayload()) {
+  _fromCache(token){
+    if (token in this._cache)
+      return  this._cache[token];
+    throw "username not found: " + token;
+  }
 
-      /*if (this._liveRequest) {
-        return this._liveRequest.then(response => {
-          this._currentToken = this.authService.getTokenPayload();
-          this._currentUsername = response.email;
-          this._liveRequest = null;
-          return this._currentUsername;
-        });
-      }
-      this._liveRequest = this.authService.getMe();
-      return this._liveRequest;*/
 
-      if (this._liveRequest) {
-        this._liveRequest = this._liveRequest.then(response => {
-          if (response && response.email) {
-            this._currentToken = this.authService.getTokenPayload();
-            this._currentUsername = response.email;
-          }
-         });
-        return this._liveRequest;
-       }
-       this._liveRequest = this.authService.getMe();
-       return this._liveRequest;
+  _getUserRoles(token){
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest.then(l=>{
+        this._fromCache(token)
+      }).then(data => {return data}, err=>{
+        this._processData(token);
+      })
+      return this._liveRequest;
     }
-    else{
+    try{
+      let userName = this._fromCache(token);
       return new Promise((resolve, reject)=>{
-        resolve(this._currentUsername);
+        resolve(userName);
       });
     }
+    catch (ex){}
+    this._liveRequest = this._processData(token);
+    return this._liveRequest;
+  }
+
+  _processData(token){
+    let q = new Query();
+    if (this._query)
+      q.filter =this._query;
+    return this._dataSource.getData(q).then(d=>{
+      this._cache[token] = d.data;
+    })
   }
 }
 
