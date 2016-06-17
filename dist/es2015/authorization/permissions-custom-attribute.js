@@ -13,23 +13,23 @@ export let PermissionsCustomAttribute = (_dec = inject(Element, PermissionsManag
 
   bind() {
     if (!this.value) return;
-    let widgetName = "";
+    let widgetGroup = "";
     let permissions = [];
     if (_.isString(this.value)) {
-      widgetName = this.element.au.permissions.scope.bindingContext.name;
+      widgetGroup = this.element.au.permissions.scope.bindingContext.resourceGroup;
       permissions = this.value.split(",");
     } else if (_.isPlainObject(this.value)) {
-      widgetName = this.value.widgetName;
-      permissions = this.value.permissions;
+      widgetGroup = this.value.resourceGroup;
+      permissions = this.value.permissions.split(",");
     }
     for (let p of permissions) {
-      this.permissionsManager.hasPermisson(p, widgetName).then(result => {
+      this.permissionsManager.hasPermisson(p, widgetGroup).then(result => {
         if (!result) {
-          if (p === 'r') this.element.hidden = true;
-          if (p === 'w') this.element.disabled = true;
+          if (p === 'read') this.element.hidden = true;
+          if (p === 'write') this.element.disabled = true;
         } else {
-          if (p === 'r') this.element.hidden = false;
-          if (p === 'w') this.element.disabled = false;
+          if (p === 'read') this.element.hidden = false;
+          if (p === 'write') this.element.disabled = false;
         }
       });
     }

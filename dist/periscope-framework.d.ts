@@ -24,15 +24,15 @@ declare module 'periscope-framework' {
     bind(): any;
   }
   export class PermissionsManagerConfiguration {
-    permissionsMatrix: any;
-    roleProvider: any;
-    withPermissionsMatrix(matrix: any): any;
-    withRoleProvider(roleProvider: any): any;
+    dataSource: any;
+    withDataSource(dataSource: any): any;
   }
   export class PermissionsManager {
     constructor();
+    isConfigured: any;
+    permissionsDataSource: any;
     configure(config: any): any;
-    hasPermisson(permission: any, resourceName: any): any;
+    hasPermisson(permission: any, resourceGroup: any): any;
   }
   
   /*

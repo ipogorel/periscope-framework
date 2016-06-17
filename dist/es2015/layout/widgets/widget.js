@@ -23,6 +23,10 @@ export let Widget = class Widget {
     return this.settings.name;
   }
 
+  get resourceGroup() {
+    return this.settings.resourceGroup;
+  }
+
   get minHeight() {
     return this.settings.minHeight;
   }

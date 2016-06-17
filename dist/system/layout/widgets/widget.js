@@ -105,6 +105,11 @@ System.register(['lodash'], function (_export, _context) {
             return this.settings.name;
           }
         }, {
+          key: 'resourceGroup',
+          get: function get() {
+            return this.settings.resourceGroup;
+          }
+        }, {
           key: 'minHeight',
           get: function get() {
             return this.settings.minHeight;

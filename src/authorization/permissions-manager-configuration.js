@@ -1,14 +1,9 @@
 export class PermissionsManagerConfiguration {
-  permissionsMatrix = [];
-  roleProvider;
+  dataSource;
 
-  withPermissionsMatrix(matrix){
-    this.permissionsMatrix = matrix;
+  withDataSource(dataSource){
+    this.dataSource = dataSource;
     return this;
   }
 
-  withRoleProvider(roleProvider){
-    this.roleProvider = roleProvider;
-    return this;
-  }
 }

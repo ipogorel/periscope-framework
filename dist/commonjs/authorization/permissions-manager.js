@@ -5,11 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.PermissionsManager = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
 var _lodash = require('lodash');
 
 var _ = _interopRequireWildcard(_lodash);
+
+var _query = require('./../data/query');
 
 var _permissionsManagerConfiguration = require('./permissions-manager-configuration');
 
@@ -21,68 +21,39 @@ var PermissionsManager = exports.PermissionsManager = function () {
   function PermissionsManager() {
     _classCallCheck(this, PermissionsManager);
 
-    this._permissionsMatrix = [];
+    this.isConfigured = false;
   }
 
   PermissionsManager.prototype.configure = function configure(config) {
     var normalizedConfig = new _permissionsManagerConfiguration.PermissionsManagerConfiguration();
     config(normalizedConfig);
-    this._permissionsMatrix = normalizedConfig.permissionsMatrix;
-    this._roleProvider = normalizedConfig.roleProvider;
+    this.permissionsDataSource = normalizedConfig.dataSource;
+    this.isConfigured = true;
   };
 
-  PermissionsManager.prototype.hasPermisson = function hasPermisson(permission, resourceName) {
-    var _this = this;
-
-    var resource = _.find(this._permissionsMatrix, { 'resource': resourceName });
-    if (!resource) {
-      return new Promise(function (resolve, reject) {
-        resolve(false);
-      });
-    }
-    if (_.indexOf(resource.roles, "*") >= 0 && _.indexOf(resource.permissions, permission) >= 0) {
+  PermissionsManager.prototype.hasPermisson = function hasPermisson(permission, resourceGroup) {
+    if (!this.isConfigured) {
       return new Promise(function (resolve, reject) {
         resolve(true);
       });
-    } else {
-      return this._roleProvider.getRoles().then(function (roles) {
-        var _loop = function _loop() {
-          if (_isArray) {
-            if (_i >= _iterator.length) return 'break';
-            _ref = _iterator[_i++];
-          } else {
-            _i = _iterator.next();
-            if (_i.done) return 'break';
-            _ref = _i.value;
-          }
-
-          var r = _ref;
-
-          var w = _.find(_this._permissionsMatrix, function (p) {
-            return p.resource === resourceName && _.indexOf(p.roles, r) >= 0;
-          });
-          if (w) return {
-              v: _.indexOf(w.permissions, permission) >= 0
-            };
-        };
-
-        _loop2: for (var _iterator = roles, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-          var _ref;
-
-          var _ret = _loop();
-
-          switch (_ret) {
-            case 'break':
-              break _loop2;
-
-            default:
-              if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-          }
-        }
-
-        return false;
-      });
     }
+
+    return this._getData().then(function (permissions) {
+      var normalizedPermissions = _.map(permissions, function (p) {
+        var a = p.toLowerCase().split("-");
+        if (a.length == 2) return { permission: a[0], group: a[1] };
+      });
+      if (_.filter(normalizedPermissions, { 'permission': permission, 'group': resourceGroup }).length > 0) return true;
+      return false;
+    });
+  };
+
+  PermissionsManager.prototype._getData = function _getData() {
+    var q = new _query.Query();
+    if (this._query) q.filter = this._query;
+    return this.permissionsDataSource.getData(q).then(function (d) {
+      return d.data;
+    });
   };
 
   return PermissionsManager;

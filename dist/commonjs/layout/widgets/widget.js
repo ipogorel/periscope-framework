@@ -88,6 +88,11 @@ var Widget = exports.Widget = function () {
       return this.settings.name;
     }
   }, {
+    key: 'resourceGroup',
+    get: function get() {
+      return this.settings.resourceGroup;
+    }
+  }, {
     key: 'minHeight',
     get: function get() {
       return this.settings.minHeight;

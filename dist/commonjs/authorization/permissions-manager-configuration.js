@@ -9,17 +9,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var PermissionsManagerConfiguration = exports.PermissionsManagerConfiguration = function () {
   function PermissionsManagerConfiguration() {
     _classCallCheck(this, PermissionsManagerConfiguration);
-
-    this.permissionsMatrix = [];
   }
 
-  PermissionsManagerConfiguration.prototype.withPermissionsMatrix = function withPermissionsMatrix(matrix) {
-    this.permissionsMatrix = matrix;
-    return this;
-  };
-
-  PermissionsManagerConfiguration.prototype.withRoleProvider = function withRoleProvider(roleProvider) {
-    this.roleProvider = roleProvider;
+  PermissionsManagerConfiguration.prototype.withDataSource = function withDataSource(dataSource) {
+    this.dataSource = dataSource;
     return this;
   };
 

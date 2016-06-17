@@ -111,6 +111,11 @@ define(['exports', 'lodash'], function (exports, _lodash) {
         return this.settings.name;
       }
     }, {
+      key: 'resourceGroup',
+      get: function get() {
+        return this.settings.resourceGroup;
+      }
+    }, {
       key: 'minHeight',
       get: function get() {
         return this.settings.minHeight;

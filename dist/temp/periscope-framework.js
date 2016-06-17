@@ -9,7 +9,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-var _dec, _class, _class5, _dec2, _class6, _dec3, _class7, _dec4, _class8, _dec5, _class9, _dec6, _desc, _value, _class10;
+var _dec, _class, _class6, _dec2, _class7, _dec3, _class8, _dec4, _class9, _dec5, _class10, _dec6, _desc, _value, _class11;
 
 var _lodash = require('lodash');
 
@@ -86,14 +86,14 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
     var _this = this;
 
     if (!this.value) return;
-    var widgetName = "";
+    var widgetGroup = "";
     var permissions = [];
     if (_.isString(this.value)) {
-      widgetName = this.element.au.permissions.scope.bindingContext.name;
+      widgetGroup = this.element.au.permissions.scope.bindingContext.resourceGroup;
       permissions = this.value.split(",");
     } else if (_.isPlainObject(this.value)) {
-      widgetName = this.value.widgetName;
-      permissions = this.value.permissions;
+      widgetGroup = this.value.resourceGroup;
+      permissions = this.value.permissions.split(",");
     }
 
     var _loop = function _loop() {
@@ -108,13 +108,13 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
 
       var p = _ref;
 
-      _this.permissionsManager.hasPermisson(p, widgetName).then(function (result) {
+      _this.permissionsManager.hasPermisson(p, widgetGroup).then(function (result) {
         if (!result) {
-          if (p === 'r') _this.element.hidden = true;
-          if (p === 'w') _this.element.disabled = true;
+          if (p === 'read') _this.element.hidden = true;
+          if (p === 'write') _this.element.disabled = true;
         } else {
-          if (p === 'r') _this.element.hidden = false;
-          if (p === 'w') _this.element.disabled = false;
+          if (p === 'read') _this.element.hidden = false;
+          if (p === 'write') _this.element.disabled = false;
         }
       });
     };
@@ -134,17 +134,10 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
 var PermissionsManagerConfiguration = exports.PermissionsManagerConfiguration = function () {
   function PermissionsManagerConfiguration() {
     _classCallCheck(this, PermissionsManagerConfiguration);
-
-    this.permissionsMatrix = [];
   }
 
-  PermissionsManagerConfiguration.prototype.withPermissionsMatrix = function withPermissionsMatrix(matrix) {
-    this.permissionsMatrix = matrix;
-    return this;
-  };
-
-  PermissionsManagerConfiguration.prototype.withRoleProvider = function withRoleProvider(roleProvider) {
-    this.roleProvider = roleProvider;
+  PermissionsManagerConfiguration.prototype.withDataSource = function withDataSource(dataSource) {
+    this.dataSource = dataSource;
     return this;
   };
 
@@ -155,68 +148,39 @@ var PermissionsManager = exports.PermissionsManager = function () {
   function PermissionsManager() {
     _classCallCheck(this, PermissionsManager);
 
-    this._permissionsMatrix = [];
+    this.isConfigured = false;
   }
 
   PermissionsManager.prototype.configure = function configure(config) {
     var normalizedConfig = new PermissionsManagerConfiguration();
     config(normalizedConfig);
-    this._permissionsMatrix = normalizedConfig.permissionsMatrix;
-    this._roleProvider = normalizedConfig.roleProvider;
+    this.permissionsDataSource = normalizedConfig.dataSource;
+    this.isConfigured = true;
   };
 
-  PermissionsManager.prototype.hasPermisson = function hasPermisson(permission, resourceName) {
-    var _this2 = this;
-
-    var resource = _.find(this._permissionsMatrix, { 'resource': resourceName });
-    if (!resource) {
-      return new Promise(function (resolve, reject) {
-        resolve(false);
-      });
-    }
-    if (_.indexOf(resource.roles, "*") >= 0 && _.indexOf(resource.permissions, permission) >= 0) {
+  PermissionsManager.prototype.hasPermisson = function hasPermisson(permission, resourceGroup) {
+    if (!this.isConfigured) {
       return new Promise(function (resolve, reject) {
         resolve(true);
       });
-    } else {
-      return this._roleProvider.getRoles().then(function (roles) {
-        var _loop2 = function _loop2() {
-          if (_isArray2) {
-            if (_i2 >= _iterator2.length) return 'break';
-            _ref2 = _iterator2[_i2++];
-          } else {
-            _i2 = _iterator2.next();
-            if (_i2.done) return 'break';
-            _ref2 = _i2.value;
-          }
-
-          var r = _ref2;
-
-          var w = _.find(_this2._permissionsMatrix, function (p) {
-            return p.resource === resourceName && _.indexOf(p.roles, r) >= 0;
-          });
-          if (w) return {
-              v: _.indexOf(w.permissions, permission) >= 0
-            };
-        };
-
-        _loop3: for (var _iterator2 = roles, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-          var _ref2;
-
-          var _ret2 = _loop2();
-
-          switch (_ret2) {
-            case 'break':
-              break _loop3;
-
-            default:
-              if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
-          }
-        }
-
-        return false;
-      });
     }
+
+    return this._getData().then(function (permissions) {
+      var normalizedPermissions = _.map(permissions, function (p) {
+        var a = p.toLowerCase().split("-");
+        if (a.length == 2) return { permission: a[0], group: a[1] };
+      });
+      if (_.filter(normalizedPermissions, { 'permission': permission, 'group': resourceGroup }).length > 0) return true;
+      return false;
+    });
+  };
+
+  PermissionsManager.prototype._getData = function _getData() {
+    var q = new Query();
+    if (this._query) q.filter = this._query;
+    return this.permissionsDataSource.getData(q).then(function (d) {
+      return d.data;
+    });
   };
 
   return PermissionsManager;
@@ -267,7 +231,7 @@ var RoleProvider = exports.RoleProvider = function () {
   };
 
   RoleProvider.prototype.getRoles = function getRoles() {
-    var _this3 = this;
+    var _this2 = this;
 
     if (!this.isConfigured) throw "role provider is not configured";
     var roles = [];
@@ -282,7 +246,7 @@ var RoleProvider = exports.RoleProvider = function () {
 
     var key = JSON.stringify(t);
     return this._getUserRoles(key).then(function (d) {
-      var r = _this3._cache[key];
+      var r = _this2._cache[key];
       if (r) roles = r;
       return roles;
     });
@@ -294,21 +258,21 @@ var RoleProvider = exports.RoleProvider = function () {
   };
 
   RoleProvider.prototype._getUserRoles = function _getUserRoles(token) {
-    var _this4 = this;
+    var _this3 = this;
 
     if (this._liveRequest) {
       this._liveRequest = this._liveRequest.then(function (l) {
-        _this4._fromCache(token);
+        _this3._fromCache(token);
       }).then(function (data) {
         return data;
       }, function (err) {
-        _this4._processData(token);
+        _this3._processData(token);
       });
       return this._liveRequest;
     }
     try {
-      var _ret3 = function () {
-        var userName = _this4._fromCache(token);
+      var _ret2 = function () {
+        var userName = _this3._fromCache(token);
         return {
           v: new Promise(function (resolve, reject) {
             resolve(userName);
@@ -316,19 +280,19 @@ var RoleProvider = exports.RoleProvider = function () {
         };
       }();
 
-      if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+      if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
     } catch (ex) {}
     this._liveRequest = this._processData(token);
     return this._liveRequest;
   };
 
   RoleProvider.prototype._processData = function _processData(token) {
-    var _this5 = this;
+    var _this4 = this;
 
     var q = new Query();
     if (this._query) q.filter = this._query;
     return this._dataSource.getData(q).then(function (d) {
-      _this5._cache[token] = d.data;
+      _this4._cache[token] = d.data;
     });
   };
 
@@ -344,14 +308,14 @@ var CacheManager = exports.CacheManager = function () {
   }
 
   CacheManager.prototype.startCleaner = function startCleaner() {
-    var _this6 = this;
+    var _this5 = this;
 
     if (!this.cleaner) {
       (function () {
-        var self = _this6;
-        _this6.cleaner = window.setInterval(function () {
+        var self = _this5;
+        _this5.cleaner = window.setInterval(function () {
           self._cacheStorage.removeExpired();
-        }, _this6._cleanInterval);
+        }, _this5._cleanInterval);
       })();
     }
   };
@@ -396,10 +360,10 @@ var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
   function MemoryCacheStorage() {
     _classCallCheck(this, MemoryCacheStorage);
 
-    var _this7 = _possibleConstructorReturn(this, _CacheStorage.call(this));
+    var _this6 = _possibleConstructorReturn(this, _CacheStorage.call(this));
 
-    _this7._cache = {};
-    return _this7;
+    _this6._cache = {};
+    return _this6;
   }
 
   MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
@@ -498,7 +462,7 @@ var Datasource = exports.Datasource = function () {
   };
 
   Datasource.prototype.getData = function getData(query) {
-    var _this8 = this;
+    var _this7 = this;
 
     var dataHolder = new DataHolder();
     dataHolder.query = query;
@@ -528,7 +492,7 @@ var Datasource = exports.Datasource = function () {
     }).then(function (d) {
       dataHolder.data = _.isArray(d.data) ? d.data : [d.data];
       dataHolder.total = d.total;
-      if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this8._cache.cacheTimeSeconds);
+      if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this7._cache.cacheTimeSeconds);
       return dataHolder;
     });
   };
@@ -617,19 +581,19 @@ var QueryExpressionEvaluator = exports.QueryExpressionEvaluator = function () {
   QueryExpressionEvaluator.prototype.evaluate = function evaluate(data, searchExpression) {
     var res = [];
     if (searchExpression != "") {
-      for (var _iterator3 = data, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-        var _ref3;
+      for (var _iterator2 = data, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+        var _ref2;
 
-        if (_isArray3) {
-          if (_i3 >= _iterator3.length) break;
-          _ref3 = _iterator3[_i3++];
+        if (_isArray2) {
+          if (_i2 >= _iterator2.length) break;
+          _ref2 = _iterator2[_i2++];
         } else {
-          _i3 = _iterator3.next();
-          if (_i3.done) break;
-          _ref3 = _i3.value;
+          _i2 = _iterator2.next();
+          if (_i2.done) break;
+          _ref2 = _i2.value;
         }
 
-        var record = _ref3;
+        var record = _ref2;
 
         if (eval(searchExpression)) {
           res.push(record);
@@ -746,7 +710,7 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
   IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
     var tmpArr = searchStr.substr(0, index).split(" ");
 
-    var _loop4 = function _loop4(i) {
+    var _loop2 = function _loop2(i) {
       var j = fieldsArray.findIndex(function (x) {
         return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
       });
@@ -756,28 +720,28 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
     };
 
     for (var i = tmpArr.length - 1; i >= 0; i--) {
-      var _ret5 = _loop4(i);
+      var _ret4 = _loop2(i);
 
-      if ((typeof _ret5 === 'undefined' ? 'undefined' : _typeof(_ret5)) === "object") return _ret5.v;
+      if ((typeof _ret4 === 'undefined' ? 'undefined' : _typeof(_ret4)) === "object") return _ret4.v;
     }
     return "";
   };
 
   IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
     if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (var _iterator4 = ex.expected, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-        var _ref4;
+      for (var _iterator3 = ex.expected, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+        var _ref3;
 
-        if (_isArray4) {
-          if (_i4 >= _iterator4.length) break;
-          _ref4 = _iterator4[_i4++];
+        if (_isArray3) {
+          if (_i3 >= _iterator3.length) break;
+          _ref3 = _iterator3[_i3++];
         } else {
-          _i4 = _iterator4.next();
-          if (_i4.done) break;
-          _ref4 = _i4.value;
+          _i3 = _iterator3.next();
+          if (_i3.done) break;
+          _ref3 = _i3.value;
         }
 
-        var desc = _ref4;
+        var desc = _ref3;
 
         if (desc.type == "other" || desc.type == "end") {
           return desc.description;
@@ -788,7 +752,7 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
   };
 
   IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
-    var _this9 = this;
+    var _this8 = this;
 
     var type = '';
     var result = [];
@@ -804,36 +768,36 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
         case "STRING_FIELD_NAME":
         case "NUMERIC_FIELD_NAME":
         case "DATE_FIELD_NAME":
-          var filteredFields = lastWord ? _.filter(_this9.fields, function (f) {
+          var filteredFields = lastWord ? _.filter(_this8.fields, function (f) {
             return f.toLowerCase().startsWith(lastWord.toLowerCase());
-          }) : _this9.fields;
-          resolve(_this9._normalizeData("field", filteredFields.sort()));
+          }) : _this8.fields;
+          resolve(_this8._normalizeData("field", filteredFields.sort()));
           break;
         case "STRING_OPERATOR_EQUAL":
         case "STRING_OPERATOR_IN":
-          resolve(_this9._normalizeData("operator", _this9._getStringComparisonOperatorsArray()));
+          resolve(_this8._normalizeData("operator", _this8._getStringComparisonOperatorsArray()));
           break;
         case "STRING_VALUE":
         case "STRING_PATTERN":
-          lastFldName = _this9._getLastFieldName(searchStr, _this9.fields, pegException.column);
-          _this9._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this9._normalizeData("string", data));
+          lastFldName = _this8._getLastFieldName(searchStr, _this8.fields, pegException.column);
+          _this8._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this8._normalizeData("string", data));
           });
           break;
         case "STRING_VALUES_ARRAY":
-          lastFldName = _this9._getLastFieldName(searchStr, _this9.fields, pegException.column);
-          _this9._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this9._normalizeData("array_string", data));
+          lastFldName = _this8._getLastFieldName(searchStr, _this8.fields, pegException.column);
+          _this8._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this8._normalizeData("array_string", data));
           });
           break;
-          resolve(_this9._normalizeData("array_string", []));
+          resolve(_this8._normalizeData("array_string", []));
           break;
         case "OPERATOR":
-          resolve(_this9._normalizeData("operator", _this9._getComparisonOperatorsArray()));
+          resolve(_this8._normalizeData("operator", _this8._getComparisonOperatorsArray()));
           break;
         case "LOGIC_OPERATOR":
         case "end of input":
-          resolve(_this9._normalizeData("operator", _this9._getLogicalOperatorsArray()));
+          resolve(_this8._normalizeData("operator", _this8._getLogicalOperatorsArray()));
           break;
         default:
           resolve([]);
@@ -1099,16 +1063,16 @@ var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
   function DefaultHttpClient(auth) {
     _classCallCheck(this, DefaultHttpClient);
 
-    var _this10 = _possibleConstructorReturn(this, _HttpClient.call(this));
+    var _this9 = _possibleConstructorReturn(this, _HttpClient.call(this));
 
-    _this10.configure(function (config) {
+    _this9.configure(function (config) {
       config.useStandardConfiguration().withDefaults({
         headers: {
           'Accept': 'application/json'
         }
       });
     });
-    return _this10;
+    return _this9;
   }
 
   return DefaultHttpClient;
@@ -1142,7 +1106,7 @@ var DashboardManager = exports.DashboardManager = function () {
   return DashboardManager;
 }();
 
-var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class5 = function () {
+var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = function () {
   function Factory(Type) {
     _classCallCheck(this, Factory);
 
@@ -1150,14 +1114,14 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class5 = functi
   }
 
   Factory.prototype.get = function get(container) {
-    var _this11 = this;
+    var _this10 = this;
 
     return function () {
       for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
         rest[_key] = arguments[_key];
       }
 
-      return container.invoke(_this11.Type, rest);
+      return container.invoke(_this10.Type, rest);
     };
   };
 
@@ -1166,9 +1130,9 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class5 = functi
   };
 
   return Factory;
-}()) || _class5;
+}()) || _class6;
 
-var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec2(_class6 = function () {
+var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec2(_class7 = function () {
   function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
     _classCallCheck(this, HistoryStep);
 
@@ -1178,7 +1142,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
   }
 
   HistoryStep.prototype.run = function run(routingContext, next) {
-    var _this12 = this;
+    var _this11 = this;
 
     if (routingContext.getAllInstructions().some(function (i) {
       return i.config.name === "dashboard";
@@ -1189,17 +1153,17 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
         var storageWidgetsState;
 
         (function () {
-          if (_this12.currentRouteItem) {
+          if (_this11.currentRouteItem) {
             (function () {
-              var currentWidgetsState = StateDiscriminator.discriminate(_this12._userStateStorage.getAll(_this12.currentRouteItem.dashboardName));
-              var url = "/" + _this12.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+              var currentWidgetsState = StateDiscriminator.discriminate(_this11._userStateStorage.getAll(_this11.currentRouteItem.dashboardName));
+              var url = "/" + _this11.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
 
-              if (_.filter(_this12._navigationHistory.items, function (i) {
+              if (_.filter(_this11._navigationHistory.items, function (i) {
                 return StringHelper.compare(i.url, url);
               }).length === 0) {
-                _this12._navigationHistory.add(url, _this12.currentRouteItem.title, _this12.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-              } else if (!StringHelper.compare(url, _this12.currentRouteItem.route)) {
-                _this12._navigationHistory.update(url, new Date());
+                _this11._navigationHistory.add(url, _this11.currentRouteItem.title, _this11.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+              } else if (!StringHelper.compare(url, _this11.currentRouteItem.route)) {
+                _this11._navigationHistory.update(url, new Date());
               }
             })();
           }
@@ -1207,9 +1171,24 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
           var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
 
           routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          storageWidgetsState = StateDiscriminator.discriminate(_this12._userStateStorage.getAll(_dashboard.name));
+          storageWidgetsState = StateDiscriminator.discriminate(_this11._userStateStorage.getAll(_dashboard.name));
 
-          for (var _iterator5 = storageWidgetsState, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+          for (var _iterator4 = storageWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+            var _ref4;
+
+            if (_isArray4) {
+              if (_i4 >= _iterator4.length) break;
+              _ref4 = _iterator4[_i4++];
+            } else {
+              _i4 = _iterator4.next();
+              if (_i4.done) break;
+              _ref4 = _i4.value;
+            }
+
+            var oldSt = _ref4;
+
+            _this11._userStateStorage.remove(oldSt.key);
+          }for (var _iterator5 = routeWidgetsState, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
             var _ref5;
 
             if (_isArray5) {
@@ -1221,32 +1200,17 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
               _ref5 = _i5.value;
             }
 
-            var oldSt = _ref5;
+            var newSt = _ref5;
 
-            _this12._userStateStorage.remove(oldSt.key);
-          }for (var _iterator6 = routeWidgetsState, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-            var _ref6;
-
-            if (_isArray6) {
-              if (_i6 >= _iterator6.length) break;
-              _ref6 = _iterator6[_i6++];
-            } else {
-              _i6 = _iterator6.next();
-              if (_i6.done) break;
-              _ref6 = _i6.value;
-            }
-
-            var newSt = _ref6;
-
-            _this12._userStateStorage.set(newSt.key, newSt.value);
+            _this11._userStateStorage.set(newSt.key, newSt.value);
           }
-          if (_.filter(_this12._navigationHistory.items, function (i) {
+          if (_.filter(_this11._navigationHistory.items, function (i) {
             return StringHelper.compare(i.url, fullUrl);
           }).length === 0) {
-            _this12._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this12._userStateStorage.getAll(_dashboard.name), new Date());
+            _this11._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this11._userStateStorage.getAll(_dashboard.name), new Date());
           }
 
-          _this12.currentRouteItem = {
+          _this11.currentRouteItem = {
             dashboardName: _dashboard.name,
             title: _dashboard.title,
             route: fullUrl
@@ -1268,7 +1232,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
   }]);
 
   return HistoryStep;
-}()) || _class6);
+}()) || _class7);
 
 var NavigationHistory = exports.NavigationHistory = function () {
   function NavigationHistory() {
@@ -1282,6 +1246,28 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.update = function update(url, dateTime) {
+    for (var _iterator6 = this._history, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+      var _ref6;
+
+      if (_isArray6) {
+        if (_i6 >= _iterator6.length) break;
+        _ref6 = _iterator6[_i6++];
+      } else {
+        _i6 = _iterator6.next();
+        if (_i6.done) break;
+        _ref6 = _i6.value;
+      }
+
+      var h = _ref6;
+
+      if (h.url === url) {
+        h.dateTime = dateTime;
+        break;
+      }
+    }
+  };
+
+  NavigationHistory.prototype.delete = function _delete(url) {
     for (var _iterator7 = this._history, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
       var _ref7;
 
@@ -1294,29 +1280,7 @@ var NavigationHistory = exports.NavigationHistory = function () {
         _ref7 = _i7.value;
       }
 
-      var h = _ref7;
-
-      if (h.url === url) {
-        h.dateTime = dateTime;
-        break;
-      }
-    }
-  };
-
-  NavigationHistory.prototype.delete = function _delete(url) {
-    for (var _iterator8 = this._history, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
-      var _ref8;
-
-      if (_isArray8) {
-        if (_i8 >= _iterator8.length) break;
-        _ref8 = _iterator8[_i8++];
-      } else {
-        _i8 = _iterator8.next();
-        if (_i8.done) break;
-        _ref8 = _i8.value;
-      }
-
-      var i = _ref8;
+      var i = _ref7;
 
       if (i.url === url) {
         this._history.splice(i, 1);
@@ -1339,19 +1303,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.exists = function exists(url) {
-    for (var _iterator9 = this._history, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
-      var _ref9;
+    for (var _iterator8 = this._history, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
+      var _ref8;
 
-      if (_isArray9) {
-        if (_i9 >= _iterator9.length) break;
-        _ref9 = _iterator9[_i9++];
+      if (_isArray8) {
+        if (_i8 >= _iterator8.length) break;
+        _ref8 = _iterator8[_i8++];
       } else {
-        _i9 = _iterator9.next();
-        if (_i9.done) break;
-        _ref9 = _i9.value;
+        _i8 = _iterator8.next();
+        if (_i8.done) break;
+        _ref8 = _i8.value;
       }
 
-      var i = _ref9;
+      var i = _ref8;
 
       if (i.route === url) return true;
     }
@@ -1375,19 +1339,19 @@ var StateDiscriminator = exports.StateDiscriminator = function () {
 
   StateDiscriminator.discriminate = function discriminate(widgetStates) {
     var result = [];
-    for (var _iterator10 = widgetStates, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
-      var _ref10;
+    for (var _iterator9 = widgetStates, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
+      var _ref9;
 
-      if (_isArray10) {
-        if (_i10 >= _iterator10.length) break;
-        _ref10 = _iterator10[_i10++];
+      if (_isArray9) {
+        if (_i9 >= _iterator9.length) break;
+        _ref9 = _iterator9[_i9++];
       } else {
-        _i10 = _iterator10.next();
-        if (_i10.done) break;
-        _ref10 = _i10.value;
+        _i9 = _iterator9.next();
+        if (_i9.done) break;
+        _ref9 = _i9.value;
       }
 
-      var ws = _ref10;
+      var ws = _ref9;
 
       if (ws.value.stateType === "searchBoxState") result.push(ws);
     }
@@ -1404,19 +1368,19 @@ var StateUrlParser = exports.StateUrlParser = function () {
 
   StateUrlParser.stateToQuery = function stateToQuery(widgetStates) {
     var params = [];
-    for (var _iterator11 = widgetStates, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
-      var _ref11;
+    for (var _iterator10 = widgetStates, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
+      var _ref10;
 
-      if (_isArray11) {
-        if (_i11 >= _iterator11.length) break;
-        _ref11 = _iterator11[_i11++];
+      if (_isArray10) {
+        if (_i10 >= _iterator10.length) break;
+        _ref10 = _iterator10[_i10++];
       } else {
-        _i11 = _iterator11.next();
-        if (_i11.done) break;
-        _ref11 = _i11.value;
+        _i10 = _iterator10.next();
+        if (_i10.done) break;
+        _ref10 = _i10.value;
       }
 
-      var widgetState = _ref11;
+      var widgetState = _ref10;
 
       params.push({ "sk": widgetState.key, "sv": widgetState.value });
     }
@@ -1428,19 +1392,19 @@ var StateUrlParser = exports.StateUrlParser = function () {
     var q = UrlHelper.getParameterByName("q", url);
     if (q) {
       var widgetStates = UrlHelper.queryToObject(q);
-      for (var _iterator12 = widgetStates, _isArray12 = Array.isArray(_iterator12), _i12 = 0, _iterator12 = _isArray12 ? _iterator12 : _iterator12[Symbol.iterator]();;) {
-        var _ref12;
+      for (var _iterator11 = widgetStates, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
+        var _ref11;
 
-        if (_isArray12) {
-          if (_i12 >= _iterator12.length) break;
-          _ref12 = _iterator12[_i12++];
+        if (_isArray11) {
+          if (_i11 >= _iterator11.length) break;
+          _ref11 = _iterator11[_i11++];
         } else {
-          _i12 = _iterator12.next();
-          if (_i12.done) break;
-          _ref12 = _i12.value;
+          _i11 = _iterator11.next();
+          if (_i11.done) break;
+          _ref11 = _i11.value;
         }
 
-        var ws = _ref12;
+        var ws = _ref11;
 
         result.push({ "key": ws.sk, "value": ws.sv });
       }
@@ -1487,7 +1451,7 @@ var Storage = exports.Storage = function () {
 
 var STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework.inject)(Storage), _dec3(_class7 = function () {
+var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework.inject)(Storage), _dec3(_class8 = function () {
   function UserStateStorage(storage) {
     _classCallCheck(this, UserStateStorage);
 
@@ -1552,7 +1516,7 @@ var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework
   };
 
   return UserStateStorage;
-}()) || _class7);
+}()) || _class8);
 
 var Schema = exports.Schema = function Schema() {
   _classCallCheck(this, Schema);
@@ -1639,7 +1603,7 @@ var DataServiceConfiguration = exports.DataServiceConfiguration = function () {
   return DataServiceConfiguration;
 }();
 
-var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.transient)(), _dec4(_class8 = function (_DataService) {
+var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.transient)(), _dec4(_class9 = function (_DataService) {
   _inherits(JsonDataService, _DataService);
 
   function JsonDataService() {
@@ -1649,7 +1613,7 @@ var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.t
   }
 
   JsonDataService.prototype.read = function read(options) {
-    var _this14 = this;
+    var _this13 = this;
 
     var url = this.url;
     if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
@@ -1657,15 +1621,15 @@ var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.t
       return response.json();
     }).then(function (jsonData) {
       return {
-        data: _this14.dataMapper ? _this14.dataMapper(jsonData) : jsonData,
-        total: _this14.totalMapper ? _this14.totalMapper(jsonData) : jsonData.length
+        data: _this13.dataMapper ? _this13.dataMapper(jsonData) : jsonData,
+        total: _this13.totalMapper ? _this13.totalMapper(jsonData) : jsonData.length
       };
     });
   };
 
   return JsonDataService;
-}(DataService)) || _class8);
-var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec5(_class9 = function (_DataService2) {
+}(DataService)) || _class9);
+var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec5(_class10 = function (_DataService2) {
   _inherits(StaticJsonDataService, _DataService2);
 
   function StaticJsonDataService() {
@@ -1675,15 +1639,15 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   }
 
   StaticJsonDataService.prototype.read = function read(options) {
-    var _this16 = this;
+    var _this15 = this;
 
     return this.httpClient.fetch(this.url).then(function (response) {
       return response.json();
     }).then(function (jsonData) {
-      var d = _this16.dataMapper ? _this16.dataMapper(jsonData) : jsonData;
+      var d = _this15.dataMapper ? _this15.dataMapper(jsonData) : jsonData;
       if (options.filter) {
         var f = options.filter;
-        if (_this16.filterParser && _this16.filterParser.type === "clientSide") f = _this16.filterParser.getFilter(options.filter);
+        if (_this15.filterParser && _this15.filterParser.type === "clientSide") f = _this15.filterParser.getFilter(options.filter);
         var evaluator = new QueryExpressionEvaluator();
         d = evaluator.evaluate(d, f);
       }
@@ -1697,13 +1661,13 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
       });
       return {
         data: DataHelper.deserializeDates(d),
-        total: _this16.totalMapper ? _this16.totalMapper(jsonData) : total
+        total: _this15.totalMapper ? _this15.totalMapper(jsonData) : total
       };
     });
   };
 
   return StaticJsonDataService;
-}(DataService)) || _class9);
+}(DataService)) || _class10);
 
 
 var DSL_GRAMMAR_EXPRESSION = '\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = "record.";\n \t\tvar result = "";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))\n              result = prefix + fieldname + ".toLowerCase().includes(\'" + v.substring(1,value.length-1) + "\')"\n          else if (v.indexOf("%")===0)\n              result = prefix + fieldname + ".toLowerCase().endsWith(\'" + v.substring(1,value.length) + "\')"\n          else if (v.lastIndexOf("%")===(value.length-1))\n              result = prefix + fieldname + ".toLowerCase().startsWith(\'" + v.substring(0,value.length-1) + "\')"\n        }\n        if (result == "")\n          result = prefix + fieldname + ".toLowerCase() == \'" + v + "\'";\n\n        result="(" + prefix + fieldname + "!=null && " + result + ")"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = "";\n    var values = value.split(\',\');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = \'[\\"\\\']\';\n      var re = new RegExp(find, \'g\');\n      var v = values[i].replace(new RegExp(find, \'g\'), "");\n      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += " || ";\n    }\n    if (result.length>0)\n      result = "(" + result + ")"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin "LOGIC_OPERATOR"\n     = and\n     / or\n\nand = space* "and"i space* {return " && ";}\n\nor = space* "or"i space* {return " || ";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}\n          / "(" space? e:expression space* ")" space* {return "(" + e +")";}\n\n\n\nvaluesArray "STRING_VALUES_ARRAY"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* "," space* v:stringValue) {return  nv}\n\n\n\ndateValue "DATE_VALUE"\n        = quote? dt:$(date+) quote? {return "\'" + dt + "\'";}\n\n\nstringValue  "STRING_VALUE"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return "";}\n\n\nnumericValue  "NUMERIC_VALUE"\n       = $(numeric+)\n\n\nop "OPERATOR"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq "STRING_OPERATOR_EQUAL"\n  = eq\n  / not_eq\n\nop_in "STRING_OPERATOR_IN"\n  = in\n\neq = space* "=" space* {return "==";}\n\nnot_eq = space* "!=" space* {return "!=";}\n\ngt = space* v:">" space* {return v;}\n\nge = space* v:">=" space* {return v;}\n\nlt = space* v:"<" space* {return v;}\n\nle = space* v:"<=" space* {return v;}\n\nin = space* v:"in" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield "FIELD_NAME"\n      = stringField\n     / numericField\n     / dateField\n\nstringField "STRING_FIELD_NAME"\n     = @S@\n\nnumericField "NUMERIC_FIELD_NAME"\n     = @N@\n\ndateField "DATE_FIELD_NAME"\n     = @D@\n\nquote = [\\\'\\"]\n\n\n';
@@ -1714,11 +1678,11 @@ var GrammarExpression = exports.GrammarExpression = function (_Grammar) {
   function GrammarExpression(dataFields) {
     _classCallCheck(this, GrammarExpression);
 
-    var _this17 = _possibleConstructorReturn(this, _Grammar.call(this));
+    var _this16 = _possibleConstructorReturn(this, _Grammar.call(this));
 
-    _this17.text = DSL_GRAMMAR_EXPRESSION;
-    _this17.dataFields = dataFields;
-    return _this17;
+    _this16.text = DSL_GRAMMAR_EXPRESSION;
+    _this16.dataFields = dataFields;
+    return _this16;
   }
 
   GrammarExpression.prototype.getGrammar = function getGrammar() {
@@ -1747,11 +1711,11 @@ var GrammarTree = exports.GrammarTree = function (_Grammar2) {
   function GrammarTree(dataFields) {
     _classCallCheck(this, GrammarTree);
 
-    var _this18 = _possibleConstructorReturn(this, _Grammar2.call(this));
+    var _this17 = _possibleConstructorReturn(this, _Grammar2.call(this));
 
-    _this18.text = DSL_GRAMMAR_TREE;
-    _this18.dataFields = dataFields;
-    return _this18;
+    _this17.text = DSL_GRAMMAR_TREE;
+    _this17.dataFields = dataFields;
+    return _this17;
   }
 
   GrammarTree.prototype.getGrammar = function getGrammar() {
@@ -1944,7 +1908,7 @@ var DashboardBase = exports.DashboardBase = function () {
   return DashboardBase;
 }();
 
-var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class10 = function () {
+var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class11 = function () {
   function LayoutWidget() {
     _classCallCheck(this, LayoutWidget);
 
@@ -2031,7 +1995,7 @@ var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.compute
   }]);
 
   return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class10.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class10.prototype, 'hasNavStack'), _class10.prototype)), _class10));
+}(), (_applyDecoratedDescriptor(_class11.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class11.prototype, 'hasNavStack'), _class11.prototype)), _class11));
 
 var Chart = exports.Chart = function (_Widget) {
   _inherits(Chart, _Widget);
@@ -2039,13 +2003,13 @@ var Chart = exports.Chart = function (_Widget) {
   function Chart(settings) {
     _classCallCheck(this, Chart);
 
-    var _this19 = _possibleConstructorReturn(this, _Widget.call(this, settings));
+    var _this18 = _possibleConstructorReturn(this, _Widget.call(this, settings));
 
-    _this19.categoriesField = settings.categoriesField;
-    _this19.seriesDefaults = settings.seriesDefaults;
-    _this19.stateType = "chartState";
-    _this19.attachBehaviors();
-    return _this19;
+    _this18.categoriesField = settings.categoriesField;
+    _this18.seriesDefaults = settings.seriesDefaults;
+    _this18.stateType = "chartState";
+    _this18.attachBehaviors();
+    return _this18;
   }
 
   _createClass(Chart, [{
@@ -2075,13 +2039,13 @@ var DataSourceConfigurator = exports.DataSourceConfigurator = function (_Widget2
   function DataSourceConfigurator(settings) {
     _classCallCheck(this, DataSourceConfigurator);
 
-    var _this20 = _possibleConstructorReturn(this, _Widget2.call(this, settings));
+    var _this19 = _possibleConstructorReturn(this, _Widget2.call(this, settings));
 
-    _this20.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    _this20.stateType = "dataSourceConfiguratorState";
-    _this20._dataSourceChanged = new WidgetEvent();
-    _this20.attachBehaviors();
-    return _this20;
+    _this19.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    _this19.stateType = "dataSourceConfiguratorState";
+    _this19._dataSourceChanged = new WidgetEvent();
+    _this19.attachBehaviors();
+    return _this19;
   }
 
   _createClass(DataSourceConfigurator, [{
@@ -2111,12 +2075,12 @@ var DetailedView = exports.DetailedView = function (_Widget3) {
   function DetailedView(settings) {
     _classCallCheck(this, DetailedView);
 
-    var _this21 = _possibleConstructorReturn(this, _Widget3.call(this, settings));
+    var _this20 = _possibleConstructorReturn(this, _Widget3.call(this, settings));
 
-    _this21.fields = settings.fields;
-    _this21.stateType = "detailedViewState";
-    _this21.attachBehaviors();
-    return _this21;
+    _this20.fields = settings.fields;
+    _this20.stateType = "detailedViewState";
+    _this20.attachBehaviors();
+    return _this20;
   }
 
   _createClass(DetailedView, [{
@@ -2138,22 +2102,22 @@ var Grid = exports.Grid = function (_Widget4) {
   function Grid(settings) {
     _classCallCheck(this, Grid);
 
-    var _this22 = _possibleConstructorReturn(this, _Widget4.call(this, settings));
+    var _this21 = _possibleConstructorReturn(this, _Widget4.call(this, settings));
 
-    _this22.columns = settings.columns ? settings.columns : [];
-    _this22.navigatable = settings.navigatable;
-    _this22.autoGenerateColumns = settings.autoGenerateColumns;
-    _this22.pageSize = settings.pageSize;
-    _this22.group = settings.group;
+    _this21.columns = settings.columns ? settings.columns : [];
+    _this21.navigatable = settings.navigatable;
+    _this21.autoGenerateColumns = settings.autoGenerateColumns;
+    _this21.pageSize = settings.pageSize;
+    _this21.group = settings.group;
 
-    _this22.stateType = "gridState";
+    _this21.stateType = "gridState";
 
-    _this22._dataSelected = new WidgetEvent();
-    _this22._dataActivated = new WidgetEvent();
-    _this22._dataFieldSelected = new WidgetEvent();
+    _this21._dataSelected = new WidgetEvent();
+    _this21._dataActivated = new WidgetEvent();
+    _this21._dataFieldSelected = new WidgetEvent();
 
-    _this22.attachBehaviors();
-    return _this22;
+    _this21.attachBehaviors();
+    return _this21;
   }
 
   Grid.prototype.saveState = function saveState() {
@@ -2239,13 +2203,13 @@ var SearchBox = exports.SearchBox = function (_Widget5) {
   function SearchBox(settings) {
     _classCallCheck(this, SearchBox);
 
-    var _this23 = _possibleConstructorReturn(this, _Widget5.call(this, settings));
+    var _this22 = _possibleConstructorReturn(this, _Widget5.call(this, settings));
 
-    _this23.stateType = "searchBoxState";
-    _this23._dataFilterChanged = new WidgetEvent();
-    _this23._searchString = "";
-    _this23.attachBehaviors();
-    return _this23;
+    _this22.stateType = "searchBoxState";
+    _this22._dataFilterChanged = new WidgetEvent();
+    _this22._searchString = "";
+    _this22.attachBehaviors();
+    return _this22;
   }
 
   SearchBox.prototype.saveState = function saveState() {
@@ -2291,19 +2255,19 @@ var Widget = exports.Widget = function () {
 
   Widget.prototype.attachBehaviors = function attachBehaviors() {
     if (this.settings.behavior) {
-      for (var _iterator13 = this.settings.behavior, _isArray13 = Array.isArray(_iterator13), _i13 = 0, _iterator13 = _isArray13 ? _iterator13 : _iterator13[Symbol.iterator]();;) {
-        var _ref13;
+      for (var _iterator12 = this.settings.behavior, _isArray12 = Array.isArray(_iterator12), _i12 = 0, _iterator12 = _isArray12 ? _iterator12 : _iterator12[Symbol.iterator]();;) {
+        var _ref12;
 
-        if (_isArray13) {
-          if (_i13 >= _iterator13.length) break;
-          _ref13 = _iterator13[_i13++];
+        if (_isArray12) {
+          if (_i12 >= _iterator12.length) break;
+          _ref12 = _iterator12[_i12++];
         } else {
-          _i13 = _iterator13.next();
-          if (_i13.done) break;
-          _ref13 = _i13.value;
+          _i12 = _iterator12.next();
+          if (_i12.done) break;
+          _ref12 = _i12.value;
         }
 
-        var b = _ref13;
+        var b = _ref12;
 
         this.attachBehavior(b);
       }
@@ -2311,11 +2275,11 @@ var Widget = exports.Widget = function () {
   };
 
   Widget.prototype.changeSettings = function changeSettings(newSettings) {
-    var _this24 = this;
+    var _this23 = this;
 
     if (newSettings) {
       _.forOwn(newSettings, function (v, k) {
-        _this24.settings[k] = v;
+        _this23.settings[k] = v;
       });
       this.refresh();
     }
@@ -2348,6 +2312,11 @@ var Widget = exports.Widget = function () {
     key: 'name',
     get: function get() {
       return this.settings.name;
+    }
+  }, {
+    key: 'resourceGroup',
+    get: function get() {
+      return this.settings.resourceGroup;
     }
   }, {
     key: 'minHeight',
@@ -2455,14 +2424,14 @@ var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBeha
   function ChangeRouteBehavior(settings) {
     _classCallCheck(this, ChangeRouteBehavior);
 
-    var _this25 = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
+    var _this24 = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-    _this25._chanel = settings.chanel;
-    _this25._eventAggregator = settings.eventAggregator;
-    _this25._newRoute = settings.newRoute;
-    _this25._router = settings.router;
-    _this25._paramsMapper = settings.paramsMapper;
-    return _this25;
+    _this24._chanel = settings.chanel;
+    _this24._eventAggregator = settings.eventAggregator;
+    _this24._newRoute = settings.newRoute;
+    _this24._router = settings.router;
+    _this24._paramsMapper = settings.paramsMapper;
+    return _this24;
   }
 
   ChangeRouteBehavior.prototype.attach = function attach(dashboard) {
@@ -2489,19 +2458,19 @@ var CreateWidgetBehavior = exports.CreateWidgetBehavior = function (_DashboardBe
   function CreateWidgetBehavior(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
     _classCallCheck(this, CreateWidgetBehavior);
 
-    var _this26 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
+    var _this25 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
 
-    _this26._chanel = chanel;
-    _this26._widgetType = widgetType;
-    _this26._widgetSettings = widgetSettings;
-    _this26._widgetDimensions = widgetDimensions;
-    _this26._eventAggregator = eventAggregator;
-    _this26._filterMapper = filterMapper;
-    return _this26;
+    _this25._chanel = chanel;
+    _this25._widgetType = widgetType;
+    _this25._widgetSettings = widgetSettings;
+    _this25._widgetDimensions = widgetDimensions;
+    _this25._eventAggregator = eventAggregator;
+    _this25._filterMapper = filterMapper;
+    return _this25;
   }
 
   CreateWidgetBehavior.prototype.attach = function attach(dashboard) {
-    var _this27 = this;
+    var _this26 = this;
 
     _DashboardBehavior2.prototype.attach.call(this, dashboard);
     var me = this;
@@ -2509,7 +2478,7 @@ var CreateWidgetBehavior = exports.CreateWidgetBehavior = function (_DashboardBe
       var w = dashboard.getWidgetByName(me._widgetSettings.name);
       if (!w) {
         var w = new me._widgetType(me._widgetSettings);
-        dashboard.addWidget(w, _this27._widgetDimensions);
+        dashboard.addWidget(w, _this26._widgetDimensions);
       }
       w.dataFilter = me._filterMapper ? me._filterMapper(message) : "";
       w.refresh();
@@ -2559,10 +2528,10 @@ var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = func
   function ManageNavigationStackBehavior(eventAggregator) {
     _classCallCheck(this, ManageNavigationStackBehavior);
 
-    var _this28 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
+    var _this27 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
 
-    _this28._eventAggregator = eventAggregator;
-    return _this28;
+    _this27._eventAggregator = eventAggregator;
+    return _this27;
   }
 
   ManageNavigationStackBehavior.prototype.attach = function attach(dashboard) {
@@ -2592,15 +2561,15 @@ var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_Dashboard
   function ReplaceWidgetBehavior(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
     _classCallCheck(this, ReplaceWidgetBehavior);
 
-    var _this29 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
+    var _this28 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
 
-    _this29._chanel = chanel;
-    _this29._widgetType = widgetType;
-    _this29._widgetSettings = widgetSettings;
-    _this29._eventAggregator = eventAggregator;
-    _this29._widgetToReplaceName = widgetToReplaceName;
-    _this29._mapper = mapper;
-    return _this29;
+    _this28._chanel = chanel;
+    _this28._widgetType = widgetType;
+    _this28._widgetSettings = widgetSettings;
+    _this28._eventAggregator = eventAggregator;
+    _this28._widgetToReplaceName = widgetToReplaceName;
+    _this28._mapper = mapper;
+    return _this28;
   }
 
   ReplaceWidgetBehavior.prototype.attach = function attach(dashboard) {
@@ -2687,11 +2656,11 @@ var DataActivatedBehavior = exports.DataActivatedBehavior = function (_WidgetBeh
   function DataActivatedBehavior(chanel, eventAggregator) {
     _classCallCheck(this, DataActivatedBehavior);
 
-    var _this30 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+    var _this29 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-    _this30._chanel = chanel;
-    _this30._eventAggregator = eventAggregator;
-    return _this30;
+    _this29._chanel = chanel;
+    _this29._eventAggregator = eventAggregator;
+    return _this29;
   }
 
   DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2718,11 +2687,11 @@ var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_W
   function DataFieldSelectedBehavior(chanel, eventAggregator) {
     _classCallCheck(this, DataFieldSelectedBehavior);
 
-    var _this31 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
+    var _this30 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
 
-    _this31._chanel = chanel;
-    _this31._eventAggregator = eventAggregator;
-    return _this31;
+    _this30._chanel = chanel;
+    _this30._eventAggregator = eventAggregator;
+    return _this30;
   }
 
   DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2749,11 +2718,11 @@ var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_W
   function DataFilterChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataFilterChangedBehavior);
 
-    var _this32 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
+    var _this31 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
 
-    _this32._channel = channel;
-    _this32._eventAggregator = eventAggregator;
-    return _this32;
+    _this31._channel = channel;
+    _this31._eventAggregator = eventAggregator;
+    return _this31;
   }
 
   DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2779,12 +2748,12 @@ var DataFilterHandleBehavior = exports.DataFilterHandleBehavior = function (_Wid
   function DataFilterHandleBehavior(channel, eventAggregator, filterMapper) {
     _classCallCheck(this, DataFilterHandleBehavior);
 
-    var _this33 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
+    var _this32 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
 
-    _this33._channel = channel;
-    _this33._eventAggregator = eventAggregator;
-    _this33._filterMapper = filterMapper;
-    return _this33;
+    _this32._channel = channel;
+    _this32._eventAggregator = eventAggregator;
+    _this32._filterMapper = filterMapper;
+    return _this32;
   }
 
   DataFilterHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2811,11 +2780,11 @@ var DataSelectedBehavior = exports.DataSelectedBehavior = function (_WidgetBehav
   function DataSelectedBehavior(chanel, eventAggregator) {
     _classCallCheck(this, DataSelectedBehavior);
 
-    var _this34 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
+    var _this33 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
 
-    _this34._chanel = chanel;
-    _this34._eventAggregator = eventAggregator;
-    return _this34;
+    _this33._chanel = chanel;
+    _this33._eventAggregator = eventAggregator;
+    return _this33;
   }
 
   DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2842,11 +2811,11 @@ var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_W
   function DataSourceChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceChangedBehavior);
 
-    var _this35 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
+    var _this34 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
 
-    _this35._channel = channel;
-    _this35._eventAggregator = eventAggregator;
-    return _this35;
+    _this34._channel = channel;
+    _this34._eventAggregator = eventAggregator;
+    return _this34;
   }
 
   DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2872,11 +2841,11 @@ var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_Wid
   function DataSourceHandleBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceHandleBehavior);
 
-    var _this36 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
+    var _this35 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
 
-    _this36._channel = channel;
-    _this36._eventAggregator = eventAggregator;
-    return _this36;
+    _this35._channel = channel;
+    _this35._eventAggregator = eventAggregator;
+    return _this35;
   }
 
   DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2902,12 +2871,12 @@ var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_WidgetB
   function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
     _classCallCheck(this, SettingsHandleBehavior);
 
-    var _this37 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
+    var _this36 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
 
-    _this37._channel = channel;
-    _this37._eventAggregator = eventAggregator;
-    _this37._messageMapper = messageMapper;
-    return _this37;
+    _this36._channel = channel;
+    _this36._eventAggregator = eventAggregator;
+    _this36._messageMapper = messageMapper;
+    return _this36;
   }
 
   SettingsHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -3056,17 +3025,17 @@ var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvi
   function StaticSchemaProvider(schema) {
     _classCallCheck(this, StaticSchemaProvider);
 
-    var _this39 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+    var _this38 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
 
-    _this39._schema = schema;
-    return _this39;
+    _this38._schema = schema;
+    return _this38;
   }
 
   StaticSchemaProvider.prototype.getSchema = function getSchema() {
-    var _this40 = this;
+    var _this39 = this;
 
     return new Promise(function (resolve, reject) {
-      resolve(_this40._schema);
+      resolve(_this39._schema);
     });
   };
 
@@ -3079,13 +3048,13 @@ var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaPro
   function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
     _classCallCheck(this, SwaggerSchemaProvider);
 
-    var _this41 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+    var _this40 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
 
-    _this41._modelName = modelName;
-    _this41._methodName = methodName;
-    _this41._apiName = apiName;
-    _this41._definitionUrl = definitionUrl;
-    return _this41;
+    _this40._modelName = modelName;
+    _this40._methodName = methodName;
+    _this40._apiName = apiName;
+    _this40._definitionUrl = definitionUrl;
+    return _this40;
   }
 
   SwaggerSchemaProvider.prototype.getSchema = function getSchema() {

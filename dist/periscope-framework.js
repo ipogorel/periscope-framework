@@ -17,28 +17,28 @@ export class PermissionsCustomAttribute {
   bind() {
     if (!this.value)
       return;
-    let widgetName = "";
+    let widgetGroup = "";
     let permissions = []
     if (_.isString(this.value)) {
-      widgetName = this.element.au.permissions.scope.bindingContext.name; // get widget name
+      widgetGroup = this.element.au.permissions.scope.bindingContext.resourceGroup; // get widget name
       permissions = this.value.split(",");
     }
     else if (_.isPlainObject(this.value)){
-      widgetName = this.value.widgetName;
-      permissions = this.value.permissions;
+      widgetGroup = this.value.resourceGroup;
+      permissions = this.value.permissions.split(",");
     }
     for (let p of permissions){
-      this.permissionsManager.hasPermisson(p, widgetName).then(result=>{
+      this.permissionsManager.hasPermisson(p, widgetGroup).then(result=>{
         if (!result){
-          if (p==='r')
+          if (p==='read')
             this.element.hidden = true;
-          if (p==='w')
+          if (p==='write')
             this.element.disabled = true;
         }
         else{
-          if (p==='r')
+          if (p==='read')
             this.element.hidden = false;
-          if (p==='w')
+          if (p==='write')
             this.element.disabled = false;
         }
       })
@@ -47,59 +47,58 @@ export class PermissionsCustomAttribute {
 }
 
 export class PermissionsManagerConfiguration {
-  permissionsMatrix = [];
-  roleProvider;
+  dataSource;
 
-  withPermissionsMatrix(matrix){
-    this.permissionsMatrix = matrix;
+  withDataSource(dataSource){
+    this.dataSource = dataSource;
     return this;
   }
 
-  withRoleProvider(roleProvider){
-    this.roleProvider = roleProvider;
-    return this;
-  }
 }
 
 export class PermissionsManager {
   constructor(){
-    this._permissionsMatrix = [];
   }
 
+  isConfigured = false;
+  permissionsDataSource;
 
   configure(config){
     let normalizedConfig = new PermissionsManagerConfiguration();
     config(normalizedConfig);
-    this._permissionsMatrix = normalizedConfig.permissionsMatrix;
-    this._roleProvider = normalizedConfig.roleProvider;
+    this.permissionsDataSource = normalizedConfig.dataSource;
+    this.isConfigured = true;
   }
 
-  hasPermisson(permission, resourceName){
-    let resource = _.find(this._permissionsMatrix,{ 'resource': resourceName});
-    if (!resource){
-      return new Promise((resolve, reject)=>{
-        resolve(false);
-      });
-    }
-    if (_.indexOf(resource.roles,"*")>=0 && _.indexOf(resource.permissions,permission)>=0){ // permission has set for all roles
+  hasPermisson(permission, resourceGroup){
+    if (!this.isConfigured){
       return new Promise((resolve, reject)=>{
         resolve(true);
       });
     }
-    else {
-      return this._roleProvider.getRoles().then(roles=>{
-        for (let r of roles){
-          let w = _.find(this._permissionsMatrix, p => {
-            return (p.resource === resourceName && _.indexOf(p.roles,r)>=0)
-          });
-          if (w)
-            return _.indexOf(w.permissions,permission)>=0;
-        }
-        return false;
-      })
-    }
+
+    return this._getData().then(permissions=>{
+      let normalizedPermissions = _.map(permissions, p=>{
+        let a = p.toLowerCase().split("-")
+        if (a.length==2)
+          return {permission:a[0], group:a[1]}
+      });
+      if (_.filter(normalizedPermissions,{ 'permission': permission, 'group': resourceGroup }).length>0)
+        return true;
+      return false;
+    })
+  }
+
+  _getData(){
+    let q = new Query();
+    if (this._query)
+      q.filter =this._query;
+    return this.permissionsDataSource.getData(q).then(d=>{
+      return d.data;
+    })
   }
 }
+
 
 /*
 [
@@ -2135,6 +2134,10 @@ export class Widget {
 
   get name(){
     return this.settings.name;
+  }
+
+  get resourceGroup() {
+    return this.settings.resourceGroup;
   }
 
   get minHeight(){

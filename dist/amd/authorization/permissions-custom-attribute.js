@@ -45,14 +45,14 @@ define(['exports', 'aurelia-framework', 'lodash', './permissions-manager'], func
       var _this = this;
 
       if (!this.value) return;
-      var widgetName = "";
+      var widgetGroup = "";
       var permissions = [];
       if (_.isString(this.value)) {
-        widgetName = this.element.au.permissions.scope.bindingContext.name;
+        widgetGroup = this.element.au.permissions.scope.bindingContext.resourceGroup;
         permissions = this.value.split(",");
       } else if (_.isPlainObject(this.value)) {
-        widgetName = this.value.widgetName;
-        permissions = this.value.permissions;
+        widgetGroup = this.value.resourceGroup;
+        permissions = this.value.permissions.split(",");
       }
 
       var _loop = function _loop() {
@@ -67,13 +67,13 @@ define(['exports', 'aurelia-framework', 'lodash', './permissions-manager'], func
 
         var p = _ref;
 
-        _this.permissionsManager.hasPermisson(p, widgetName).then(function (result) {
+        _this.permissionsManager.hasPermisson(p, widgetGroup).then(function (result) {
           if (!result) {
-            if (p === 'r') _this.element.hidden = true;
-            if (p === 'w') _this.element.disabled = true;
+            if (p === 'read') _this.element.hidden = true;
+            if (p === 'write') _this.element.disabled = true;
           } else {
-            if (p === 'r') _this.element.hidden = false;
-            if (p === 'w') _this.element.disabled = false;
+            if (p === 'read') _this.element.hidden = false;
+            if (p === 'write') _this.element.disabled = false;
           }
         });
       };

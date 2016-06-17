@@ -1,45 +1,50 @@
 import * as _ from 'lodash';
+import {Query} from './../data/query';
 import {PermissionsManagerConfiguration} from './permissions-manager-configuration';
 
 export class PermissionsManager {
   constructor(){
-    this._permissionsMatrix = [];
   }
 
+  isConfigured = false;
+  permissionsDataSource;
 
   configure(config){
     let normalizedConfig = new PermissionsManagerConfiguration();
     config(normalizedConfig);
-    this._permissionsMatrix = normalizedConfig.permissionsMatrix;
-    this._roleProvider = normalizedConfig.roleProvider;
+    this.permissionsDataSource = normalizedConfig.dataSource;
+    this.isConfigured = true;
   }
 
-  hasPermisson(permission, resourceName){
-    let resource = _.find(this._permissionsMatrix,{ 'resource': resourceName});
-    if (!resource){
-      return new Promise((resolve, reject)=>{
-        resolve(false);
-      });
-    }
-    if (_.indexOf(resource.roles,"*")>=0 && _.indexOf(resource.permissions,permission)>=0){ // permission has set for all roles
+  hasPermisson(permission, resourceGroup){
+    if (!this.isConfigured){
       return new Promise((resolve, reject)=>{
         resolve(true);
       });
     }
-    else {
-      return this._roleProvider.getRoles().then(roles=>{
-        for (let r of roles){
-          let w = _.find(this._permissionsMatrix, p => {
-            return (p.resource === resourceName && _.indexOf(p.roles,r)>=0)
-          });
-          if (w)
-            return _.indexOf(w.permissions,permission)>=0;
-        }
-        return false;
-      })
-    }
+
+    return this._getData().then(permissions=>{
+      let normalizedPermissions = _.map(permissions, p=>{
+        let a = p.toLowerCase().split("-")
+        if (a.length==2)
+          return {permission:a[0], group:a[1]}
+      });
+      if (_.filter(normalizedPermissions,{ 'permission': permission, 'group': resourceGroup }).length>0)
+        return true;
+      return false;
+    })
+  }
+
+  _getData(){
+    let q = new Query();
+    if (this._query)
+      q.filter =this._query;
+    return this.permissionsDataSource.getData(q).then(d=>{
+      return d.data;
+    })
   }
 }
+
 
 /*
 [
