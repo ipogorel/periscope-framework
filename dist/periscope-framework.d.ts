@@ -49,25 +49,6 @@ declare module 'periscope-framework' {
     }
   ]
   */
-  export class RoleProviderConfiguration {
-    authService: any;
-    dataSource: any;
-    query: any;
-    withAuthService(authService: any): any;
-    withDataSource(dataSource: any): any;
-    withQuery(query: any): any;
-  }
-  export class RoleProvider {
-    _liveRequest: any;
-    _cache: any;
-    _authService: any;
-    _dataSource: any;
-    _query: any;
-    isConfigured: any;
-    constructor(authService: any);
-    configure(config: any): any;
-    getRoles(): any;
-  }
   export class CacheManager {
     constructor(storage: any);
     cleanInterval: any;
@@ -87,9 +68,6 @@ declare module 'periscope-framework' {
     getItem(key: any): any;
     removeItem(key: any): any;
     removeExpired(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
   }
   export class DataHolder {
     constructor();
@@ -137,6 +115,9 @@ declare module 'periscope-framework' {
       }*/
     filter: any;
     cacheKey(): any;
+  }
+  export class DashboardConfiguration {
+    invoke(): any;
   }
   export class IntellisenceManager {
     constructor(parser: any, dataSource: any, availableFields: any);
@@ -228,18 +209,6 @@ declare module 'periscope-framework' {
   export class Schema {
     constructor();
   }
-  export class GrammarExpression extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class GrammarTree extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class Grammar {
-    text: any;
-    getGrammar(): any;
-  }
   export class DataService {
     configure(configuration: any): any;
     getSchema(): any;
@@ -311,6 +280,18 @@ declare module 'periscope-framework' {
   export class StaticJsonDataService extends DataService {
     constructor();
     read(options: any): any;
+  }
+  export class GrammarExpression extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class GrammarTree extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class Grammar {
+    text: any;
+    getGrammar(): any;
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

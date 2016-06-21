@@ -1,6 +1,5 @@
 export * from './authorization/permissions-custom-attribute';
 export * from './authorization/permissions-manager';
-export * from './authorization/role-provider';
 
 export * from './cache/cache-manager';
 export * from './cache/cache-storage';

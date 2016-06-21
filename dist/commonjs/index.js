@@ -28,18 +28,6 @@ Object.keys(_permissionsManager).forEach(function (key) {
   });
 });
 
-var _roleProvider = require('./authorization/role-provider');
-
-Object.keys(_roleProvider).forEach(function (key) {
-  if (key === "default") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _roleProvider[key];
-    }
-  });
-});
-
 var _cacheManager = require('./cache/cache-manager');
 
 Object.keys(_cacheManager).forEach(function (key) {

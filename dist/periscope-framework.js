@@ -117,116 +117,6 @@ export class PermissionsManager {
 ]
 */
 
-export class RoleProviderConfiguration {
-  authService;
-  dataSource;
-  query;
-
-  withAuthService(authService){
-    this.authService = authService;
-    return this;
-  }
-
-  withDataSource(dataSource){
-    this.dataSource = dataSource;
-    return this;
-  }
-
-  withQuery(query){
-    this.query = query;
-    return this;
-  }
-
-}
-
-export class RoleProvider {
-  _liveRequest = null;
-  _cache = {};
-
-
-  _authService;
-  _dataSource;
-  _query;
-
-  isConfigured = false;
-
-  constructor(authService) {
-    this._authService = authService;
-  }
-
-  configure(config){
-    let normalizedConfig = new RoleProviderConfiguration();
-    config(normalizedConfig);
-    this._authService = normalizedConfig.authService;
-    this._dataSource = normalizedConfig.dataSource;
-    this._query = normalizedConfig.query;
-    this._userRolesArray = normalizedConfig.userRolesArray;
-    if (this._authService && this._dataSource)
-      this.isConfigured = true;
-  }
-
-  getRoles(){
-    if (!this.isConfigured)
-      throw "role provider is not configured";
-    let roles = [];
-    if (!this._authService.isAuthenticated()){
-      return new Promise((resolve, reject)=>{
-        resolve(roles);
-      });
-    }
-
-    let t = this._authService.getTokenPayload();
-    if (!t || !t.sub)
-      throw "Wrong token. Make sure your token follows JWT format";
-
-    let key = JSON.stringify(t);
-    return this._getUserRoles(key).then(d=>{
-      let r = this._cache[key]
-      if (r)
-        roles = r;
-      return roles;
-    });
-  }
-
-  _fromCache(token){
-    if (token in this._cache)
-      return  this._cache[token];
-    throw "username not found: " + token;
-  }
-
-
-  _getUserRoles(token){
-    if (this._liveRequest) {
-      this._liveRequest = this._liveRequest.then(l=>{
-        this._fromCache(token)
-      }).then(data => {return data}, err=>{
-        this._processData(token);
-      })
-      return this._liveRequest;
-    }
-    try{
-      let userName = this._fromCache(token);
-      return new Promise((resolve, reject)=>{
-        resolve(userName);
-      });
-    }
-    catch (ex){}
-    this._liveRequest = this._processData(token);
-    return this._liveRequest;
-  }
-
-  _processData(token){
-    let q = new Query();
-    if (this._query)
-      q.filter =this._query;
-    return this._dataSource.getData(q).then(d=>{
-      this._liveRequest = null;
-      this._cache[token] = d.data;
-    })
-  }
-}
-
-
 export class CacheManager {
   constructor(storage) {
     this._cacheStorage = storage;
@@ -294,13 +184,6 @@ export class MemoryCacheStorage extends CacheStorage{
     });
   }
 }
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
 
 
 export class DataHolder {
@@ -541,6 +424,13 @@ export class Query {
         (this.skip?this.skip:"0")));
   }
   
+}
+
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
 }
 
 
@@ -1218,6 +1108,178 @@ export class Schema {
   }
 }
 
+export class DataService{
+  
+  configure(configuration){
+    this.url = configuration.url;
+    this.schemaProvider = configuration.schemaProvider;
+    this.filterParser = configuration.filterParser;
+    this.totalMapper = configuration.totalMapper;
+    this.dataMapper = configuration.dataMapper;
+    this.httpClient = configuration.httpClient;
+  }
+  getSchema(){
+    return this.schemaProvider.getSchema();
+  }
+  read(options) {}
+  create(entity) {}
+  update(id, entity) {}
+  delete(id) {}
+  
+}
+
+export class DataServiceConfiguration {
+
+  constructor(configuration){
+    if (configuration) {
+      this._url = configuration.url;
+      this._schemaProvider = configuration.schemaProvider;
+      this._totalMapper = configuration.totalMapper;
+      this._filterParser = configuration.filterParser;
+      this._dataMapper = configuration.dataMapper;
+      this._httpClient = configuration.httpClient
+    }
+  }
+
+  get url() {
+    return this._url;
+  }
+
+  get httpClient() {
+    return this._httpClient;
+  }
+
+  get schemaProvider(){
+    return this._schemaProvider
+  }
+
+  get totalMapper(){
+    return this._totalMapper;
+  }
+
+  get filterParser(){
+    return this._filterParser;
+  }
+
+  get dataMapper(){
+    return this._dataMapper;
+  }
+
+}
+
+@transient()
+export class JsonDataService extends DataService {
+    _cache = {};
+    _liveRequest;
+
+    constructor() {
+      super();
+    }
+
+
+    read(options) { //options: fields,filter, take, skip, sort
+      let url = this.url
+      if (options.filter)
+        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return {
+            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+          }
+        });
+    }
+
+  /*read(options) { //options: fields,filter, take, skip, sort
+    let url = this.url
+    if (options.filter)
+      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest
+        .then(l=>this._fromCache(url))
+        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
+      return this._liveRequest;
+    }
+    try{
+      let data = this._fromCache(url);
+      return Promise.resolve(data).then(d => this._processData(url, d));
+    }
+    catch (ex){}
+    this._liveRequest = this._doWebRequest(url);
+    return this._liveRequest;
+  }
+
+    _doWebRequest(url){
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return this._processData(url,jsonData)
+        });
+    }
+
+    _processData(url, jsonData){
+      this._liveRequest = null;
+      this._cache[url] = jsonData;
+      return {
+        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+      };
+    }
+
+
+    _fromCache(url){
+      if ((url in this._cache)&&(this._cache[url]))
+        return  this._cache[url];
+      throw "data not found: " + url;
+    }*/
+
+}
+
+@transient()
+export class StaticJsonDataService extends DataService {
+  constructor() {
+    super();
+  }
+  
+
+  read(options) {
+    return this.httpClient
+      .fetch(this.url)
+      .then(response => {
+        return response.json();
+      })
+      .then(jsonData => {
+        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
+        if (options.filter){
+          let f = options.filter;
+          if (this.filterParser && this.filterParser.type === "clientSide")
+            f = this.filterParser.getFilter(options.filter);
+          let evaluator = new QueryExpressionEvaluator();
+          d = evaluator.evaluate(d, f);
+        }
+        let total = d.length;
+        // sort
+        if (options.sort)
+          d = _.orderBy(d,[options.sort],[options.sortDir]);
+        var l = options.skip + options.take;
+        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
+        if (options.fields && options.fields.length>0)
+          d = _.map(d, item =>{
+            return _.pick(item, options.fields);
+          });
+        return {
+          data: DataHelper.deserializeDates(d),
+          total: (this.totalMapper? this.totalMapper(jsonData) : total)
+        }
+      });
+  }
+
+}
+
 const DSL_GRAMMAR_EXPRESSION = `
 {
 function createStringExpression(fieldname, value){
@@ -1579,178 +1641,6 @@ export class Grammar{
   getGrammar(){
   }
   
-}
-
-export class DataService{
-  
-  configure(configuration){
-    this.url = configuration.url;
-    this.schemaProvider = configuration.schemaProvider;
-    this.filterParser = configuration.filterParser;
-    this.totalMapper = configuration.totalMapper;
-    this.dataMapper = configuration.dataMapper;
-    this.httpClient = configuration.httpClient;
-  }
-  getSchema(){
-    return this.schemaProvider.getSchema();
-  }
-  read(options) {}
-  create(entity) {}
-  update(id, entity) {}
-  delete(id) {}
-  
-}
-
-export class DataServiceConfiguration {
-
-  constructor(configuration){
-    if (configuration) {
-      this._url = configuration.url;
-      this._schemaProvider = configuration.schemaProvider;
-      this._totalMapper = configuration.totalMapper;
-      this._filterParser = configuration.filterParser;
-      this._dataMapper = configuration.dataMapper;
-      this._httpClient = configuration.httpClient
-    }
-  }
-
-  get url() {
-    return this._url;
-  }
-
-  get httpClient() {
-    return this._httpClient;
-  }
-
-  get schemaProvider(){
-    return this._schemaProvider
-  }
-
-  get totalMapper(){
-    return this._totalMapper;
-  }
-
-  get filterParser(){
-    return this._filterParser;
-  }
-
-  get dataMapper(){
-    return this._dataMapper;
-  }
-
-}
-
-@transient()
-export class JsonDataService extends DataService {
-    _cache = {};
-    _liveRequest;
-
-    constructor() {
-      super();
-    }
-
-
-    read(options) { //options: fields,filter, take, skip, sort
-      let url = this.url
-      if (options.filter)
-        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
-      return this.httpClient
-        .fetch(url)
-        .then(response => {return response.json(); })
-        .then(jsonData => {
-          return {
-            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-          }
-        });
-    }
-
-  /*read(options) { //options: fields,filter, take, skip, sort
-    let url = this.url
-    if (options.filter)
-      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
-
-    if (this._liveRequest) {
-      this._liveRequest = this._liveRequest
-        .then(l=>this._fromCache(url))
-        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
-      return this._liveRequest;
-    }
-    try{
-      let data = this._fromCache(url);
-      return Promise.resolve(data).then(d => this._processData(url, d));
-    }
-    catch (ex){}
-    this._liveRequest = this._doWebRequest(url);
-    return this._liveRequest;
-  }
-
-    _doWebRequest(url){
-      return this.httpClient
-        .fetch(url)
-        .then(response => {return response.json(); })
-        .then(jsonData => {
-          return this._processData(url,jsonData)
-        });
-    }
-
-    _processData(url, jsonData){
-      this._liveRequest = null;
-      this._cache[url] = jsonData;
-      return {
-        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-      };
-    }
-
-
-    _fromCache(url){
-      if ((url in this._cache)&&(this._cache[url]))
-        return  this._cache[url];
-      throw "data not found: " + url;
-    }*/
-
-}
-
-@transient()
-export class StaticJsonDataService extends DataService {
-  constructor() {
-    super();
-  }
-  
-
-  read(options) {
-    return this.httpClient
-      .fetch(this.url)
-      .then(response => {
-        return response.json();
-      })
-      .then(jsonData => {
-        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
-        if (options.filter){
-          let f = options.filter;
-          if (this.filterParser && this.filterParser.type === "clientSide")
-            f = this.filterParser.getFilter(options.filter);
-          let evaluator = new QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, f);
-        }
-        let total = d.length;
-        // sort
-        if (options.sort)
-          d = _.orderBy(d,[options.sort],[options.sortDir]);
-        var l = options.skip + options.take;
-        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
-        if (options.fields && options.fields.length>0)
-          d = _.map(d, item =>{
-            return _.pick(item, options.fields);
-          });
-        return {
-          data: DataHelper.deserializeDates(d),
-          total: (this.totalMapper? this.totalMapper(jsonData) : total)
-        }
-      });
-  }
-
 }
 
 export class FormatValueConverter {
