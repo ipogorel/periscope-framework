@@ -5,36 +5,23 @@ import * as _ from 'lodash';
 export class DashboardBase
 {
   constructor() {
-    this._layout = [];
-    this._behaviors = [];
   }
 
-  get name() {
-    return this._name;
-  }
-
-
-  get title() {
-    return this._title;
-  }
-
-
-  get layout() {
-    return this._layout;
-  }
-
-  get behaviors() {
-    return this._behaviors;
-  }
+  name;
+  resourceGroup;
+  title;
+  layout = [];
+  behaviors = [];
 
   configure(dashboardConfiguration){
-    this._name = dashboardConfiguration.name;
-    this._title = dashboardConfiguration.title;
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
   }
 
 
   getWidgetByName(widgetName) {
-    var wl = _.find(this._layout, w=> { return w.widget.name === widgetName });
+    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
     if (wl)
       return wl.widget;
   }
@@ -46,12 +33,12 @@ export class DashboardBase
     lw.sizeY = dimensions.sizeY;
     lw.col = dimensions.col;
     lw.row = dimensions.row;
-    this._layout.push(lw);
+    this.layout.push(lw);
     widget.dashboard = this;
   }
 
   removeWidget(widget) {
-    _.remove(this._layout, w=>{
+    _.remove(this.layout, w=>{
       if (w.widget === widget) {
         widget.dispose();
         return true;
@@ -61,7 +48,7 @@ export class DashboardBase
   }
 
   replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this._layout, w=> {return w.widget === oldWidget});
+    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
     if (oldLw){
       newWidget.dashboard = this;
       let newLw = new LayoutWidget();
@@ -72,12 +59,12 @@ export class DashboardBase
       newLw.row = oldLw.row;
 
       newLw.navigationStack.push(oldWidget);
-      this._layout.splice(_.indexOf(this._layout,oldLw), 1, newLw);
+      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
     }
   }
 
   restoreWidget(currentWidget){
-    let lw = _.find(this._layout, w=> {return w.widget === currentWidget});
+    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
     let previousWidget = lw.navigationStack.pop();
     if (previousWidget){
       let previousLw = new LayoutWidget();
@@ -86,13 +73,13 @@ export class DashboardBase
       previousLw.sizeY = lw.sizeY;
       previousLw.col = lw.col;
       previousLw.row = lw.row;
-      this._layout.splice(_.indexOf(this._layout,lw), 1, previousLw);
+      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
     }
   }
 
 
   resizeWidget(widget, newSize){
-    var lw = _.find(this._layout, w=> {return w.widget === widget});
+    var lw = _.find(this.layout, w=> {return w.widget === widget});
     if (newSize) {
       let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
       let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
@@ -108,20 +95,20 @@ export class DashboardBase
   }
   
   refresh() {
-    for (let i=0; i<this._layout.length; i++) {
-      this.refreshWidget(this._layout[i].widget);
+    for (let i=0; i<this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
     }
   }
 
   dispose(){
-    for (let i=0; i<this._layout.length; i++) {
-      this._layout[i].widget.dispose();
+    for (let i=0; i<this.layout.length; i++) {
+      this.layout[i].widget.dispose();
     }
-    this._layout = [];
+    this.layout = [];
 
     while(true) {
-      if (this._behaviors.length>0)
-        this._behaviors[0].detach();
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
       else
         break;
     }
@@ -129,58 +116,14 @@ export class DashboardBase
 }
 
 export class LayoutWidget{
-  constructor(){
-    this.navigationStack = [];
-    this.resized = false;
-  }
-  get widget(){
-    return this._widget;
-  }
-  set widget(value){
-    this._widget = value;
-  }
 
-  get navigationStack(){
-    return this._navigationStack;
-  }
-  set navigationStack(value){
-    this._navigationStack = value;
-  }
-
-  get sizeX(){
-    return this._sizeX;
-  }
-  set sizeX(value){
-    this._sizeX = value;
-  }
-
-  get sizeY(){
-    return this._sizeY;
-  }
-  set sizeY(value){
-    this._sizeY = value;
-  }
-
-  get col(){
-    return this._col;
-  }
-  set col(value){
-    this._col = value;
-  }
-
-  get row(){
-    return this._row;
-  }
-  set row(value){
-    this._row = value;
-  }
-
-  get resized() {
-    return this._resized;
-  }
-  set resized(value) {
-    this._resized = value;
-  }
+  widget;
+  navigationStack = [];
+  sizeX;
+  sizeY;
+  col;
+  row;
+  resized = false;
 
   @computedFrom('navigationStack')
   get hasNavStack() {

@@ -45,15 +45,18 @@ define(['exports', 'aurelia-framework', 'lodash', './permissions-manager'], func
       var _this = this;
 
       if (!this.value) return;
-      var widgetGroup = "";
+      var rGroup = "";
       var permissions = [];
       if (_.isString(this.value)) {
-        widgetGroup = this.element.au.permissions.scope.bindingContext.resourceGroup;
+        rGroup = this.element.au.permissions.scope.bindingContext.resourceGroup;
         permissions = this.value.split(",");
       } else if (_.isPlainObject(this.value)) {
-        widgetGroup = this.value.resourceGroup;
+        rGroup = this.value.resourceGroup;
         permissions = this.value.permissions.split(",");
       }
+
+      this.element.hidden = true;
+      this.element.disabled = true;
 
       var _loop = function _loop() {
         if (_isArray) {
@@ -67,15 +70,13 @@ define(['exports', 'aurelia-framework', 'lodash', './permissions-manager'], func
 
         var p = _ref;
 
-        _this.permissionsManager.hasPermisson(p, widgetGroup).then(function (result) {
-          if (!result) {
-            if (p === 'read') _this.element.hidden = true;
-            if (p === 'write') _this.element.disabled = true;
-          } else {
+        _this.permissionsManager.hasPermisson(p, rGroup).then(function (result) {
+
+          if (result) {
             if (p === 'read') _this.element.hidden = false;
             if (p === 'write') _this.element.disabled = false;
           }
-        });
+        }, function (err) {});
       };
 
       for (var _iterator = permissions, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {

@@ -17,30 +17,30 @@ export class PermissionsCustomAttribute {
   bind() {
     if (!this.value)
       return;
-    let widgetGroup = "";
+    let rGroup = "";
     let permissions = []
     if (_.isString(this.value)) {
-      widgetGroup = this.element.au.permissions.scope.bindingContext.resourceGroup; // get widget name
+      rGroup = this.element.au.permissions.scope.bindingContext.resourceGroup; // get widget name
       permissions = this.value.split(",");
     }
     else if (_.isPlainObject(this.value)){
-      widgetGroup = this.value.resourceGroup;
+      rGroup = this.value.resourceGroup;
       permissions = this.value.permissions.split(",");
     }
+
+    this.element.hidden = true;
+    this.element.disabled = true;
     for (let p of permissions){
-      this.permissionsManager.hasPermisson(p, widgetGroup).then(result=>{
-        if (!result){
-          if (p==='read')
-            this.element.hidden = true;
-          if (p==='write')
-            this.element.disabled = true;
-        }
-        else{
+      this.permissionsManager.hasPermisson(p, rGroup).then(result=>{
+
+        if (result){
           if (p==='read')
             this.element.hidden = false;
           if (p==='write')
             this.element.disabled = false;
         }
+      }, err=>{
+
       })
     }
   }
@@ -85,6 +85,8 @@ export class PermissionsManager {
       });
       if (_.filter(normalizedPermissions,{ 'permission': permission, 'group': resourceGroup }).length>0)
         return true;
+      return false;
+    }, err=>{
       return false;
     })
   }
@@ -184,7 +186,6 @@ export class RoleProvider {
         roles = r;
       return roles;
     });
-
   }
 
   _fromCache(token){
@@ -219,6 +220,7 @@ export class RoleProvider {
     if (this._query)
       q.filter =this._query;
     return this._dataSource.getData(q).then(d=>{
+      this._liveRequest = null;
       this._cache[token] = d.data;
     })
   }
@@ -278,6 +280,7 @@ export class MemoryCacheStorage extends CacheStorage{
   getItem(key){
     if (this._cache[key] && this._cache[key].exp >= Date.now())
       return this._cache[key].value;
+    return null;
   }
   removeItem(key){
     delete this._cache[key];
@@ -331,71 +334,43 @@ export class DataHolder {
 export class Datasource {
     
     constructor(datasourceConfiguration) {
-        this._name = datasourceConfiguration.name;
-        this._transport = datasourceConfiguration.transport;
-        this._schemeConfig = datasourceConfiguration.schemeConfig;
-        this._cache = datasourceConfiguration.cache;
+        this.name = datasourceConfiguration.name;
+        this.transport = datasourceConfiguration.transport;
+        this.cache = datasourceConfiguration.cache;
     }
 
-    get name() {
-        return this._name;
-    }
+    name;
+    transport;
+    cacheManager;
 
-    get transport(){
-      return this._transport;
-    }
+    _liveRequest = {};
 
-    get cacheManager(){
-      return this._cacheManager;
-    }
 
-    createDataHolder(){
-      return new DataHolder(this);
-    }
-
-    cacheOn(cacheKey){
-      if (this._cache&&this._cache.cacheManager) {
-        var storage = this._cache.cacheManager.getStorage();
-        return storage.getItem(cacheKey);
-      }
-    }
 
     getData(query) {
-      let dataHolder = new DataHolder();
-      dataHolder.query = query;
-
       if ((!this.transport)&&(!this.transport.readService))
         throw "readService is not configured";
 
-      let storage;
       let cacheKey = this.transport.readService.url + query.cacheKey();
-      if (this._cache&&this._cache.cacheManager){
-        storage = this._cache.cacheManager.getStorage();
-        let cachedDataHolder = storage.getItem(cacheKey);
-        if (cachedDataHolder) {
-          dataHolder.data = cachedDataHolder.data;
-          dataHolder.total = cachedDataHolder.total;
-          return new Promise((resolve, reject)=> {
-            resolve(dataHolder);
-          });
-        }
+
+      if (!this.cache){
+        return this._doWebRequest(cacheKey, query);
       }
-      return this.transport.readService.read(
-          {
-            fields: query.fields,
-            filter: query.filter,
-            take: query.take,
-            skip: query.skip,
-            sort: query.sort,
-            sortDir: query.sortDir
-          })
-          .then(d => {
-            dataHolder.data = _.isArray(d.data)?d.data : [d.data];
-            dataHolder.total = d.total;
-            if (storage)
-              storage.setItem(cacheKey, {data:dataHolder.data, total:dataHolder.total}, this._cache.cacheTimeSeconds);
-            return dataHolder;
-      });
+      else {
+        if (this._liveRequest[cacheKey]) {
+          this._liveRequest[cacheKey] = this._liveRequest[cacheKey]
+            .then(l=>this._fromCache(cacheKey))
+            .then(data =>this._processData(cacheKey, query, data), err=> this._doWebRequest(cacheKey, query))
+          return this._liveRequest[cacheKey];
+        }
+        try{
+          let data = this._fromCache(cacheKey);
+          return Promise.resolve(data).then(d => this._processData(cacheKey, query, d));
+        }
+        catch (ex){}
+        this._liveRequest[cacheKey] = this._doWebRequest(cacheKey, query);
+        return this._liveRequest[cacheKey];
+      }
     }
 
     create(entity){
@@ -415,29 +390,53 @@ export class Datasource {
         throw "deleteService is not configured";
       return this.transport.updateService.delete(entity);
     }
+
+    _doWebRequest(cacheKey, query){
+      return this.transport.readService.read(
+        {
+          fields: query.fields,
+          filter: query.filter,
+          take: query.take,
+          skip: query.skip,
+          sort: query.sort,
+          sortDir: query.sortDir
+        })
+        .then(d => {
+          return this._processData(cacheKey,query,d)
+        });
+    }
+
+    _processData(cacheKey, query, jsonData){
+      this._liveRequest[cacheKey] = null;
+      this._setCache(jsonData, cacheKey);
+      let dataHolder = new DataHolder();
+      dataHolder.query = query;
+      dataHolder.data = _.isArray(jsonData.data)?jsonData.data : [jsonData.data];
+      dataHolder.total = jsonData.total;
+      return dataHolder;
+
+    }
+
+    _fromCache(cacheKey){
+      let storage = this.cache.cacheManager.getStorage();
+      let d = storage.getItem(cacheKey);
+      if (d)
+        return d;
+      throw "data not found: " + cacheKey;
+    }
+    _setCache(data, cacheKey){
+      if (this.cache&&this.cache.cacheManager) {
+        let storage = this.cache.cacheManager.getStorage();
+        storage.setItem(cacheKey, data, this.cache.cacheTimeSeconds);
+      }
+    }
+
 }
 
 export class DataSourceConfiguration {
-  get cache(){
-    return this._cache;
-  }
-  set cache(value){
-    this._cache = value;
-  }
-
-  get transport(){
-    return this._transport;
-  }
-  set transport(value){
-    this._transport = value;
-  }
-  
-  get name(){
-    return this._name;
-  }
-  set name(value){
-    this._name = value;
-  }
+  cache;
+  transport;
+  name;
 }
 
 
@@ -1219,126 +1218,6 @@ export class Schema {
   }
 }
 
-export class DataService{
-  configure(configuration){
-    this.url = configuration.url;
-    this.schemaProvider = configuration.schemaProvider;
-    this.filterParser = configuration.filterParser;
-    this.totalMapper = configuration.totalMapper;
-    this.dataMapper = configuration.dataMapper;
-    this.httpClient = configuration.httpClient;
-  }
-  getSchema(){
-    return this.schemaProvider.getSchema();
-  }
-  read(options) {}
-  create(entity) {}
-  update(id, entity) {}
-  delete(id) {}
-}
-
-export class DataServiceConfiguration {
-
-  constructor(configuration){
-    if (configuration) {
-      this._url = configuration.url;
-      this._schemaProvider = configuration.schemaProvider;
-      this._totalMapper = configuration.totalMapper;
-      this._filterParser = configuration.filterParser;
-      this._dataMapper = configuration.dataMapper;
-      this._httpClient = configuration.httpClient
-    }
-  }
-
-  get url() {
-    return this._url;
-  }
-
-  get httpClient() {
-    return this._httpClient;
-  }
-
-  get schemaProvider(){
-    return this._schemaProvider
-  }
-
-  get totalMapper(){
-    return this._totalMapper;
-  }
-
-  get filterParser(){
-    return this._filterParser;
-  }
-
-  get dataMapper(){
-    return this._dataMapper;
-  }
-
-}
-
-@transient()
-export class JsonDataService extends DataService {
-    constructor() {
-      super();
-    }
-
-    read(options) { //options: fields,filter, take, skip, sort
-        let url = this.url
-        if (options.filter)
-          url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
-        return this.httpClient
-            .fetch(url)
-            .then(response => {return response.json(); })
-            .then(jsonData => {
-                return {
-                  data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-                  total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-                }
-            });
-    }
-}
-
-@transient()
-export class StaticJsonDataService extends DataService {
-  constructor() {
-    super();
-  }
-  
-
-  read(options) {
-    return this.httpClient
-      .fetch(this.url)
-      .then(response => {
-        return response.json();
-      })
-      .then(jsonData => {
-        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
-        if (options.filter){
-          let f = options.filter;
-          if (this.filterParser && this.filterParser.type === "clientSide")
-            f = this.filterParser.getFilter(options.filter);
-          let evaluator = new QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, f);
-        }
-        let total = d.length;
-        // sort
-        if (options.sort)
-          d = _.orderBy(d,[options.sort],[options.sortDir]);
-        var l = options.skip + options.take;
-        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
-        if (options.fields && options.fields.length>0)
-          d = _.map(d, item =>{
-            return _.pick(item, options.fields);
-          });
-        return {
-          data: DataHelper.deserializeDates(d),
-          total: (this.totalMapper? this.totalMapper(jsonData) : total)
-        }
-      });
-  }
-
-}
-
 const DSL_GRAMMAR_EXPRESSION = `
 {
 function createStringExpression(fieldname, value){
@@ -1702,6 +1581,178 @@ export class Grammar{
   
 }
 
+export class DataService{
+  
+  configure(configuration){
+    this.url = configuration.url;
+    this.schemaProvider = configuration.schemaProvider;
+    this.filterParser = configuration.filterParser;
+    this.totalMapper = configuration.totalMapper;
+    this.dataMapper = configuration.dataMapper;
+    this.httpClient = configuration.httpClient;
+  }
+  getSchema(){
+    return this.schemaProvider.getSchema();
+  }
+  read(options) {}
+  create(entity) {}
+  update(id, entity) {}
+  delete(id) {}
+  
+}
+
+export class DataServiceConfiguration {
+
+  constructor(configuration){
+    if (configuration) {
+      this._url = configuration.url;
+      this._schemaProvider = configuration.schemaProvider;
+      this._totalMapper = configuration.totalMapper;
+      this._filterParser = configuration.filterParser;
+      this._dataMapper = configuration.dataMapper;
+      this._httpClient = configuration.httpClient
+    }
+  }
+
+  get url() {
+    return this._url;
+  }
+
+  get httpClient() {
+    return this._httpClient;
+  }
+
+  get schemaProvider(){
+    return this._schemaProvider
+  }
+
+  get totalMapper(){
+    return this._totalMapper;
+  }
+
+  get filterParser(){
+    return this._filterParser;
+  }
+
+  get dataMapper(){
+    return this._dataMapper;
+  }
+
+}
+
+@transient()
+export class JsonDataService extends DataService {
+    _cache = {};
+    _liveRequest;
+
+    constructor() {
+      super();
+    }
+
+
+    read(options) { //options: fields,filter, take, skip, sort
+      let url = this.url
+      if (options.filter)
+        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return {
+            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+          }
+        });
+    }
+
+  /*read(options) { //options: fields,filter, take, skip, sort
+    let url = this.url
+    if (options.filter)
+      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest
+        .then(l=>this._fromCache(url))
+        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
+      return this._liveRequest;
+    }
+    try{
+      let data = this._fromCache(url);
+      return Promise.resolve(data).then(d => this._processData(url, d));
+    }
+    catch (ex){}
+    this._liveRequest = this._doWebRequest(url);
+    return this._liveRequest;
+  }
+
+    _doWebRequest(url){
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return this._processData(url,jsonData)
+        });
+    }
+
+    _processData(url, jsonData){
+      this._liveRequest = null;
+      this._cache[url] = jsonData;
+      return {
+        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+      };
+    }
+
+
+    _fromCache(url){
+      if ((url in this._cache)&&(this._cache[url]))
+        return  this._cache[url];
+      throw "data not found: " + url;
+    }*/
+
+}
+
+@transient()
+export class StaticJsonDataService extends DataService {
+  constructor() {
+    super();
+  }
+  
+
+  read(options) {
+    return this.httpClient
+      .fetch(this.url)
+      .then(response => {
+        return response.json();
+      })
+      .then(jsonData => {
+        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
+        if (options.filter){
+          let f = options.filter;
+          if (this.filterParser && this.filterParser.type === "clientSide")
+            f = this.filterParser.getFilter(options.filter);
+          let evaluator = new QueryExpressionEvaluator();
+          d = evaluator.evaluate(d, f);
+        }
+        let total = d.length;
+        // sort
+        if (options.sort)
+          d = _.orderBy(d,[options.sort],[options.sortDir]);
+        var l = options.skip + options.take;
+        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
+        if (options.fields && options.fields.length>0)
+          d = _.map(d, item =>{
+            return _.pick(item, options.fields);
+          });
+        return {
+          data: DataHelper.deserializeDates(d),
+          total: (this.totalMapper? this.totalMapper(jsonData) : total)
+        }
+      });
+  }
+
+}
+
 export class FormatValueConverter {
   static format(value, format){
     if (DataHelper.isDate(value))
@@ -1719,36 +1770,23 @@ export class FormatValueConverter {
 export class DashboardBase
 {
   constructor() {
-    this._layout = [];
-    this._behaviors = [];
   }
 
-  get name() {
-    return this._name;
-  }
-
-
-  get title() {
-    return this._title;
-  }
-
-
-  get layout() {
-    return this._layout;
-  }
-
-  get behaviors() {
-    return this._behaviors;
-  }
+  name;
+  resourceGroup;
+  title;
+  layout = [];
+  behaviors = [];
 
   configure(dashboardConfiguration){
-    this._name = dashboardConfiguration.name;
-    this._title = dashboardConfiguration.title;
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
   }
 
 
   getWidgetByName(widgetName) {
-    var wl = _.find(this._layout, w=> { return w.widget.name === widgetName });
+    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
     if (wl)
       return wl.widget;
   }
@@ -1760,12 +1798,12 @@ export class DashboardBase
     lw.sizeY = dimensions.sizeY;
     lw.col = dimensions.col;
     lw.row = dimensions.row;
-    this._layout.push(lw);
+    this.layout.push(lw);
     widget.dashboard = this;
   }
 
   removeWidget(widget) {
-    _.remove(this._layout, w=>{
+    _.remove(this.layout, w=>{
       if (w.widget === widget) {
         widget.dispose();
         return true;
@@ -1775,7 +1813,7 @@ export class DashboardBase
   }
 
   replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this._layout, w=> {return w.widget === oldWidget});
+    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
     if (oldLw){
       newWidget.dashboard = this;
       let newLw = new LayoutWidget();
@@ -1786,12 +1824,12 @@ export class DashboardBase
       newLw.row = oldLw.row;
 
       newLw.navigationStack.push(oldWidget);
-      this._layout.splice(_.indexOf(this._layout,oldLw), 1, newLw);
+      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
     }
   }
 
   restoreWidget(currentWidget){
-    let lw = _.find(this._layout, w=> {return w.widget === currentWidget});
+    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
     let previousWidget = lw.navigationStack.pop();
     if (previousWidget){
       let previousLw = new LayoutWidget();
@@ -1800,13 +1838,13 @@ export class DashboardBase
       previousLw.sizeY = lw.sizeY;
       previousLw.col = lw.col;
       previousLw.row = lw.row;
-      this._layout.splice(_.indexOf(this._layout,lw), 1, previousLw);
+      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
     }
   }
 
 
   resizeWidget(widget, newSize){
-    var lw = _.find(this._layout, w=> {return w.widget === widget});
+    var lw = _.find(this.layout, w=> {return w.widget === widget});
     if (newSize) {
       let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
       let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
@@ -1822,20 +1860,20 @@ export class DashboardBase
   }
   
   refresh() {
-    for (let i=0; i<this._layout.length; i++) {
-      this.refreshWidget(this._layout[i].widget);
+    for (let i=0; i<this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
     }
   }
 
   dispose(){
-    for (let i=0; i<this._layout.length; i++) {
-      this._layout[i].widget.dispose();
+    for (let i=0; i<this.layout.length; i++) {
+      this.layout[i].widget.dispose();
     }
-    this._layout = [];
+    this.layout = [];
 
     while(true) {
-      if (this._behaviors.length>0)
-        this._behaviors[0].detach();
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
       else
         break;
     }
@@ -1843,58 +1881,14 @@ export class DashboardBase
 }
 
 export class LayoutWidget{
-  constructor(){
-    this.navigationStack = [];
-    this.resized = false;
-  }
-  get widget(){
-    return this._widget;
-  }
-  set widget(value){
-    this._widget = value;
-  }
 
-  get navigationStack(){
-    return this._navigationStack;
-  }
-  set navigationStack(value){
-    this._navigationStack = value;
-  }
-
-  get sizeX(){
-    return this._sizeX;
-  }
-  set sizeX(value){
-    this._sizeX = value;
-  }
-
-  get sizeY(){
-    return this._sizeY;
-  }
-  set sizeY(value){
-    this._sizeY = value;
-  }
-
-  get col(){
-    return this._col;
-  }
-  set col(value){
-    this._col = value;
-  }
-
-  get row(){
-    return this._row;
-  }
-  set row(value){
-    this._row = value;
-  }
-
-  get resized() {
-    return this._resized;
-  }
-  set resized(value) {
-    this._resized = value;
-  }
+  widget;
+  navigationStack = [];
+  sizeX;
+  sizeY;
+  col;
+  row;
+  resized = false;
 
   @computedFrom('navigationStack')
   get hasNavStack() {

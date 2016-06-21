@@ -1,4 +1,4 @@
-var _dec, _desc, _value, _class;
+var _dec, _desc, _value, _class2;
 
 function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
   var desc = {};
@@ -34,33 +34,18 @@ import * as _ from 'lodash';
 
 export let DashboardBase = class DashboardBase {
   constructor() {
-    this._layout = [];
-    this._behaviors = [];
-  }
-
-  get name() {
-    return this._name;
-  }
-
-  get title() {
-    return this._title;
-  }
-
-  get layout() {
-    return this._layout;
-  }
-
-  get behaviors() {
-    return this._behaviors;
+    this.layout = [];
+    this.behaviors = [];
   }
 
   configure(dashboardConfiguration) {
-    this._name = dashboardConfiguration.name;
-    this._title = dashboardConfiguration.title;
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
   }
 
   getWidgetByName(widgetName) {
-    var wl = _.find(this._layout, w => {
+    var wl = _.find(this.layout, w => {
       return w.widget.name === widgetName;
     });
     if (wl) return wl.widget;
@@ -73,12 +58,12 @@ export let DashboardBase = class DashboardBase {
     lw.sizeY = dimensions.sizeY;
     lw.col = dimensions.col;
     lw.row = dimensions.row;
-    this._layout.push(lw);
+    this.layout.push(lw);
     widget.dashboard = this;
   }
 
   removeWidget(widget) {
-    _.remove(this._layout, w => {
+    _.remove(this.layout, w => {
       if (w.widget === widget) {
         widget.dispose();
         return true;
@@ -88,7 +73,7 @@ export let DashboardBase = class DashboardBase {
   }
 
   replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this._layout, w => {
+    let oldLw = _.find(this.layout, w => {
       return w.widget === oldWidget;
     });
     if (oldLw) {
@@ -101,12 +86,12 @@ export let DashboardBase = class DashboardBase {
       newLw.row = oldLw.row;
 
       newLw.navigationStack.push(oldWidget);
-      this._layout.splice(_.indexOf(this._layout, oldLw), 1, newLw);
+      this.layout.splice(_.indexOf(this.layout, oldLw), 1, newLw);
     }
   }
 
   restoreWidget(currentWidget) {
-    let lw = _.find(this._layout, w => {
+    let lw = _.find(this.layout, w => {
       return w.widget === currentWidget;
     });
     let previousWidget = lw.navigationStack.pop();
@@ -117,12 +102,12 @@ export let DashboardBase = class DashboardBase {
       previousLw.sizeY = lw.sizeY;
       previousLw.col = lw.col;
       previousLw.row = lw.row;
-      this._layout.splice(_.indexOf(this._layout, lw), 1, previousLw);
+      this.layout.splice(_.indexOf(this.layout, lw), 1, previousLw);
     }
   }
 
   resizeWidget(widget, newSize) {
-    var lw = _.find(this._layout, w => {
+    var lw = _.find(this.layout, w => {
       return w.widget === widget;
     });
     if (newSize) {
@@ -137,75 +122,27 @@ export let DashboardBase = class DashboardBase {
   }
 
   refresh() {
-    for (let i = 0; i < this._layout.length; i++) {
-      this.refreshWidget(this._layout[i].widget);
+    for (let i = 0; i < this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
     }
   }
 
   dispose() {
-    for (let i = 0; i < this._layout.length; i++) {
-      this._layout[i].widget.dispose();
+    for (let i = 0; i < this.layout.length; i++) {
+      this.layout[i].widget.dispose();
     }
-    this._layout = [];
+    this.layout = [];
 
     while (true) {
-      if (this._behaviors.length > 0) this._behaviors[0].detach();else break;
+      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
     }
   }
 };
 
-export let LayoutWidget = (_dec = computedFrom('navigationStack'), (_class = class LayoutWidget {
+export let LayoutWidget = (_dec = computedFrom('navigationStack'), (_class2 = class LayoutWidget {
   constructor() {
     this.navigationStack = [];
     this.resized = false;
-  }
-  get widget() {
-    return this._widget;
-  }
-  set widget(value) {
-    this._widget = value;
-  }
-
-  get navigationStack() {
-    return this._navigationStack;
-  }
-  set navigationStack(value) {
-    this._navigationStack = value;
-  }
-
-  get sizeX() {
-    return this._sizeX;
-  }
-  set sizeX(value) {
-    this._sizeX = value;
-  }
-
-  get sizeY() {
-    return this._sizeY;
-  }
-  set sizeY(value) {
-    this._sizeY = value;
-  }
-
-  get col() {
-    return this._col;
-  }
-  set col(value) {
-    this._col = value;
-  }
-
-  get row() {
-    return this._row;
-  }
-  set row(value) {
-    this._row = value;
-  }
-
-  get resized() {
-    return this._resized;
-  }
-  set resized(value) {
-    this._resized = value;
   }
 
   get hasNavStack() {
@@ -227,4 +164,4 @@ export let LayoutWidget = (_dec = computedFrom('navigationStack'), (_class = cla
     this.resized = false;
   }
 
-}, (_applyDecoratedDescriptor(_class.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'hasNavStack'), _class.prototype)), _class));
+}, (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2));

@@ -45,6 +45,8 @@ var PermissionsManager = exports.PermissionsManager = function () {
       });
       if (_.filter(normalizedPermissions, { 'permission': permission, 'group': resourceGroup }).length > 0) return true;
       return false;
+    }, function (err) {
+      return false;
     });
   };
 

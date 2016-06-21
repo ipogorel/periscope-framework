@@ -46,6 +46,8 @@ System.register(['lodash', './../data/query', './permissions-manager-configurati
             });
             if (_.filter(normalizedPermissions, { 'permission': permission, 'group': resourceGroup }).length > 0) return true;
             return false;
+          }, function (err) {
+            return false;
           });
         };
 

@@ -1,7 +1,7 @@
 'use strict';
 
 System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
-  var computedFrom, _, _dec, _desc, _value, _class, _createClass, DashboardBase, LayoutWidget;
+  var computedFrom, _, _createClass, _dec, _desc, _value, _class2, DashboardBase, LayoutWidget;
 
   function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
     var desc = {};
@@ -67,17 +67,18 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
         function DashboardBase() {
           _classCallCheck(this, DashboardBase);
 
-          this._layout = [];
-          this._behaviors = [];
+          this.layout = [];
+          this.behaviors = [];
         }
 
         DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
-          this._name = dashboardConfiguration.name;
-          this._title = dashboardConfiguration.title;
+          this.name = dashboardConfiguration.name;
+          this.title = dashboardConfiguration.title;
+          this.resourceGroup = dashboardConfiguration.resourceGroup;
         };
 
         DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
-          var wl = _.find(this._layout, function (w) {
+          var wl = _.find(this.layout, function (w) {
             return w.widget.name === widgetName;
           });
           if (wl) return wl.widget;
@@ -90,12 +91,12 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
           lw.sizeY = dimensions.sizeY;
           lw.col = dimensions.col;
           lw.row = dimensions.row;
-          this._layout.push(lw);
+          this.layout.push(lw);
           widget.dashboard = this;
         };
 
         DashboardBase.prototype.removeWidget = function removeWidget(widget) {
-          _.remove(this._layout, function (w) {
+          _.remove(this.layout, function (w) {
             if (w.widget === widget) {
               widget.dispose();
               return true;
@@ -105,7 +106,7 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
         };
 
         DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
-          var oldLw = _.find(this._layout, function (w) {
+          var oldLw = _.find(this.layout, function (w) {
             return w.widget === oldWidget;
           });
           if (oldLw) {
@@ -118,12 +119,12 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
             newLw.row = oldLw.row;
 
             newLw.navigationStack.push(oldWidget);
-            this._layout.splice(_.indexOf(this._layout, oldLw), 1, newLw);
+            this.layout.splice(_.indexOf(this.layout, oldLw), 1, newLw);
           }
         };
 
         DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
-          var lw = _.find(this._layout, function (w) {
+          var lw = _.find(this.layout, function (w) {
             return w.widget === currentWidget;
           });
           var previousWidget = lw.navigationStack.pop();
@@ -134,12 +135,12 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
             previousLw.sizeY = lw.sizeY;
             previousLw.col = lw.col;
             previousLw.row = lw.row;
-            this._layout.splice(_.indexOf(this._layout, lw), 1, previousLw);
+            this.layout.splice(_.indexOf(this.layout, lw), 1, previousLw);
           }
         };
 
         DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
-          var lw = _.find(this._layout, function (w) {
+          var lw = _.find(this.layout, function (w) {
             return w.widget === widget;
           });
           if (newSize) {
@@ -154,50 +155,28 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
         };
 
         DashboardBase.prototype.refresh = function refresh() {
-          for (var i = 0; i < this._layout.length; i++) {
-            this.refreshWidget(this._layout[i].widget);
+          for (var i = 0; i < this.layout.length; i++) {
+            this.refreshWidget(this.layout[i].widget);
           }
         };
 
         DashboardBase.prototype.dispose = function dispose() {
-          for (var i = 0; i < this._layout.length; i++) {
-            this._layout[i].widget.dispose();
+          for (var i = 0; i < this.layout.length; i++) {
+            this.layout[i].widget.dispose();
           }
-          this._layout = [];
+          this.layout = [];
 
           while (true) {
-            if (this._behaviors.length > 0) this._behaviors[0].detach();else break;
+            if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
           }
         };
-
-        _createClass(DashboardBase, [{
-          key: 'name',
-          get: function get() {
-            return this._name;
-          }
-        }, {
-          key: 'title',
-          get: function get() {
-            return this._title;
-          }
-        }, {
-          key: 'layout',
-          get: function get() {
-            return this._layout;
-          }
-        }, {
-          key: 'behaviors',
-          get: function get() {
-            return this._behaviors;
-          }
-        }]);
 
         return DashboardBase;
       }());
 
       _export('DashboardBase', DashboardBase);
 
-      _export('LayoutWidget', LayoutWidget = (_dec = computedFrom('navigationStack'), (_class = function () {
+      _export('LayoutWidget', LayoutWidget = (_dec = computedFrom('navigationStack'), (_class2 = function () {
         function LayoutWidget() {
           _classCallCheck(this, LayoutWidget);
 
@@ -221,62 +200,6 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
         };
 
         _createClass(LayoutWidget, [{
-          key: 'widget',
-          get: function get() {
-            return this._widget;
-          },
-          set: function set(value) {
-            this._widget = value;
-          }
-        }, {
-          key: 'navigationStack',
-          get: function get() {
-            return this._navigationStack;
-          },
-          set: function set(value) {
-            this._navigationStack = value;
-          }
-        }, {
-          key: 'sizeX',
-          get: function get() {
-            return this._sizeX;
-          },
-          set: function set(value) {
-            this._sizeX = value;
-          }
-        }, {
-          key: 'sizeY',
-          get: function get() {
-            return this._sizeY;
-          },
-          set: function set(value) {
-            this._sizeY = value;
-          }
-        }, {
-          key: 'col',
-          get: function get() {
-            return this._col;
-          },
-          set: function set(value) {
-            this._col = value;
-          }
-        }, {
-          key: 'row',
-          get: function get() {
-            return this._row;
-          },
-          set: function set(value) {
-            this._row = value;
-          }
-        }, {
-          key: 'resized',
-          get: function get() {
-            return this._resized;
-          },
-          set: function set(value) {
-            this._resized = value;
-          }
-        }, {
           key: 'hasNavStack',
           get: function get() {
             return this.navigationStack && this.navigationStack.length > 0;
@@ -284,7 +207,7 @@ System.register(['aurelia-framework', 'lodash'], function (_export, _context) {
         }]);
 
         return LayoutWidget;
-      }(), (_applyDecoratedDescriptor(_class.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'hasNavStack'), _class.prototype)), _class)));
+      }(), (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2)));
 
       _export('LayoutWidget', LayoutWidget);
     }

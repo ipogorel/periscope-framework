@@ -50,7 +50,6 @@ export class RoleProvider {
         roles = r;
       return roles;
     });
-
   }
 
   _fromCache(token){
@@ -85,6 +84,7 @@ export class RoleProvider {
     if (this._query)
       q.filter =this._query;
     return this._dataSource.getData(q).then(d=>{
+      this._liveRequest = null;
       this._cache[token] = d.data;
     })
   }

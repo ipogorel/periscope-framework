@@ -1,7 +1,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
 exports.JsonDataService = undefined;
 
@@ -9,7 +9,13 @@ var _dec, _class;
 
 var _dataService = require('./data-service');
 
+var _lodash = require('lodash');
+
+var _ = _interopRequireWildcard(_lodash);
+
 var _aureliaFramework = require('aurelia-framework');
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -18,28 +24,31 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec(_class = function (_DataService) {
-    _inherits(JsonDataService, _DataService);
+  _inherits(JsonDataService, _DataService);
 
-    function JsonDataService() {
-        _classCallCheck(this, JsonDataService);
+  function JsonDataService() {
+    _classCallCheck(this, JsonDataService);
 
-        return _possibleConstructorReturn(this, _DataService.call(this));
-    }
+    var _this = _possibleConstructorReturn(this, _DataService.call(this));
 
-    JsonDataService.prototype.read = function read(options) {
-        var _this2 = this;
+    _this._cache = {};
+    return _this;
+  }
 
-        var url = this.url;
-        if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
-        return this.httpClient.fetch(url).then(function (response) {
-            return response.json();
-        }).then(function (jsonData) {
-            return {
-                data: _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData,
-                total: _this2.totalMapper ? _this2.totalMapper(jsonData) : jsonData.length
-            };
-        });
-    };
+  JsonDataService.prototype.read = function read(options) {
+    var _this2 = this;
 
-    return JsonDataService;
+    var url = this.url;
+    if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
+    return this.httpClient.fetch(url).then(function (response) {
+      return response.json();
+    }).then(function (jsonData) {
+      return {
+        data: _this2.dataMapper ? _this2.dataMapper(jsonData) : jsonData,
+        total: _this2.totalMapper ? _this2.totalMapper(jsonData) : jsonData.length
+      };
+    });
+  };
+
+  return JsonDataService;
 }(_dataService.DataService)) || _class);

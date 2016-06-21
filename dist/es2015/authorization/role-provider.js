@@ -72,6 +72,7 @@ export let RoleProvider = class RoleProvider {
     let q = new Query();
     if (this._query) q.filter = this._query;
     return this._dataSource.getData(q).then(d => {
+      this._liveRequest = null;
       this._cache[token] = d.data;
     });
   }

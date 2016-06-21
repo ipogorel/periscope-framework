@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.DataSourceConfiguration = exports.Datasource = undefined;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _lodash = require('lodash');
 
 var _ = _interopRequireWildcard(_lodash);
@@ -21,57 +19,42 @@ var Datasource = exports.Datasource = function () {
   function Datasource(datasourceConfiguration) {
     _classCallCheck(this, Datasource);
 
-    this._name = datasourceConfiguration.name;
-    this._transport = datasourceConfiguration.transport;
-    this._schemeConfig = datasourceConfiguration.schemeConfig;
-    this._cache = datasourceConfiguration.cache;
+    this._liveRequest = {};
+
+    this.name = datasourceConfiguration.name;
+    this.transport = datasourceConfiguration.transport;
+    this.cache = datasourceConfiguration.cache;
   }
-
-  Datasource.prototype.createDataHolder = function createDataHolder() {
-    return new _dataHolder.DataHolder(this);
-  };
-
-  Datasource.prototype.cacheOn = function cacheOn(cacheKey) {
-    if (this._cache && this._cache.cacheManager) {
-      var storage = this._cache.cacheManager.getStorage();
-      return storage.getItem(cacheKey);
-    }
-  };
 
   Datasource.prototype.getData = function getData(query) {
     var _this = this;
 
-    var dataHolder = new _dataHolder.DataHolder();
-    dataHolder.query = query;
-
     if (!this.transport && !this.transport.readService) throw "readService is not configured";
 
-    var storage = void 0;
     var cacheKey = this.transport.readService.url + query.cacheKey();
-    if (this._cache && this._cache.cacheManager) {
-      storage = this._cache.cacheManager.getStorage();
-      var cachedDataHolder = storage.getItem(cacheKey);
-      if (cachedDataHolder) {
-        dataHolder.data = cachedDataHolder.data;
-        dataHolder.total = cachedDataHolder.total;
-        return new Promise(function (resolve, reject) {
-          resolve(dataHolder);
+
+    if (!this.cache) {
+      return this._doWebRequest(cacheKey, query);
+    } else {
+      if (this._liveRequest[cacheKey]) {
+        this._liveRequest[cacheKey] = this._liveRequest[cacheKey].then(function (l) {
+          return _this._fromCache(cacheKey);
+        }).then(function (data) {
+          return _this._processData(cacheKey, query, data);
+        }, function (err) {
+          return _this._doWebRequest(cacheKey, query);
         });
+        return this._liveRequest[cacheKey];
       }
+      try {
+        var data = this._fromCache(cacheKey);
+        return Promise.resolve(data).then(function (d) {
+          return _this._processData(cacheKey, query, d);
+        });
+      } catch (ex) {}
+      this._liveRequest[cacheKey] = this._doWebRequest(cacheKey, query);
+      return this._liveRequest[cacheKey];
     }
-    return this.transport.readService.read({
-      fields: query.fields,
-      filter: query.filter,
-      take: query.take,
-      skip: query.skip,
-      sort: query.sort,
-      sortDir: query.sortDir
-    }).then(function (d) {
-      dataHolder.data = _.isArray(d.data) ? d.data : [d.data];
-      dataHolder.total = d.total;
-      if (storage) storage.setItem(cacheKey, { data: dataHolder.data, total: dataHolder.total }, _this._cache.cacheTimeSeconds);
-      return dataHolder;
-    });
   };
 
   Datasource.prototype.create = function create(entity) {
@@ -89,56 +72,48 @@ var Datasource = exports.Datasource = function () {
     return this.transport.updateService.delete(entity);
   };
 
-  _createClass(Datasource, [{
-    key: 'name',
-    get: function get() {
-      return this._name;
+  Datasource.prototype._doWebRequest = function _doWebRequest(cacheKey, query) {
+    var _this2 = this;
+
+    return this.transport.readService.read({
+      fields: query.fields,
+      filter: query.filter,
+      take: query.take,
+      skip: query.skip,
+      sort: query.sort,
+      sortDir: query.sortDir
+    }).then(function (d) {
+      return _this2._processData(cacheKey, query, d);
+    });
+  };
+
+  Datasource.prototype._processData = function _processData(cacheKey, query, jsonData) {
+    this._liveRequest[cacheKey] = null;
+    this._setCache(jsonData, cacheKey);
+    var dataHolder = new _dataHolder.DataHolder();
+    dataHolder.query = query;
+    dataHolder.data = _.isArray(jsonData.data) ? jsonData.data : [jsonData.data];
+    dataHolder.total = jsonData.total;
+    return dataHolder;
+  };
+
+  Datasource.prototype._fromCache = function _fromCache(cacheKey) {
+    var storage = this.cache.cacheManager.getStorage();
+    var d = storage.getItem(cacheKey);
+    if (d) return d;
+    throw "data not found: " + cacheKey;
+  };
+
+  Datasource.prototype._setCache = function _setCache(data, cacheKey) {
+    if (this.cache && this.cache.cacheManager) {
+      var storage = this.cache.cacheManager.getStorage();
+      storage.setItem(cacheKey, data, this.cache.cacheTimeSeconds);
     }
-  }, {
-    key: 'transport',
-    get: function get() {
-      return this._transport;
-    }
-  }, {
-    key: 'cacheManager',
-    get: function get() {
-      return this._cacheManager;
-    }
-  }]);
+  };
 
   return Datasource;
 }();
 
-var DataSourceConfiguration = exports.DataSourceConfiguration = function () {
-  function DataSourceConfiguration() {
-    _classCallCheck(this, DataSourceConfiguration);
-  }
-
-  _createClass(DataSourceConfiguration, [{
-    key: 'cache',
-    get: function get() {
-      return this._cache;
-    },
-    set: function set(value) {
-      this._cache = value;
-    }
-  }, {
-    key: 'transport',
-    get: function get() {
-      return this._transport;
-    },
-    set: function set(value) {
-      this._transport = value;
-    }
-  }, {
-    key: 'name',
-    get: function get() {
-      return this._name;
-    },
-    set: function set(value) {
-      this._name = value;
-    }
-  }]);
-
-  return DataSourceConfiguration;
-}();
+var DataSourceConfiguration = exports.DataSourceConfiguration = function DataSourceConfiguration() {
+  _classCallCheck(this, DataSourceConfiguration);
+};

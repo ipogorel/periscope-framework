@@ -79,6 +79,7 @@ define(['exports', './../cache/cache-storage', 'lodash'], function (exports, _ca
 
     MemoryCacheStorage.prototype.getItem = function getItem(key) {
       if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
+      return null;
     };
 
     MemoryCacheStorage.prototype.removeItem = function removeItem(key) {

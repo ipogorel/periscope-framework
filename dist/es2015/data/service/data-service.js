@@ -1,4 +1,5 @@
 export let DataService = class DataService {
+
   configure(configuration) {
     this.url = configuration.url;
     this.schemaProvider = configuration.schemaProvider;
@@ -14,6 +15,7 @@ export let DataService = class DataService {
   create(entity) {}
   update(id, entity) {}
   delete(id) {}
+
 };
 
 export let DataServiceConfiguration = class DataServiceConfiguration {

@@ -17,6 +17,7 @@ export let MemoryCacheStorage = class MemoryCacheStorage extends CacheStorage {
   }
   getItem(key) {
     if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
+    return null;
   }
   removeItem(key) {
     delete this._cache[key];

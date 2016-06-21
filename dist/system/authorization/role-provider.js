@@ -107,6 +107,7 @@ System.register(['lodash', './../data/query', './role-provider-configuration'], 
           var q = new Query();
           if (this._query) q.filter = this._query;
           return this._dataSource.getData(q).then(function (d) {
+            _this3._liveRequest = null;
             _this3._cache[token] = d.data;
           });
         };

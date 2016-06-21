@@ -32,6 +32,8 @@ export class PermissionsManager {
       if (_.filter(normalizedPermissions,{ 'permission': permission, 'group': resourceGroup }).length>0)
         return true;
       return false;
+    }, err=>{
+      return false;
     })
   }
 
