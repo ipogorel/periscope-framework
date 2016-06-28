@@ -69,6 +69,9 @@ declare module 'periscope-framework' {
     removeItem(key: any): any;
     removeExpired(): any;
   }
+  export class DashboardConfiguration {
+    invoke(): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
@@ -116,9 +119,6 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
-  export class DashboardConfiguration {
-    invoke(): any;
-  }
   export class IntellisenceManager {
     constructor(parser: any, dataSource: any, availableFields: any);
     populate(searchStr: any, lastWord: any): any;
@@ -156,7 +156,7 @@ declare module 'periscope-framework' {
     static getParameterByName(name: any, url: any): any;
   }
   export class DefaultHttpClient extends HttpClient {
-    constructor(auth: any);
+    constructor();
   }
   export class DashboardManager {
     constructor();

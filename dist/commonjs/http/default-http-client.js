@@ -16,7 +16,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
   _inherits(DefaultHttpClient, _HttpClient);
 
-  function DefaultHttpClient(auth) {
+  function DefaultHttpClient() {
     _classCallCheck(this, DefaultHttpClient);
 
     var _this = _possibleConstructorReturn(this, _HttpClient.call(this));

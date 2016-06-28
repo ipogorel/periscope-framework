@@ -185,6 +185,13 @@ export class MemoryCacheStorage extends CacheStorage{
   }
 }
 
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
+
 
 export class DataHolder {
   constructor(){
@@ -424,13 +431,6 @@ export class Query {
         (this.skip?this.skip:"0")));
   }
   
-}
-
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
 }
 
 
@@ -790,7 +790,7 @@ export class UrlHelper {
 }
 
 export class DefaultHttpClient extends HttpClient {
-  constructor(auth) {
+  constructor() {
     super();
     this.configure(config => {
       config

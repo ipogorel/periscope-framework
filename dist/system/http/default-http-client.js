@@ -41,7 +41,7 @@ System.register(['aurelia-fetch-client'], function (_export, _context) {
       _export('DefaultHttpClient', DefaultHttpClient = function (_HttpClient) {
         _inherits(DefaultHttpClient, _HttpClient);
 
-        function DefaultHttpClient(auth) {
+        function DefaultHttpClient() {
           _classCallCheck(this, DefaultHttpClient);
 
           var _this = _possibleConstructorReturn(this, _HttpClient.call(this));

@@ -1,6 +1,6 @@
 import {HttpClient} from 'aurelia-fetch-client';
 export class DefaultHttpClient extends HttpClient {
-  constructor(auth) {
+  constructor() {
     super();
     this.configure(config => {
       config
