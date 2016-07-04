@@ -1,7 +1,9 @@
 'use strict';
 
-System.register(['./widget-behavior', '../events/widget-event-message'], function (_export, _context) {
-  var WidgetBehavior, WidgetEventMessage, DataSelectedBehavior;
+System.register(['./broadcaster-behavior', '../events/widget-event-message'], function (_export, _context) {
+  "use strict";
+
+  var BroadcasterBehavior, WidgetEventMessage, DataSelectedBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -34,42 +36,44 @@ System.register(['./widget-behavior', '../events/widget-event-message'], functio
   }
 
   return {
-    setters: [function (_widgetBehavior) {
-      WidgetBehavior = _widgetBehavior.WidgetBehavior;
+    setters: [function (_broadcasterBehavior) {
+      BroadcasterBehavior = _broadcasterBehavior.BroadcasterBehavior;
     }, function (_eventsWidgetEventMessage) {
       WidgetEventMessage = _eventsWidgetEventMessage.WidgetEventMessage;
     }],
     execute: function () {
-      _export('DataSelectedBehavior', DataSelectedBehavior = function (_WidgetBehavior) {
-        _inherits(DataSelectedBehavior, _WidgetBehavior);
+      _export('DataSelectedBehavior', DataSelectedBehavior = function (_BroadcasterBehavior) {
+        _inherits(DataSelectedBehavior, _BroadcasterBehavior);
 
-        function DataSelectedBehavior(chanel, eventAggregator) {
+        function DataSelectedBehavior(channel, eventAggregator) {
           _classCallCheck(this, DataSelectedBehavior);
 
-          var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+          var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-          _this._chanel = chanel;
+          _this.channel = channel;
+          _this.eventToAttach = "dataSelected";
           _this._eventAggregator = eventAggregator;
           return _this;
         }
 
         DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-          _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+
+          _BroadcasterBehavior.prototype.attachToWidget.call(this, widget);
           var me = this;
 
-          widget.dataSelected = function (currentRecord) {
+          widget[this.eventToAttach] = function (currentRecord) {
             var message = new WidgetEventMessage(me.widget.name);
-            message.selectedData = currentRecord;
-            me._eventAggregator.publish(me._chanel, message);
+            message.params = { selectedData: currentRecord };
+            me._eventAggregator.publish(me.channel, message);
           };
         };
 
         DataSelectedBehavior.prototype.detach = function detach() {
-          _WidgetBehavior.prototype.detach.call(this, dashboard);
+          _BroadcasterBehavior.prototype.detach.call(this, dashboard);
         };
 
         return DataSelectedBehavior;
-      }(WidgetBehavior));
+      }(BroadcasterBehavior));
 
       _export('DataSelectedBehavior', DataSelectedBehavior);
     }

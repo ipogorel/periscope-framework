@@ -1,4 +1,4 @@
-define(['exports', './widget-behavior', '../events/widget-event-message'], function (exports, _widgetBehavior, _widgetEventMessage) {
+define(['exports', './broadcaster-behavior', '../events/widget-event-message'], function (exports, _broadcasterBehavior, _widgetEventMessage) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -36,33 +36,34 @@ define(['exports', './widget-behavior', '../events/widget-event-message'], funct
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_WidgetBehavior) {
-    _inherits(DataSourceChangedBehavior, _WidgetBehavior);
+  var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_BroadcasterBehavior) {
+    _inherits(DataSourceChangedBehavior, _BroadcasterBehavior);
 
     function DataSourceChangedBehavior(channel, eventAggregator) {
       _classCallCheck(this, DataSourceChangedBehavior);
 
-      var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+      var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-      _this._channel = channel;
+      _this.channel = channel;
+      _this.eventToAttach = "dataSourceChanged";
       _this._eventAggregator = eventAggregator;
       return _this;
     }
 
     DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-      _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+      _BroadcasterBehavior.prototype.attachToWidget.call(this, widget);
       var me = this;
-      widget.dataSourceChanged = function (dataSource) {
+      widget[this.eventToAttach] = function (dataSource) {
         var message = new _widgetEventMessage.WidgetEventMessage(me.widget.name);
-        message.dataSource = dataSource;
-        me._eventAggregator.publish(me._channel, message);
+        message.params = { dataSource: dataSource };
+        me._eventAggregator.publish(me.channel, message);
       };
     };
 
     DataSourceChangedBehavior.prototype.detach = function detach() {
-      _WidgetBehavior.prototype.detach.call(this, dashboard);
+      _BroadcasterBehavior.prototype.detach.call(this, dashboard);
     };
 
     return DataSourceChangedBehavior;
-  }(_widgetBehavior.WidgetBehavior);
+  }(_broadcasterBehavior.BroadcasterBehavior);
 });

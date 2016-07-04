@@ -38,6 +38,7 @@ export * from './helpers/url-helper';
 export * from './http/default-http-client';
 
 export * from './infrastructure/dashboard-manager';
+export * from './infrastructure/datasource-manager';
 export * from './infrastructure/factory';
 
 export * from './layout/dashboards/dashboard-base';
@@ -61,6 +62,8 @@ export * from './navigator/events/widget-event-message';
 export * from './navigator/events/widget-event';
 
 export * from './navigator/widgetbehavior/widget-behavior';
+export * from './navigator/widgetbehavior/listner-behavior';
+export * from './navigator/widgetbehavior/broadcaster-behavior';
 export * from './navigator/widgetbehavior/data-activated-behavior';
 export * from './navigator/widgetbehavior/data-field-selected-behavior';
 export * from './navigator/widgetbehavior/data-filter-changed-behavior';

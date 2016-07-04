@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['aurelia-framework', './widget'], function (_export, _context) {
+  "use strict";
+
   var customElement, inject, useView, Widget, _createClass, DetailedView;
 
   function _classCallCheck(instance, Constructor) {

@@ -1,7 +1,9 @@
 'use strict';
 
-System.register(['./widget-behavior'], function (_export, _context) {
-  var WidgetBehavior, DataFilterHandleBehavior;
+System.register(['./listner-behavior'], function (_export, _context) {
+  "use strict";
+
+  var ListenerBehavior, DataFilterHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -34,41 +36,41 @@ System.register(['./widget-behavior'], function (_export, _context) {
   }
 
   return {
-    setters: [function (_widgetBehavior) {
-      WidgetBehavior = _widgetBehavior.WidgetBehavior;
+    setters: [function (_listnerBehavior) {
+      ListenerBehavior = _listnerBehavior.ListenerBehavior;
     }],
     execute: function () {
-      _export('DataFilterHandleBehavior', DataFilterHandleBehavior = function (_WidgetBehavior) {
-        _inherits(DataFilterHandleBehavior, _WidgetBehavior);
+      _export('DataFilterHandleBehavior', DataFilterHandleBehavior = function (_ListenerBehavior) {
+        _inherits(DataFilterHandleBehavior, _ListenerBehavior);
 
         function DataFilterHandleBehavior(channel, eventAggregator, filterMapper) {
           _classCallCheck(this, DataFilterHandleBehavior);
 
-          var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+          var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-          _this._channel = channel;
+          _this.channel = channel;
           _this._eventAggregator = eventAggregator;
           _this._filterMapper = filterMapper;
           return _this;
         }
 
         DataFilterHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-          _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+          _ListenerBehavior.prototype.attachToWidget.call(this, widget);
           var me = this;
-          this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-            var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
+          this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+            var filterToApply = me._filterMapper ? me._filterMapper(message.params) : message.params.dataFilter;
             me.widget.dataFilter = filterToApply;
             me.widget.refresh();
           });
         };
 
         DataFilterHandleBehavior.prototype.detach = function detach() {
-          _WidgetBehavior.prototype.detach.call(this, dashboard);
+          _ListenerBehavior.prototype.detach.call(this, dashboard);
           if (this.subscription) this.subscription.dispose();
         };
 
         return DataFilterHandleBehavior;
-      }(WidgetBehavior));
+      }(ListenerBehavior));
 
       _export('DataFilterHandleBehavior', DataFilterHandleBehavior);
     }

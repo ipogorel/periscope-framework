@@ -1,19 +1,21 @@
-import { WidgetBehavior } from './widget-behavior';
+import { BroadcasterBehavior } from './broadcaster-behavior';
 import { WidgetEventMessage } from '../events/widget-event-message';
-export let DataSourceChangedBehavior = class DataSourceChangedBehavior extends WidgetBehavior {
+
+export let DataSourceChangedBehavior = class DataSourceChangedBehavior extends BroadcasterBehavior {
   constructor(channel, eventAggregator) {
     super();
-    this._channel = channel;
+    this.channel = channel;
+    this.eventToAttach = "dataSourceChanged";
     this._eventAggregator = eventAggregator;
   }
 
   attachToWidget(widget) {
     super.attachToWidget(widget);
     var me = this;
-    widget.dataSourceChanged = function (dataSource) {
+    widget[this.eventToAttach] = function (dataSource) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.dataSource = dataSource;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = { dataSource: dataSource };
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 

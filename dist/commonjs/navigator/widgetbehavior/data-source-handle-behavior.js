@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.DataSourceHandleBehavior = undefined;
 
-var _widgetBehavior = require('./widget-behavior');
+var _listnerBehavior = require('./listner-behavior');
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -13,32 +13,33 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_WidgetBehavior) {
-  _inherits(DataSourceHandleBehavior, _WidgetBehavior);
+var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_ListenerBehavior) {
+  _inherits(DataSourceHandleBehavior, _ListenerBehavior);
 
   function DataSourceHandleBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceHandleBehavior);
 
-    var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+    var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-    _this._channel = channel;
+    _this.channel = channel;
+
     _this._eventAggregator = eventAggregator;
     return _this;
   }
 
   DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+    _ListenerBehavior.prototype.attachToWidget.call(this, widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-      me.widget.dataSource = message.dataSource;
+    this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+      me.widget.dataSource = message.params.dataSource;
       me.widget.refresh();
     });
   };
 
   DataSourceHandleBehavior.prototype.detach = function detach() {
-    _WidgetBehavior.prototype.detach.call(this, dashboard);
+    _ListenerBehavior.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
   return DataSourceHandleBehavior;
-}(_widgetBehavior.WidgetBehavior);
+}(_listnerBehavior.ListenerBehavior);

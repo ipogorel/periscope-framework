@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['lodash', './../data/query', './permissions-manager-configuration'], function (_export, _context) {
+  "use strict";
+
   var _, Query, PermissionsManagerConfiguration, PermissionsManager;
 
   function _classCallCheck(instance, Constructor) {

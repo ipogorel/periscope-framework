@@ -1,7 +1,9 @@
 'use strict';
 
-System.register(['./widget-behavior'], function (_export, _context) {
-  var WidgetBehavior, DataSourceHandleBehavior;
+System.register(['./listner-behavior'], function (_export, _context) {
+  "use strict";
+
+  var ListenerBehavior, DataSourceHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -34,39 +36,40 @@ System.register(['./widget-behavior'], function (_export, _context) {
   }
 
   return {
-    setters: [function (_widgetBehavior) {
-      WidgetBehavior = _widgetBehavior.WidgetBehavior;
+    setters: [function (_listnerBehavior) {
+      ListenerBehavior = _listnerBehavior.ListenerBehavior;
     }],
     execute: function () {
-      _export('DataSourceHandleBehavior', DataSourceHandleBehavior = function (_WidgetBehavior) {
-        _inherits(DataSourceHandleBehavior, _WidgetBehavior);
+      _export('DataSourceHandleBehavior', DataSourceHandleBehavior = function (_ListenerBehavior) {
+        _inherits(DataSourceHandleBehavior, _ListenerBehavior);
 
         function DataSourceHandleBehavior(channel, eventAggregator) {
           _classCallCheck(this, DataSourceHandleBehavior);
 
-          var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+          var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-          _this._channel = channel;
+          _this.channel = channel;
+
           _this._eventAggregator = eventAggregator;
           return _this;
         }
 
         DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-          _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+          _ListenerBehavior.prototype.attachToWidget.call(this, widget);
           var me = this;
-          this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-            me.widget.dataSource = message.dataSource;
+          this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+            me.widget.dataSource = message.params.dataSource;
             me.widget.refresh();
           });
         };
 
         DataSourceHandleBehavior.prototype.detach = function detach() {
-          _WidgetBehavior.prototype.detach.call(this, dashboard);
+          _ListenerBehavior.prototype.detach.call(this, dashboard);
           if (this.subscription) this.subscription.dispose();
         };
 
         return DataSourceHandleBehavior;
-      }(WidgetBehavior));
+      }(ListenerBehavior));
 
       _export('DataSourceHandleBehavior', DataSourceHandleBehavior);
     }

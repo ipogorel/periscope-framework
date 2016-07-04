@@ -1,8 +1,9 @@
-import { WidgetBehavior } from './widget-behavior';
-export let DataFilterHandleBehavior = class DataFilterHandleBehavior extends WidgetBehavior {
+import { ListenerBehavior } from './listner-behavior';
+
+export let DataFilterHandleBehavior = class DataFilterHandleBehavior extends ListenerBehavior {
   constructor(channel, eventAggregator, filterMapper) {
     super();
-    this._channel = channel;
+    this.channel = channel;
     this._eventAggregator = eventAggregator;
     this._filterMapper = filterMapper;
   }
@@ -10,8 +11,8 @@ export let DataFilterHandleBehavior = class DataFilterHandleBehavior extends Wid
   attachToWidget(widget) {
     super.attachToWidget(widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      var filterToApply = me._filterMapper ? me._filterMapper(message.params) : message.params.dataFilter;
       me.widget.dataFilter = filterToApply;
       me.widget.refresh();
     });

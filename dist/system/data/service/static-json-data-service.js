@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./data-service', './../../helpers/data-helper', 'aurelia-framework', 'aurelia-fetch-client', './../query-expression-evaluator', 'lodash'], function (_export, _context) {
+  "use strict";
+
   var DataService, DataHelper, inject, transient, HttpClient, QueryExpressionEvaluator, _, _dec, _class, StaticJsonDataService;
 
   function _classCallCheck(instance, Constructor) {

@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.SettingsHandleBehavior = undefined;
 
-var _widgetBehavior = require('./widget-behavior');
+var _listnerBehavior = require('./listner-behavior');
 
 var _lodash = require('lodash');
 
@@ -19,25 +19,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_WidgetBehavior) {
-  _inherits(SettingsHandleBehavior, _WidgetBehavior);
+var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_ListenerBehavior) {
+  _inherits(SettingsHandleBehavior, _ListenerBehavior);
 
   function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
     _classCallCheck(this, SettingsHandleBehavior);
 
-    var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+    var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-    _this._channel = channel;
+    _this.channel = channel;
     _this._eventAggregator = eventAggregator;
+
     _this._messageMapper = messageMapper;
     return _this;
   }
 
   SettingsHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+    _ListenerBehavior.prototype.attachToWidget.call(this, widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
+    this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
       _.forOwn(settingsToApply, function (v, k) {
         me.widget[k] = v;
       });
@@ -47,9 +48,9 @@ var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_WidgetB
   };
 
   SettingsHandleBehavior.prototype.detach = function detach() {
-    _WidgetBehavior.prototype.detach.call(this, dashboard);
+    _ListenerBehavior.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
   return SettingsHandleBehavior;
-}(_widgetBehavior.WidgetBehavior);
+}(_listnerBehavior.ListenerBehavior);

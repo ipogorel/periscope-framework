@@ -1,4 +1,4 @@
-define(['exports', './authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (exports, _permissionsCustomAttribute, _permissionsManager, _cacheManager, _cacheStorage, _memoryCacheStorage, _dashboardConfiguration, _dataHolder, _dataSource, _query, _queryExpressionEvaluator, _astParser, _astToJavascriptParser, _schemaObject, _schemaProvider, _staticSchemaProvider, _swaggerSchemaProvider, _dataService, _jsonDataService, _staticJsonDataService, _grammarExpression, _grammarTree, _grammar, _intellisenceManager, _parser, _valueFormat, _dataHelper, _guidHelper, _stringHelper, _urlHelper, _defaultHttpClient, _dashboardManager, _factory, _dashboardBase, _widget, _dataSourceConfigurator, _detailedView, _grid, _chart, _searchBox, _navigationHistory, _historyStep, _changeRouteBehavior, _createWidgetBehavior, _dashboardBehavior, _manageNavigationStackBehavior, _replaceWidgetBehavior, _widgetEventMessage, _widgetEvent, _widgetBehavior, _dataActivatedBehavior, _dataFieldSelectedBehavior, _dataFilterChangedBehavior, _dataFilterHandleBehavior, _dataSelectedBehavior, _dataSourceChangedBehavior, _dataSourceHandleBehavior, _settingsHandleBehavior, _stateDiscriminator, _stateUrlParser, _storage, _userStateStorage) {
+define(['exports', './authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (exports, _permissionsCustomAttribute, _permissionsManager, _cacheManager, _cacheStorage, _memoryCacheStorage, _dashboardConfiguration, _dataHolder, _dataSource, _query, _queryExpressionEvaluator, _astParser, _astToJavascriptParser, _schemaObject, _schemaProvider, _staticSchemaProvider, _swaggerSchemaProvider, _dataService, _jsonDataService, _staticJsonDataService, _grammarExpression, _grammarTree, _grammar, _intellisenceManager, _parser, _valueFormat, _dataHelper, _guidHelper, _stringHelper, _urlHelper, _defaultHttpClient, _dashboardManager, _datasourceManager, _factory, _dashboardBase, _widget, _dataSourceConfigurator, _detailedView, _grid, _chart, _searchBox, _navigationHistory, _historyStep, _changeRouteBehavior, _createWidgetBehavior, _dashboardBehavior, _manageNavigationStackBehavior, _replaceWidgetBehavior, _widgetEventMessage, _widgetEvent, _widgetBehavior, _listnerBehavior, _broadcasterBehavior, _dataActivatedBehavior, _dataFieldSelectedBehavior, _dataFilterChangedBehavior, _dataFilterHandleBehavior, _dataSelectedBehavior, _dataSourceChangedBehavior, _dataSourceHandleBehavior, _settingsHandleBehavior, _stateDiscriminator, _stateUrlParser, _storage, _userStateStorage) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -283,6 +283,15 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
       }
     });
   });
+  Object.keys(_datasourceManager).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _datasourceManager[key];
+      }
+    });
+  });
   Object.keys(_factory).forEach(function (key) {
     if (key === "default") return;
     Object.defineProperty(exports, key, {
@@ -442,6 +451,24 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
       enumerable: true,
       get: function () {
         return _widgetBehavior[key];
+      }
+    });
+  });
+  Object.keys(_listnerBehavior).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _listnerBehavior[key];
+      }
+    });
+  });
+  Object.keys(_broadcasterBehavior).forEach(function (key) {
+    if (key === "default") return;
+    Object.defineProperty(exports, key, {
+      enumerable: true,
+      get: function () {
+        return _broadcasterBehavior[key];
       }
     });
   });

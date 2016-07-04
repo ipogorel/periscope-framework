@@ -1,16 +1,17 @@
-import { WidgetBehavior } from './widget-behavior';
-export let DataSourceHandleBehavior = class DataSourceHandleBehavior extends WidgetBehavior {
+import { ListenerBehavior } from './listner-behavior';
+export let DataSourceHandleBehavior = class DataSourceHandleBehavior extends ListenerBehavior {
   constructor(channel, eventAggregator) {
     super();
-    this._channel = channel;
+    this.channel = channel;
+
     this._eventAggregator = eventAggregator;
   }
 
   attachToWidget(widget) {
     super.attachToWidget(widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      me.widget.dataSource = message.dataSource;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      me.widget.dataSource = message.params.dataSource;
       me.widget.refresh();
     });
   }

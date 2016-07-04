@@ -14,7 +14,7 @@ export class ManageNavigationStackBehavior extends DashboardBehavior {
     this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
       var originatorWidget = dashboard.getWidgetByName(message.originatorName);
       if (originatorWidget) {
-        var previousWidget = message.navigationStack.pop();
+        var previousWidget = message.params.navigationStack.pop();
         dashboard.replaceWidget(originatorWidget,previousWidget);
       }
     });

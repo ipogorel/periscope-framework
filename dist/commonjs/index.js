@@ -376,6 +376,18 @@ Object.keys(_dashboardManager).forEach(function (key) {
   });
 });
 
+var _datasourceManager = require('./infrastructure/datasource-manager');
+
+Object.keys(_datasourceManager).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _datasourceManager[key];
+    }
+  });
+});
+
 var _factory = require('./infrastructure/factory');
 
 Object.keys(_factory).forEach(function (key) {
@@ -588,6 +600,30 @@ Object.keys(_widgetBehavior).forEach(function (key) {
     enumerable: true,
     get: function get() {
       return _widgetBehavior[key];
+    }
+  });
+});
+
+var _listnerBehavior = require('./navigator/widgetbehavior/listner-behavior');
+
+Object.keys(_listnerBehavior).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _listnerBehavior[key];
+    }
+  });
+});
+
+var _broadcasterBehavior = require('./navigator/widgetbehavior/broadcaster-behavior');
+
+Object.keys(_broadcasterBehavior).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _broadcasterBehavior[key];
     }
   });
 });

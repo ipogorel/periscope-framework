@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.Factory = exports.DashboardManager = exports.DefaultHttpClient = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.DefaultHttpClient = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -974,6 +974,34 @@ var DashboardManager = exports.DashboardManager = function () {
   return DashboardManager;
 }();
 
+var DatasourceManager = exports.DatasourceManager = function () {
+  function DatasourceManager() {
+    _classCallCheck(this, DatasourceManager);
+
+    this._datasources = [];
+  }
+
+  DatasourceManager.prototype.find = function find(datasourceName) {
+    return _.find(this._datasources, { name: datasourceName });
+  };
+
+  DatasourceManager.prototype.createDatasource = function createDatasource(datasourceConfiguration) {
+    if (this.find(datasourceConfiguration.name)) throw "Datasource with the name '" + datasourceConfiguration.name + "' already exists";
+    var datasource = new Datasource(datasourceConfiguration);
+    this._datasources.push(datasource);
+    return datasource;
+  };
+
+  _createClass(DatasourceManager, [{
+    key: 'datasources',
+    get: function get() {
+      return this._datasources;
+    }
+  }]);
+
+  return DatasourceManager;
+}();
+
 var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = function () {
   function Factory(Type) {
     _classCallCheck(this, Factory);
@@ -999,6 +1027,26 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = functi
 
   return Factory;
 }()) || _class6;
+
+var BehaviorType = exports.BehaviorType = function () {
+  function BehaviorType() {
+    _classCallCheck(this, BehaviorType);
+  }
+
+  _createClass(BehaviorType, null, [{
+    key: 'listener',
+    get: function get() {
+      return "listener";
+    }
+  }, {
+    key: 'broadcaster',
+    get: function get() {
+      return "broadcaster";
+    }
+  }]);
+
+  return BehaviorType;
+}();
 
 var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec2(_class7 = function () {
   function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
@@ -2335,7 +2383,7 @@ var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = func
     this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", function (message) {
       var originatorWidget = dashboard.getWidgetByName(message.originatorName);
       if (originatorWidget) {
-        var previousWidget = message.navigationStack.pop();
+        var previousWidget = message.params.navigationStack.pop();
         dashboard.replaceWidget(originatorWidget, previousWidget);
       }
     });
@@ -2352,28 +2400,29 @@ var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = func
 var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_DashboardBehavior4) {
   _inherits(ReplaceWidgetBehavior, _DashboardBehavior4);
 
-  function ReplaceWidgetBehavior(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
+  function ReplaceWidgetBehavior(settings) {
     _classCallCheck(this, ReplaceWidgetBehavior);
 
     var _this26 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
 
-    _this26._chanel = chanel;
-    _this26._widgetType = widgetType;
-    _this26._widgetSettings = widgetSettings;
-    _this26._eventAggregator = eventAggregator;
-    _this26._widgetToReplaceName = widgetToReplaceName;
-    _this26._mapper = mapper;
+    _this26._channel = settings.channel;
+    _this26._widgetType = settings.widgetType;
+    _this26._widgetSettings = settings.widgetSettings;
+    _this26._eventAggregator = settings.eventAggregator;
+    _this26._widgetToReplaceName = settings.widgetToReplaceName;
+    _this26._mapper = settings.mapper;
+    _this26._queryPattern = settings.queryPattern;
     return _this26;
   }
 
   ReplaceWidgetBehavior.prototype.attach = function attach(dashboard) {
     _DashboardBehavior4.prototype.attach.call(this, dashboard);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, function (message) {
+    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
       var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
       var w = new me._widgetType(me._widgetSettings);
       dashboard.replaceWidget(originatorWidget, w);
-      if (me._mapper) w.dataFilter = me._mapper(message);
+      w.dataFilter = me._mapper ? me._mapper(message) : message.params.dataFilter;
       w.refresh();
     });
   };
@@ -2444,240 +2493,285 @@ var WidgetEvent = exports.WidgetEvent = function () {
   return WidgetEvent;
 }();
 
-var DataActivatedBehavior = exports.DataActivatedBehavior = function (_WidgetBehavior) {
-  _inherits(DataActivatedBehavior, _WidgetBehavior);
+var BroadcasterBehavior = exports.BroadcasterBehavior = function (_WidgetBehavior) {
+  _inherits(BroadcasterBehavior, _WidgetBehavior);
 
-  function DataActivatedBehavior(chanel, eventAggregator) {
-    _classCallCheck(this, DataActivatedBehavior);
+  function BroadcasterBehavior() {
+    _classCallCheck(this, BroadcasterBehavior);
 
     var _this27 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-    _this27._chanel = chanel;
-    _this27._eventAggregator = eventAggregator;
+    _this27.type = BehaviorType.broadcaster;
     return _this27;
   }
 
-  DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+  BroadcasterBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+    if (!widget[this.eventToAttach]) throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
     _WidgetBehavior.prototype.attachToWidget.call(this, widget);
-    var me = this;
-
-    widget.dataActivated = function (currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.activatedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
-    };
   };
 
-  DataActivatedBehavior.prototype.detach = function detach() {
-    _WidgetBehavior.prototype.detach.call(this, dashboard);
-  };
-
-  return DataActivatedBehavior;
+  return BroadcasterBehavior;
 }(WidgetBehavior);
 
-var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_WidgetBehavior2) {
-  _inherits(DataFieldSelectedBehavior, _WidgetBehavior2);
+var DataActivatedBehavior = exports.DataActivatedBehavior = function (_BroadcasterBehavior) {
+  _inherits(DataActivatedBehavior, _BroadcasterBehavior);
 
-  function DataFieldSelectedBehavior(chanel, eventAggregator) {
-    _classCallCheck(this, DataFieldSelectedBehavior);
+  function DataActivatedBehavior(channel, eventAggregator) {
+    _classCallCheck(this, DataActivatedBehavior);
 
-    var _this28 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
+    var _this28 = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-    _this28._chanel = chanel;
+    _this28.channel = channel;
+    _this28.eventToAttach = "dataActivated";
     _this28._eventAggregator = eventAggregator;
     return _this28;
   }
 
-  DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior2.prototype.attachToWidget.call(this, widget);
+  DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+    _BroadcasterBehavior.prototype.attachToWidget.call(this, widget);
     var me = this;
 
-    widget.dataFieldSelected = function (fieldName) {
+    widget[this.eventToAttach] = function (currentRecord) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.fieldName = fieldName;
-      me._eventAggregator.publish(me._chanel, message);
+      message.params = { activatedData: currentRecord };
+      me._eventAggregator.publish(me.channel, message);
     };
   };
 
-  DataFieldSelectedBehavior.prototype.detach = function detach() {
-    _WidgetBehavior2.prototype.detach.call(this, dashboard);
+  DataActivatedBehavior.prototype.detach = function detach() {
+    _BroadcasterBehavior.prototype.detach.call(this, dashboard);
   };
 
-  return DataFieldSelectedBehavior;
-}(WidgetBehavior);
+  return DataActivatedBehavior;
+}(BroadcasterBehavior);
 
-var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_WidgetBehavior3) {
-  _inherits(DataFilterChangedBehavior, _WidgetBehavior3);
+var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_BroadcasterBehavior2) {
+  _inherits(DataFieldSelectedBehavior, _BroadcasterBehavior2);
 
-  function DataFilterChangedBehavior(channel, eventAggregator) {
-    _classCallCheck(this, DataFilterChangedBehavior);
+  function DataFieldSelectedBehavior(channel, eventAggregator) {
+    _classCallCheck(this, DataFieldSelectedBehavior);
 
-    var _this29 = _possibleConstructorReturn(this, _WidgetBehavior3.call(this));
+    var _this29 = _possibleConstructorReturn(this, _BroadcasterBehavior2.call(this));
 
-    _this29._channel = channel;
+    _this29.channel = channel;
+    _this29.eventToAttach = "dataSelected";
+
     _this29._eventAggregator = eventAggregator;
     return _this29;
   }
 
-  DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior3.prototype.attachToWidget.call(this, widget);
+  DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+
+    _BroadcasterBehavior2.prototype.attachToWidget.call(this, widget);
     var me = this;
-    widget.dataFilterChanged = function (filter) {
+
+    widget[this.eventToAttach] = function (fieldName) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.dataFilter = filter;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = { fieldName: fieldName };
+      me._eventAggregator.publish(me.channel, message);
+    };
+  };
+
+  DataFieldSelectedBehavior.prototype.detach = function detach() {
+    _BroadcasterBehavior2.prototype.detach.call(this, dashboard);
+  };
+
+  return DataFieldSelectedBehavior;
+}(BroadcasterBehavior);
+
+var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_BroadcasterBehavior3) {
+  _inherits(DataFilterChangedBehavior, _BroadcasterBehavior3);
+
+  function DataFilterChangedBehavior(channel, eventAggregator) {
+    _classCallCheck(this, DataFilterChangedBehavior);
+
+    var _this30 = _possibleConstructorReturn(this, _BroadcasterBehavior3.call(this));
+
+    _this30.channel = channel;
+    _this30.eventToAttach = "dataFilterChanged";
+    _this30._eventAggregator = eventAggregator;
+    return _this30;
+  }
+
+  DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+    _BroadcasterBehavior3.prototype.attachToWidget.call(this, widget);
+    var me = this;
+    widget[this.eventToAttach] = function (filter) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params = { dataFilter: filter };
+      me._eventAggregator.publish(me.channel, message);
     };
   };
 
   DataFilterChangedBehavior.prototype.detach = function detach() {
-    _WidgetBehavior3.prototype.detach.call(this, dashboard);
+    _BroadcasterBehavior3.prototype.detach.call(this, dashboard);
   };
 
   return DataFilterChangedBehavior;
-}(WidgetBehavior);
+}(BroadcasterBehavior);
 
-var DataFilterHandleBehavior = exports.DataFilterHandleBehavior = function (_WidgetBehavior4) {
-  _inherits(DataFilterHandleBehavior, _WidgetBehavior4);
+var DataFilterHandleBehavior = exports.DataFilterHandleBehavior = function (_ListenerBehavior) {
+  _inherits(DataFilterHandleBehavior, _ListenerBehavior);
 
   function DataFilterHandleBehavior(channel, eventAggregator, filterMapper) {
     _classCallCheck(this, DataFilterHandleBehavior);
 
-    var _this30 = _possibleConstructorReturn(this, _WidgetBehavior4.call(this));
+    var _this31 = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-    _this30._channel = channel;
-    _this30._eventAggregator = eventAggregator;
-    _this30._filterMapper = filterMapper;
-    return _this30;
+    _this31.channel = channel;
+    _this31._eventAggregator = eventAggregator;
+    _this31._filterMapper = filterMapper;
+    return _this31;
   }
 
   DataFilterHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior4.prototype.attachToWidget.call(this, widget);
+    _ListenerBehavior.prototype.attachToWidget.call(this, widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
+    this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+      var filterToApply = me._filterMapper ? me._filterMapper(message.params) : message.params.dataFilter;
       me.widget.dataFilter = filterToApply;
       me.widget.refresh();
     });
   };
 
   DataFilterHandleBehavior.prototype.detach = function detach() {
-    _WidgetBehavior4.prototype.detach.call(this, dashboard);
+    _ListenerBehavior.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
   return DataFilterHandleBehavior;
-}(WidgetBehavior);
+}(ListenerBehavior);
 
-var DataSelectedBehavior = exports.DataSelectedBehavior = function (_WidgetBehavior5) {
-  _inherits(DataSelectedBehavior, _WidgetBehavior5);
+var DataSelectedBehavior = exports.DataSelectedBehavior = function (_BroadcasterBehavior4) {
+  _inherits(DataSelectedBehavior, _BroadcasterBehavior4);
 
-  function DataSelectedBehavior(chanel, eventAggregator) {
+  function DataSelectedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSelectedBehavior);
 
-    var _this31 = _possibleConstructorReturn(this, _WidgetBehavior5.call(this));
+    var _this32 = _possibleConstructorReturn(this, _BroadcasterBehavior4.call(this));
 
-    _this31._chanel = chanel;
-    _this31._eventAggregator = eventAggregator;
-    return _this31;
-  }
-
-  DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior5.prototype.attachToWidget.call(this, widget);
-    var me = this;
-
-    widget.dataSelected = function (currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.selectedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
-    };
-  };
-
-  DataSelectedBehavior.prototype.detach = function detach() {
-    _WidgetBehavior5.prototype.detach.call(this, dashboard);
-  };
-
-  return DataSelectedBehavior;
-}(WidgetBehavior);
-
-var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_WidgetBehavior6) {
-  _inherits(DataSourceChangedBehavior, _WidgetBehavior6);
-
-  function DataSourceChangedBehavior(channel, eventAggregator) {
-    _classCallCheck(this, DataSourceChangedBehavior);
-
-    var _this32 = _possibleConstructorReturn(this, _WidgetBehavior6.call(this));
-
-    _this32._channel = channel;
+    _this32.channel = channel;
+    _this32.eventToAttach = "dataSelected";
     _this32._eventAggregator = eventAggregator;
     return _this32;
   }
 
-  DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior6.prototype.attachToWidget.call(this, widget);
+  DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+
+    _BroadcasterBehavior4.prototype.attachToWidget.call(this, widget);
     var me = this;
-    widget.dataSourceChanged = function (dataSource) {
+
+    widget[this.eventToAttach] = function (currentRecord) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.dataSource = dataSource;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = { selectedData: currentRecord };
+      me._eventAggregator.publish(me.channel, message);
     };
   };
 
-  DataSourceChangedBehavior.prototype.detach = function detach() {
-    _WidgetBehavior6.prototype.detach.call(this, dashboard);
+  DataSelectedBehavior.prototype.detach = function detach() {
+    _BroadcasterBehavior4.prototype.detach.call(this, dashboard);
   };
 
-  return DataSourceChangedBehavior;
-}(WidgetBehavior);
+  return DataSelectedBehavior;
+}(BroadcasterBehavior);
 
-var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_WidgetBehavior7) {
-  _inherits(DataSourceHandleBehavior, _WidgetBehavior7);
+var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_BroadcasterBehavior5) {
+  _inherits(DataSourceChangedBehavior, _BroadcasterBehavior5);
 
-  function DataSourceHandleBehavior(channel, eventAggregator) {
-    _classCallCheck(this, DataSourceHandleBehavior);
+  function DataSourceChangedBehavior(channel, eventAggregator) {
+    _classCallCheck(this, DataSourceChangedBehavior);
 
-    var _this33 = _possibleConstructorReturn(this, _WidgetBehavior7.call(this));
+    var _this33 = _possibleConstructorReturn(this, _BroadcasterBehavior5.call(this));
 
-    _this33._channel = channel;
+    _this33.channel = channel;
+    _this33.eventToAttach = "dataSourceChanged";
     _this33._eventAggregator = eventAggregator;
     return _this33;
   }
 
-  DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior7.prototype.attachToWidget.call(this, widget);
+  DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+    _BroadcasterBehavior5.prototype.attachToWidget.call(this, widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-      me.widget.dataSource = message.dataSource;
+    widget[this.eventToAttach] = function (dataSource) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params = { dataSource: dataSource };
+      me._eventAggregator.publish(me.channel, message);
+    };
+  };
+
+  DataSourceChangedBehavior.prototype.detach = function detach() {
+    _BroadcasterBehavior5.prototype.detach.call(this, dashboard);
+  };
+
+  return DataSourceChangedBehavior;
+}(BroadcasterBehavior);
+
+var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_ListenerBehavior2) {
+  _inherits(DataSourceHandleBehavior, _ListenerBehavior2);
+
+  function DataSourceHandleBehavior(channel, eventAggregator) {
+    _classCallCheck(this, DataSourceHandleBehavior);
+
+    var _this34 = _possibleConstructorReturn(this, _ListenerBehavior2.call(this));
+
+    _this34.channel = channel;
+
+    _this34._eventAggregator = eventAggregator;
+    return _this34;
+  }
+
+  DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+    _ListenerBehavior2.prototype.attachToWidget.call(this, widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+      me.widget.dataSource = message.params.dataSource;
       me.widget.refresh();
     });
   };
 
   DataSourceHandleBehavior.prototype.detach = function detach() {
-    _WidgetBehavior7.prototype.detach.call(this, dashboard);
+    _ListenerBehavior2.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
   return DataSourceHandleBehavior;
+}(ListenerBehavior);
+
+var ListenerBehavior = exports.ListenerBehavior = function (_WidgetBehavior2) {
+  _inherits(ListenerBehavior, _WidgetBehavior2);
+
+  function ListenerBehavior() {
+    _classCallCheck(this, ListenerBehavior);
+
+    var _this35 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
+
+    _this35.type = BehaviorType.listener;
+    return _this35;
+  }
+
+  return ListenerBehavior;
 }(WidgetBehavior);
 
-var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_WidgetBehavior8) {
-  _inherits(SettingsHandleBehavior, _WidgetBehavior8);
+var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_ListenerBehavior3) {
+  _inherits(SettingsHandleBehavior, _ListenerBehavior3);
 
   function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
     _classCallCheck(this, SettingsHandleBehavior);
 
-    var _this34 = _possibleConstructorReturn(this, _WidgetBehavior8.call(this));
+    var _this36 = _possibleConstructorReturn(this, _ListenerBehavior3.call(this));
 
-    _this34._channel = channel;
-    _this34._eventAggregator = eventAggregator;
-    _this34._messageMapper = messageMapper;
-    return _this34;
+    _this36.channel = channel;
+    _this36._eventAggregator = eventAggregator;
+
+    _this36._messageMapper = messageMapper;
+    return _this36;
   }
 
   SettingsHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior8.prototype.attachToWidget.call(this, widget);
+    _ListenerBehavior3.prototype.attachToWidget.call(this, widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
+    this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
+      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
       _.forOwn(settingsToApply, function (v, k) {
         me.widget[k] = v;
       });
@@ -2687,12 +2781,12 @@ var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_WidgetB
   };
 
   SettingsHandleBehavior.prototype.detach = function detach() {
-    _WidgetBehavior8.prototype.detach.call(this, dashboard);
+    _ListenerBehavior3.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
   return SettingsHandleBehavior;
-}(WidgetBehavior);
+}(ListenerBehavior);
 
 var WidgetBehavior = exports.WidgetBehavior = function () {
   function WidgetBehavior() {
@@ -2700,11 +2794,12 @@ var WidgetBehavior = exports.WidgetBehavior = function () {
   }
 
   WidgetBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
+    this.widget = widget;
+    this.widget.behaviors.push(this);
   };
 
   WidgetBehavior.prototype.detach = function detach() {
+    if (!this.widget) return;
     for (var i = 0; i < this.widget.behaviors.length; i++) {
       if (this.widget.behaviors[i] === this) {
         this.widget.behaviors.splice(i, 1);
@@ -2712,13 +2807,6 @@ var WidgetBehavior = exports.WidgetBehavior = function () {
       }
     }
   };
-
-  _createClass(WidgetBehavior, [{
-    key: 'widget',
-    get: function get() {
-      return this._widget;
-    }
-  }]);
 
   return WidgetBehavior;
 }();
@@ -2819,17 +2907,17 @@ var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvi
   function StaticSchemaProvider(schema) {
     _classCallCheck(this, StaticSchemaProvider);
 
-    var _this36 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+    var _this38 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
 
-    _this36._schema = schema;
-    return _this36;
+    _this38._schema = schema;
+    return _this38;
   }
 
   StaticSchemaProvider.prototype.getSchema = function getSchema() {
-    var _this37 = this;
+    var _this39 = this;
 
     return new Promise(function (resolve, reject) {
-      resolve(_this37._schema);
+      resolve(_this39._schema);
     });
   };
 
@@ -2842,13 +2930,13 @@ var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaPro
   function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
     _classCallCheck(this, SwaggerSchemaProvider);
 
-    var _this38 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+    var _this40 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
 
-    _this38._modelName = modelName;
-    _this38._methodName = methodName;
-    _this38._apiName = apiName;
-    _this38._definitionUrl = definitionUrl;
-    return _this38;
+    _this40._modelName = modelName;
+    _this40._methodName = methodName;
+    _this40._apiName = apiName;
+    _this40._definitionUrl = definitionUrl;
+    return _this40;
   }
 
   SwaggerSchemaProvider.prototype.getSchema = function getSchema() {

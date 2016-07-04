@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['lodash', './data-holder'], function (_export, _context) {
+  "use strict";
+
   var _, DataHolder, Datasource, DataSourceConfiguration;
 
   function _classCallCheck(instance, Constructor) {

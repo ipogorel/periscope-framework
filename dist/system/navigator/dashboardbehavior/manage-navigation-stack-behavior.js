@@ -1,6 +1,8 @@
 "use strict";
 
 System.register(["./dashboard-behavior"], function (_export, _context) {
+  "use strict";
+
   var DashboardBehavior, ManageNavigationStackBehavior;
 
   function _classCallCheck(instance, Constructor) {
@@ -57,7 +59,7 @@ System.register(["./dashboard-behavior"], function (_export, _context) {
           this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", function (message) {
             var originatorWidget = dashboard.getWidgetByName(message.originatorName);
             if (originatorWidget) {
-              var previousWidget = message.navigationStack.pop();
+              var previousWidget = message.params.navigationStack.pop();
               dashboard.replaceWidget(originatorWidget, previousWidget);
             }
           });

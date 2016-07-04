@@ -1,7 +1,9 @@
 'use strict';
 
-System.register(['./widget-behavior', '../events/widget-event-message'], function (_export, _context) {
-  var WidgetBehavior, WidgetEventMessage, DataActivatedBehavior;
+System.register(['./broadcaster-behavior', '../events/widget-event-message'], function (_export, _context) {
+  "use strict";
+
+  var BroadcasterBehavior, WidgetEventMessage, DataActivatedBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -34,42 +36,43 @@ System.register(['./widget-behavior', '../events/widget-event-message'], functio
   }
 
   return {
-    setters: [function (_widgetBehavior) {
-      WidgetBehavior = _widgetBehavior.WidgetBehavior;
+    setters: [function (_broadcasterBehavior) {
+      BroadcasterBehavior = _broadcasterBehavior.BroadcasterBehavior;
     }, function (_eventsWidgetEventMessage) {
       WidgetEventMessage = _eventsWidgetEventMessage.WidgetEventMessage;
     }],
     execute: function () {
-      _export('DataActivatedBehavior', DataActivatedBehavior = function (_WidgetBehavior) {
-        _inherits(DataActivatedBehavior, _WidgetBehavior);
+      _export('DataActivatedBehavior', DataActivatedBehavior = function (_BroadcasterBehavior) {
+        _inherits(DataActivatedBehavior, _BroadcasterBehavior);
 
-        function DataActivatedBehavior(chanel, eventAggregator) {
+        function DataActivatedBehavior(channel, eventAggregator) {
           _classCallCheck(this, DataActivatedBehavior);
 
-          var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+          var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-          _this._chanel = chanel;
+          _this.channel = channel;
+          _this.eventToAttach = "dataActivated";
           _this._eventAggregator = eventAggregator;
           return _this;
         }
 
         DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-          _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+          _BroadcasterBehavior.prototype.attachToWidget.call(this, widget);
           var me = this;
 
-          widget.dataActivated = function (currentRecord) {
+          widget[this.eventToAttach] = function (currentRecord) {
             var message = new WidgetEventMessage(me.widget.name);
-            message.activatedData = currentRecord;
-            me._eventAggregator.publish(me._chanel, message);
+            message.params = { activatedData: currentRecord };
+            me._eventAggregator.publish(me.channel, message);
           };
         };
 
         DataActivatedBehavior.prototype.detach = function detach() {
-          _WidgetBehavior.prototype.detach.call(this, dashboard);
+          _BroadcasterBehavior.prototype.detach.call(this, dashboard);
         };
 
         return DataActivatedBehavior;
-      }(WidgetBehavior));
+      }(BroadcasterBehavior));
 
       _export('DataActivatedBehavior', DataActivatedBehavior);
     }

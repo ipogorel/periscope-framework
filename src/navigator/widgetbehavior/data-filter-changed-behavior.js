@@ -1,22 +1,24 @@
-import {WidgetBehavior} from './widget-behavior';
+import {BroadcasterBehavior} from './broadcaster-behavior';
 import {WidgetEventMessage} from '../events/widget-event-message';
 
-export class DataFilterChangedBehavior extends WidgetBehavior
+export class DataFilterChangedBehavior extends BroadcasterBehavior
 {
   constructor(channel, eventAggregator) {
     super();
-    this._channel = channel;
+    this.channel = channel;
+    this.eventToAttach = "dataFilterChanged";
     this._eventAggregator = eventAggregator;
   }
+
 
   attachToWidget(widget) {
     super.attachToWidget(widget);
     var me = this;
-    widget.dataFilterChanged = function(filter)
+    widget[this.eventToAttach] = function(filter)
     {
       var message = new WidgetEventMessage(me.widget.name);
-      message.dataFilter = filter;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = {dataFilter: filter};
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 

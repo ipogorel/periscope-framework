@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.DataFilterChangedBehavior = undefined;
 
-var _widgetBehavior = require('./widget-behavior');
+var _broadcasterBehavior = require('./broadcaster-behavior');
 
 var _widgetEventMessage = require('../events/widget-event-message');
 
@@ -15,32 +15,33 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_WidgetBehavior) {
-  _inherits(DataFilterChangedBehavior, _WidgetBehavior);
+var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_BroadcasterBehavior) {
+  _inherits(DataFilterChangedBehavior, _BroadcasterBehavior);
 
   function DataFilterChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataFilterChangedBehavior);
 
-    var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+    var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-    _this._channel = channel;
+    _this.channel = channel;
+    _this.eventToAttach = "dataFilterChanged";
     _this._eventAggregator = eventAggregator;
     return _this;
   }
 
   DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-    _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+    _BroadcasterBehavior.prototype.attachToWidget.call(this, widget);
     var me = this;
-    widget.dataFilterChanged = function (filter) {
+    widget[this.eventToAttach] = function (filter) {
       var message = new _widgetEventMessage.WidgetEventMessage(me.widget.name);
-      message.dataFilter = filter;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = { dataFilter: filter };
+      me._eventAggregator.publish(me.channel, message);
     };
   };
 
   DataFilterChangedBehavior.prototype.detach = function detach() {
-    _WidgetBehavior.prototype.detach.call(this, dashboard);
+    _BroadcasterBehavior.prototype.detach.call(this, dashboard);
   };
 
   return DataFilterChangedBehavior;
-}(_widgetBehavior.WidgetBehavior);
+}(_broadcasterBehavior.BroadcasterBehavior);

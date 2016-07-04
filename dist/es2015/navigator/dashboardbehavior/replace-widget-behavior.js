@@ -2,24 +2,25 @@ import { DashboardBehavior } from './dashboard-behavior';
 
 export let ReplaceWidgetBehavior = class ReplaceWidgetBehavior extends DashboardBehavior {
 
-  constructor(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
+  constructor(settings) {
     super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._eventAggregator = eventAggregator;
-    this._widgetToReplaceName = widgetToReplaceName;
-    this._mapper = mapper;
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+    this._mapper = settings.mapper;
+    this._queryPattern = settings.queryPattern;
   }
 
   attach(dashboard) {
     super.attach(dashboard);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
       var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
       var w = new me._widgetType(me._widgetSettings);
       dashboard.replaceWidget(originatorWidget, w);
-      if (me._mapper) w.dataFilter = me._mapper(message);
+      w.dataFilter = me._mapper ? me._mapper(message) : message.params.dataFilter;
       w.refresh();
     });
   }

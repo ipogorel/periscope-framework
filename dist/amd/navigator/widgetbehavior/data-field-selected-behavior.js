@@ -1,4 +1,4 @@
-define(['exports', './widget-behavior', '../events/widget-event-message'], function (exports, _widgetBehavior, _widgetEventMessage) {
+define(['exports', './broadcaster-behavior', '../events/widget-event-message'], function (exports, _broadcasterBehavior, _widgetEventMessage) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -36,34 +36,37 @@ define(['exports', './widget-behavior', '../events/widget-event-message'], funct
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_WidgetBehavior) {
-    _inherits(DataFieldSelectedBehavior, _WidgetBehavior);
+  var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_BroadcasterBehavior) {
+    _inherits(DataFieldSelectedBehavior, _BroadcasterBehavior);
 
-    function DataFieldSelectedBehavior(chanel, eventAggregator) {
+    function DataFieldSelectedBehavior(channel, eventAggregator) {
       _classCallCheck(this, DataFieldSelectedBehavior);
 
-      var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+      var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-      _this._chanel = chanel;
+      _this.channel = channel;
+      _this.eventToAttach = "dataSelected";
+
       _this._eventAggregator = eventAggregator;
       return _this;
     }
 
     DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
-      _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+
+      _BroadcasterBehavior.prototype.attachToWidget.call(this, widget);
       var me = this;
 
-      widget.dataFieldSelected = function (fieldName) {
+      widget[this.eventToAttach] = function (fieldName) {
         var message = new _widgetEventMessage.WidgetEventMessage(me.widget.name);
-        message.fieldName = fieldName;
-        me._eventAggregator.publish(me._chanel, message);
+        message.params = { fieldName: fieldName };
+        me._eventAggregator.publish(me.channel, message);
       };
     };
 
     DataFieldSelectedBehavior.prototype.detach = function detach() {
-      _WidgetBehavior.prototype.detach.call(this, dashboard);
+      _BroadcasterBehavior.prototype.detach.call(this, dashboard);
     };
 
     return DataFieldSelectedBehavior;
-  }(_widgetBehavior.WidgetBehavior);
+  }(_broadcasterBehavior.BroadcasterBehavior);
 });

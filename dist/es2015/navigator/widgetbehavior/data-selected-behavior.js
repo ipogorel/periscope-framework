@@ -1,21 +1,23 @@
-import { WidgetBehavior } from './widget-behavior';
+import { BroadcasterBehavior } from './broadcaster-behavior';
 import { WidgetEventMessage } from '../events/widget-event-message';
 
-export let DataSelectedBehavior = class DataSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
+export let DataSelectedBehavior = class DataSelectedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
     super();
-    this._chanel = chanel;
+    this.channel = channel;
+    this.eventToAttach = "dataSelected";
     this._eventAggregator = eventAggregator;
   }
 
   attachToWidget(widget) {
+
     super.attachToWidget(widget);
     var me = this;
 
-    widget.dataSelected = function (currentRecord) {
+    widget[this.eventToAttach] = function (currentRecord) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.selectedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
+      message.params = { selectedData: currentRecord };
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 

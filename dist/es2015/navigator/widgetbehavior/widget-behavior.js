@@ -1,16 +1,13 @@
 
 export let WidgetBehavior = class WidgetBehavior {
 
-  get widget() {
-    return this._widget;
-  }
-
   attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
+    this.widget = widget;
+    this.widget.behaviors.push(this);
   }
 
   detach() {
+    if (!this.widget) return;
     for (let i = 0; i < this.widget.behaviors.length; i++) {
       if (this.widget.behaviors[i] === this) {
         this.widget.behaviors.splice(i, 1);

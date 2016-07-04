@@ -117,81 +117,6 @@ export class PermissionsManager {
 ]
 */
 
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-    return null;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
-
 
 export class DataHolder {
   constructor(){
@@ -431,6 +356,81 @@ export class Query {
         (this.skip?this.skip:"0")));
   }
   
+}
+
+
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+    return null;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
 }
 
 
@@ -825,6 +825,27 @@ export class DashboardManager {
   }
 }
 
+export class DatasourceManager {
+  constructor() {
+    this._datasources = [];
+  }
+  get datasources(){
+    return this._datasources;
+  }
+
+  find(datasourceName){
+    return  _.find(this._datasources, {name:datasourceName});
+  }
+
+  createDatasource(datasourceConfiguration){
+    if (this.find(datasourceConfiguration.name))
+      throw "Datasource with the name '" + datasourceConfiguration.name + "' already exists";
+    var datasource = new Datasource(datasourceConfiguration);
+    this._datasources.push(datasource);
+    return datasource;
+  }
+}
+
 @resolver
 export class Factory{
   constructor(Type){
@@ -839,6 +860,15 @@ export class Factory{
 
   static of(Type){
     return new Factory(Type);
+  }
+}
+
+export class BehaviorType {
+  static get listener(){
+    return "listener";
+  }
+  static get broadcaster(){
+    return "broadcaster";
   }
 }
 
@@ -2270,7 +2300,7 @@ export class ManageNavigationStackBehavior extends DashboardBehavior {
     this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
       var originatorWidget = dashboard.getWidgetByName(message.originatorName);
       if (originatorWidget) {
-        var previousWidget = message.navigationStack.pop();
+        var previousWidget = message.params.navigationStack.pop();
         dashboard.replaceWidget(originatorWidget,previousWidget);
       }
     });
@@ -2286,25 +2316,25 @@ export class ManageNavigationStackBehavior extends DashboardBehavior {
 
 export class ReplaceWidgetBehavior extends DashboardBehavior  {
 
-  constructor(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
+  constructor(settings) {
     super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._eventAggregator = eventAggregator;
-    this._widgetToReplaceName = widgetToReplaceName;
-    this._mapper = mapper;
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+    this._mapper = settings.mapper;
+    this._queryPattern = settings.queryPattern;
   }
 
   attach(dashboard){
     super.attach(dashboard);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
       var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
       var w = new me._widgetType(me._widgetSettings);
       dashboard.replaceWidget(originatorWidget, w);
-      if (me._mapper)
-        w.dataFilter =  me._mapper(message);
+      w.dataFilter = me._mapper? me._mapper(message) : message.params.dataFilter;
       w.refresh();
     });
   }
@@ -2360,10 +2390,26 @@ export class WidgetEvent {
   }
 }
 
-export class DataActivatedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
+export class BroadcasterBehavior extends WidgetBehavior {
+  constructor(){
     super();
-    this._chanel = chanel;
+    this.type = BehaviorType.broadcaster;
+  }
+
+  eventToAttach;
+
+  attachToWidget(widget) {
+    if (!widget[this.eventToAttach])
+      throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
+    super.attachToWidget(widget);
+  }
+}
+
+export class DataActivatedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataActivated";
     this._eventAggregator = eventAggregator;
   }
 
@@ -2371,10 +2417,10 @@ export class DataActivatedBehavior extends WidgetBehavior {
     super.attachToWidget(widget);
     var me = this;
 
-    widget.dataActivated =  function(currentRecord) {
+    widget[this.eventToAttach] =  function(currentRecord) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.activatedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
+      message.params = {activatedData: currentRecord};
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 
@@ -2383,21 +2429,25 @@ export class DataActivatedBehavior extends WidgetBehavior {
   }
 }
 
-export class DataFieldSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
+export class DataFieldSelectedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
     super();
-    this._chanel = chanel;
+    this.channel = channel;
+    this.eventToAttach = "dataSelected";
+
     this._eventAggregator = eventAggregator;
   }
+  
 
   attachToWidget(widget)   {
+
     super.attachToWidget(widget);
     var me = this;
 
-    widget.dataFieldSelected =  function(fieldName) {
+    widget[this.eventToAttach] =  function(fieldName) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.fieldName = fieldName;
-      me._eventAggregator.publish(me._chanel, message);
+      message.params = {fieldName: fieldName};
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 
@@ -2407,22 +2457,24 @@ export class DataFieldSelectedBehavior extends WidgetBehavior {
 }
 
 
-export class DataFilterChangedBehavior extends WidgetBehavior
+export class DataFilterChangedBehavior extends BroadcasterBehavior
 {
   constructor(channel, eventAggregator) {
     super();
-    this._channel = channel;
+    this.channel = channel;
+    this.eventToAttach = "dataFilterChanged";
     this._eventAggregator = eventAggregator;
   }
+
 
   attachToWidget(widget) {
     super.attachToWidget(widget);
     var me = this;
-    widget.dataFilterChanged = function(filter)
+    widget[this.eventToAttach] = function(filter)
     {
       var message = new WidgetEventMessage(me.widget.name);
-      message.dataFilter = filter;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = {dataFilter: filter};
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 
@@ -2431,11 +2483,11 @@ export class DataFilterChangedBehavior extends WidgetBehavior
   }
 }
 
-export class DataFilterHandleBehavior extends WidgetBehavior
+export class DataFilterHandleBehavior extends ListenerBehavior
 {
   constructor(channel, eventAggregator, filterMapper) {
     super();
-    this._channel = channel;
+    this.channel = channel;
     this._eventAggregator = eventAggregator;
     this._filterMapper = filterMapper;
   }
@@ -2443,8 +2495,8 @@ export class DataFilterHandleBehavior extends WidgetBehavior
   attachToWidget(widget){
     super.attachToWidget(widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var filterToApply = me._filterMapper ? me._filterMapper(message) : message.dataFilter;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      var filterToApply = me._filterMapper ? me._filterMapper(message.params) : message.params.dataFilter;
       me.widget.dataFilter = filterToApply;
       me.widget.refresh();
     });
@@ -2457,21 +2509,24 @@ export class DataFilterHandleBehavior extends WidgetBehavior
   }
 }
 
-export class DataSelectedBehavior extends WidgetBehavior {
-  constructor(chanel, eventAggregator) {
+export class DataSelectedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
     super();
-    this._chanel = chanel;
+    this.channel = channel;
+    this.eventToAttach = "dataSelected";
     this._eventAggregator = eventAggregator;
   }
 
+
   attachToWidget(widget)   {
+
     super.attachToWidget(widget);
     var me = this;
 
-    widget.dataSelected =  function(currentRecord) {
+    widget[this.eventToAttach] =  function(currentRecord) {
       var message = new WidgetEventMessage(me.widget.name);
-      message.selectedData = currentRecord;
-      me._eventAggregator.publish(me._chanel, message);
+      message.params ={selectedData: currentRecord};
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 
@@ -2480,22 +2535,23 @@ export class DataSelectedBehavior extends WidgetBehavior {
   }
 }
 
-export class DataSourceChangedBehavior extends WidgetBehavior
+export class DataSourceChangedBehavior extends BroadcasterBehavior
 {
   constructor(channel, eventAggregator) {
     super();
-    this._channel = channel;
+    this.channel = channel;
+    this.eventToAttach = "dataSourceChanged";
     this._eventAggregator = eventAggregator;
   }
 
   attachToWidget(widget) {
     super.attachToWidget(widget);
     var me = this;
-    widget.dataSourceChanged = function(dataSource)
+    widget[this.eventToAttach] = function(dataSource)
     {
       var message = new WidgetEventMessage(me.widget.name);
-      message.dataSource = dataSource;
-      me._eventAggregator.publish(me._channel, message);
+      message.params = {dataSource: dataSource};
+      me._eventAggregator.publish(me.channel, message);
     };
   }
 
@@ -2504,19 +2560,20 @@ export class DataSourceChangedBehavior extends WidgetBehavior
   }
 }
 
-export class DataSourceHandleBehavior extends WidgetBehavior
+export class DataSourceHandleBehavior extends ListenerBehavior
 {
   constructor(channel, eventAggregator) {
     super();
-    this._channel = channel;
+    this.channel = channel;
+
     this._eventAggregator = eventAggregator;
   }
 
   attachToWidget(widget){
     super.attachToWidget(widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      me.widget.dataSource = message.dataSource;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      me.widget.dataSource = message.params.dataSource;
       me.widget.refresh();
     });
   }
@@ -2529,20 +2586,28 @@ export class DataSourceHandleBehavior extends WidgetBehavior
 }
 
 
-export class SettingsHandleBehavior extends WidgetBehavior
+export class ListenerBehavior extends WidgetBehavior {
+  constructor(){
+    super();
+    this.type = BehaviorType.listener;
+  }
+}
+
+export class SettingsHandleBehavior extends ListenerBehavior
 {
   constructor(channel, eventAggregator, messageMapper) {
     super();
-    this._channel = channel;
+    this.channel = channel;
     this._eventAggregator = eventAggregator;
+
     this._messageMapper = messageMapper;
   }
 
   attachToWidget(widget){
     super.attachToWidget(widget);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message) : message;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
       _.forOwn(settingsToApply, (v, k)=>{
         //me.widget.changeSettings(settingsToApply);
         me.widget[k] = v;
@@ -2562,16 +2627,19 @@ export class SettingsHandleBehavior extends WidgetBehavior
 
 export class WidgetBehavior {
 
-  get widget() {
-    return this._widget;
-  }
+  type;
+  widget;
+  channel;
+
 
   attachToWidget(widget) {
-    this._widget = widget;
-    this._widget.behaviors.push(this);
+    this.widget = widget;
+    this.widget.behaviors.push(this);
   }
 
   detach(){
+    if (!this.widget)
+      return;
     for (let i=0; i<this.widget.behaviors.length; i++) {
       if(this.widget.behaviors[i] === this) {
         this.widget.behaviors.splice(i, 1);

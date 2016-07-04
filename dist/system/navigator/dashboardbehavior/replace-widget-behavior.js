@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./dashboard-behavior'], function (_export, _context) {
+  "use strict";
+
   var DashboardBehavior, ReplaceWidgetBehavior;
 
   function _classCallCheck(instance, Constructor) {
@@ -41,28 +43,29 @@ System.register(['./dashboard-behavior'], function (_export, _context) {
       _export('ReplaceWidgetBehavior', ReplaceWidgetBehavior = function (_DashboardBehavior) {
         _inherits(ReplaceWidgetBehavior, _DashboardBehavior);
 
-        function ReplaceWidgetBehavior(chanel, eventAggregator, widgetToReplaceName, widgetType, widgetSettings, mapper) {
+        function ReplaceWidgetBehavior(settings) {
           _classCallCheck(this, ReplaceWidgetBehavior);
 
           var _this = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-          _this._chanel = chanel;
-          _this._widgetType = widgetType;
-          _this._widgetSettings = widgetSettings;
-          _this._eventAggregator = eventAggregator;
-          _this._widgetToReplaceName = widgetToReplaceName;
-          _this._mapper = mapper;
+          _this._channel = settings.channel;
+          _this._widgetType = settings.widgetType;
+          _this._widgetSettings = settings.widgetSettings;
+          _this._eventAggregator = settings.eventAggregator;
+          _this._widgetToReplaceName = settings.widgetToReplaceName;
+          _this._mapper = settings.mapper;
+          _this._queryPattern = settings.queryPattern;
           return _this;
         }
 
         ReplaceWidgetBehavior.prototype.attach = function attach(dashboard) {
           _DashboardBehavior.prototype.attach.call(this, dashboard);
           var me = this;
-          this.subscription = this._eventAggregator.subscribe(this._chanel, function (message) {
+          this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
             var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
             var w = new me._widgetType(me._widgetSettings);
             dashboard.replaceWidget(originatorWidget, w);
-            if (me._mapper) w.dataFilter = me._mapper(message);
+            w.dataFilter = me._mapper ? me._mapper(message) : message.params.dataFilter;
             w.refresh();
           });
         };
