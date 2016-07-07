@@ -14,12 +14,12 @@ var DataService = exports.DataService = function () {
   }
 
   DataService.prototype.configure = function configure(configuration) {
-    this.url = configuration.url;
-    this.schemaProvider = configuration.schemaProvider;
-    this.filterParser = configuration.filterParser;
-    this.totalMapper = configuration.totalMapper;
-    this.dataMapper = configuration.dataMapper;
-    this.httpClient = configuration.httpClient;
+    this.url = configuration.url ? configuration.url : this.url;
+    this.schemaProvider = configuration.schemaProvider ? configuration.schemaProvider : this.schemaProvider;
+    this.filterParser = configuration.filterParser ? configuration.filterParser : this.filterParser;
+    this.totalMapper = configuration.totalMapper ? configuration.totalMapper : this.totalMapper;
+    this.dataMapper = configuration.dataMapper ? configuration.dataMapper : this.dataMapper;
+    this.httpClient = configuration.httpClient ? configuration.httpClient : this.httpClient;
   };
 
   DataService.prototype.getSchema = function getSchema() {

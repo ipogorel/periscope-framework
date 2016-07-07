@@ -6,6 +6,74 @@ import lodash from 'lodash';
 import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+    return null;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
+
 @inject(Element, PermissionsManager)
 export class PermissionsCustomAttribute {
 
@@ -116,6 +184,13 @@ export class PermissionsManager {
   }
 ]
 */
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
 
 
 export class DataHolder {
@@ -359,239 +434,6 @@ export class Query {
 }
 
 
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-    return null;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
-
-export class IntellisenceManager {
-  constructor(parser, dataSource, availableFields){
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  populate(searchStr, lastWord){
-    let parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  }
-
-
-  _getParserError(searchStr) {
-    let result = null;
-    if (searchStr!="") {
-      try {
-        this.parser.parse(searchStr);
-        try{
-          this.parser.parse(searchStr + "^");
-        }
-        catch(ex2){
-          result = ex2;
-        }
-      }
-      catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  }
-
-
-
-  _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-    for (let i=(tmpArr.length-1); i>=0; i--)  {
-      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
-      if (j>=0)
-        return fieldsArray[j];
-      //return tmpArr[i].trim();
-    }
-    return "";
-  }
-
-  _interpreteParserError(ex){
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (let desc of ex.expected) {
-        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  }
-
-  _getIntellisenseData (searchStr, lastWord, pegException) {
-    let type='';
-    let result = [];
-    let lastFldName = '';
-
-    if (!pegException)
-      return new Promise((resolve, reject)=>{ resolve([])});
-
-    let tokenName = this._interpreteParserError(pegException);
-    return new Promise((resolve, reject)=>{
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
-          resolve(this._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("string", data))
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("array_string", data))
-          });
-          break;
-          resolve(this._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  }
-
-
-  _getFieldValuesArray(fieldName, lastWord) {
-    let query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord)
-      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(dH=>{
-      var result = _.map(dH.data,fieldName);
-      return _.uniq(result).sort();
-    })
-  }
-
-  _getStringComparisonOperatorsArray() {
-    return (["=", "in"]);
-  }
-
-  _getLogicalOperatorsArray() {
-    return (["and", "or"]);
-  }
-
-  _getComparisonOperatorsArray() {
-    return (["!=", "=", ">", "<", ">=", "<="])
-  }
-
-  _normalizeData(type, dataArray) {
-    return _.map(dataArray,d=>{ return { type: type, value: d }});
-  }
-}
-
-export class ExpressionParser {
-
-  constructor(grammarText) {
-    this.parser =  peg.buildParser(grammarText);
-  }
-
-  parse(searchString) {
-    return this.parser.parse(searchString);
-  }
-
-  validate(searchString) {
-    try{
-      this.parser.parse(searchString);
-      return true;
-    }
-    catch(ex) {
-      return false;
-    }
-  }
-}
-
 export class DataHelper {
   static getNumericFields(fields){
     return _.filter(fields, f => {
@@ -801,6 +643,164 @@ export class DefaultHttpClient extends HttpClient {
           }
         })
     });
+  }
+}
+
+export class IntellisenceManager {
+  constructor(parser, dataSource, availableFields){
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  populate(searchStr, lastWord){
+    let parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  }
+
+
+  _getParserError(searchStr) {
+    let result = null;
+    if (searchStr!="") {
+      try {
+        this.parser.parse(searchStr);
+        try{
+          this.parser.parse(searchStr + "^");
+        }
+        catch(ex2){
+          result = ex2;
+        }
+      }
+      catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  }
+
+
+
+  _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+    for (let i=(tmpArr.length-1); i>=0; i--)  {
+      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
+      if (j>=0)
+        return fieldsArray[j];
+      //return tmpArr[i].trim();
+    }
+    return "";
+  }
+
+  _interpreteParserError(ex){
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (let desc of ex.expected) {
+        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  }
+
+  _getIntellisenseData (searchStr, lastWord, pegException) {
+    let type='';
+    let result = [];
+    let lastFldName = '';
+
+    if (!pegException)
+      return new Promise((resolve, reject)=>{ resolve([])});
+
+    let tokenName = this._interpreteParserError(pegException);
+    return new Promise((resolve, reject)=>{
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
+          resolve(this._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("string", data))
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("array_string", data))
+          });
+          break;
+          resolve(this._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  }
+
+
+  _getFieldValuesArray(fieldName, lastWord) {
+    let query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord)
+      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(dH=>{
+      var result = _.map(dH.data,fieldName);
+      return _.uniq(result).sort();
+    })
+  }
+
+  _getStringComparisonOperatorsArray() {
+    return (["=", "in"]);
+  }
+
+  _getLogicalOperatorsArray() {
+    return (["and", "or"]);
+  }
+
+  _getComparisonOperatorsArray() {
+    return (["!=", "=", ">", "<", ">=", "<="])
+  }
+
+  _normalizeData(type, dataArray) {
+    return _.map(dataArray,d=>{ return { type: type, value: d }});
+  }
+}
+
+export class ExpressionParser {
+
+  constructor(grammarText) {
+    this.parser =  peg.buildParser(grammarText);
+  }
+
+  parse(searchString) {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString) {
+    try{
+      this.parser.parse(searchString);
+      return true;
+    }
+    catch(ex) {
+      return false;
+    }
   }
 }
 
@@ -1131,23 +1131,23 @@ export class UserStateStorage{
 
 }
 
-export class Schema {
-  constructor(){
-    this.fields = [];
-    this.parameters = [];
-  }
-}
-
 export class DataService{
-  
   configure(configuration){
-    this.url = configuration.url;
-    this.schemaProvider = configuration.schemaProvider;
-    this.filterParser = configuration.filterParser;
-    this.totalMapper = configuration.totalMapper;
-    this.dataMapper = configuration.dataMapper;
-    this.httpClient = configuration.httpClient;
+    this.url = configuration.url?configuration.url:this.url;
+    this.schemaProvider = configuration.schemaProvider?configuration.schemaProvider:this.schemaProvider;
+    this.filterParser = configuration.filterParser?configuration.filterParser:this.filterParser;
+    this.totalMapper = configuration.totalMapper?configuration.totalMapper:this.totalMapper;
+    this.dataMapper = configuration.dataMapper?configuration.dataMapper:this.dataMapper;
+    this.httpClient = configuration.httpClient?configuration.httpClient:this.httpClient;
   }
+
+  url;
+  schemaProvider;
+  filterParser;
+  totalMapper;
+  dataMapper;
+  httpClient;
+
   getSchema(){
     return this.schemaProvider.getSchema();
   }
@@ -1210,7 +1210,7 @@ export class JsonDataService extends DataService {
     read(options) { //options: fields,filter, take, skip, sort
       let url = this.url
       if (options.filter)
-        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : options.filter);
       return this.httpClient
         .fetch(url)
         .then(response => {return response.json(); })
@@ -1308,6 +1308,27 @@ export class StaticJsonDataService extends DataService {
       });
   }
 
+}
+
+export class Schema {
+  constructor(){
+    this.fields = [];
+    this.parameters = [];
+  }
+}
+
+export class FormatValueConverter {
+  static format(value, format){
+    if (DataHelper.isDate(value))
+      return moment(value).format(format);
+    if (DataHelper.isNumber(value))
+      return numeral(value).format(format);
+    return value;
+  }
+
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  }
 }
 
 const DSL_GRAMMAR_EXPRESSION = `
@@ -1671,20 +1692,6 @@ export class Grammar{
   getGrammar(){
   }
   
-}
-
-export class FormatValueConverter {
-  static format(value, format){
-    if (DataHelper.isDate(value))
-      return moment(value).format(format);
-    if (DataHelper.isNumber(value))
-      return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
 }
 
 export class DashboardBase
@@ -2286,6 +2293,39 @@ export class DashboardBehavior {
   }
 }
 
+export class DrillDownHandleBehavior extends DashboardBehavior  {
+
+  constructor(settings) {
+    super();
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      // create widget
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      // replace widget
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      w.dataFilter = message.params.dataFilter;
+      w.dataSource.transport.readService.configure({url:message.params.dataServiceUrl});
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
 export class ManageNavigationStackBehavior extends DashboardBehavior {
   constructor(eventAggregator) {
     super();
@@ -2360,23 +2400,24 @@ export class WidgetEventMessage {
 export class WidgetEvent {
 
   constructor(widgetName) {
-    this._handlers = [];
     this._originatorName = widgetName;
   }
+
+  handlers = [];
 
   get originatorName()  {
     return this._originatorName;
   }
 
   attach(handler){
-    if(this._handlers.some(e=>e === handler)) {
+    if(this.handlers.some(e=>e === handler)) {
       return; //already attached
     }
-    this._handlers.push(handler);
+    this.handlers.push(handler);
   }
 
   detach(handler) {
-    var idx = this._handlers.indexOf(handler);
+    var idx = this.handlers.indexOf(handler);
     if(idx < 0){
       return; //not attached, do nothing
     }
@@ -2384,8 +2425,8 @@ export class WidgetEvent {
   }
 
   raise(){
-    for(var i = 0; i< this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
+    for(var i = 0; i< this.handlers.length; i++) {
+      this.handlers[i].apply(this, arguments);
     }
   }
 }
@@ -2583,6 +2624,54 @@ export class DataSourceHandleBehavior extends ListenerBehavior
     if (this.subscription)
       this.subscription.dispose();
   }
+}
+
+
+export class DrillDownBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator, dataSource) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataActivated";
+    this._eventAggregator = eventAggregator;
+    this._dataSource = dataSource;
+  }
+
+  queryPattern="";
+  dataServiceUrl="";
+  isConfigured = false;
+
+  configure(drillDownBehaviorConfiguration){
+    this.queryPattern = drillDownBehaviorConfiguration.queryPattern;
+    this.dataServiceUrl = drillDownBehaviorConfiguration.dataServiceUrl;
+    this.isConfigured = true;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget[this.eventToAttach] =  function(currentRecord) {
+      if (!me.isConfigured)
+        return;
+      var message = new WidgetEventMessage(me.widget.name);
+      let query = me.queryPattern;
+      _.forOwn(currentRecord, (value, key)=>{
+        query = StringHelper.replaceAll(query,"@"+key,value);
+      })
+
+      message.params = {dataFilter: query, dataServiceUrl: me.dataServiceUrl};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DrillDownBehaviorConfiguration {
+  queryPattern;
+  dataServiceUrl;
 }
 
 

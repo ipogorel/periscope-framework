@@ -568,6 +568,18 @@ Object.keys(_replaceWidgetBehavior).forEach(function (key) {
   });
 });
 
+var _drillDownHandleBehavior = require('./navigator/dashboardbehavior/drill-down-handle-behavior');
+
+Object.keys(_drillDownHandleBehavior).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _drillDownHandleBehavior[key];
+    }
+  });
+});
+
 var _widgetEventMessage = require('./navigator/events/widget-event-message');
 
 Object.keys(_widgetEventMessage).forEach(function (key) {
@@ -720,6 +732,18 @@ Object.keys(_settingsHandleBehavior).forEach(function (key) {
     enumerable: true,
     get: function get() {
       return _settingsHandleBehavior[key];
+    }
+  });
+});
+
+var _drillDownBehavior = require('./navigator/widgetbehavior/drill-down-behavior');
+
+Object.keys(_drillDownBehavior).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _drillDownBehavior[key];
     }
   });
 });

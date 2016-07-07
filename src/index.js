@@ -57,6 +57,7 @@ export * from './navigator/dashboardbehavior/create-widget-behavior';
 export * from './navigator/dashboardbehavior/dashboard-behavior';
 export * from './navigator/dashboardbehavior/manage-navigation-stack-behavior';
 export * from './navigator/dashboardbehavior/replace-widget-behavior';
+export * from './navigator/dashboardbehavior/drill-down-handle-behavior';
 
 export * from './navigator/events/widget-event-message';
 export * from './navigator/events/widget-event';
@@ -72,6 +73,7 @@ export * from './navigator/widgetbehavior/data-selected-behavior';
 export * from './navigator/widgetbehavior/data-source-changed-behavior';
 export * from './navigator/widgetbehavior/data-source-handle-behavior';
 export * from './navigator/widgetbehavior/settings-handle-behavior';
+export * from './navigator/widgetbehavior/drill-down-behavior';
 
 export * from './state/state-discriminator';
 export * from './state/state-url-parser';

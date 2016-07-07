@@ -15,7 +15,7 @@ export class JsonDataService extends DataService {
     read(options) { //options: fields,filter, take, skip, sort
       let url = this.url
       if (options.filter)
-        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : options.filter);
       return this.httpClient
         .fetch(url)
         .then(response => {return response.json(); })

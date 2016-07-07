@@ -73,7 +73,7 @@ define(['exports', './data-service', 'lodash', 'aurelia-framework'], function (e
       var _this2 = this;
 
       var url = this.url;
-      if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
+      if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : options.filter;
       return this.httpClient.fetch(url).then(function (response) {
         return response.json();
       }).then(function (jsonData) {

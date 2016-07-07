@@ -1,7 +1,8 @@
 export let WidgetEvent = class WidgetEvent {
 
   constructor(widgetName) {
-    this._handlers = [];
+    this.handlers = [];
+
     this._originatorName = widgetName;
   }
 
@@ -10,14 +11,14 @@ export let WidgetEvent = class WidgetEvent {
   }
 
   attach(handler) {
-    if (this._handlers.some(e => e === handler)) {
+    if (this.handlers.some(e => e === handler)) {
       return;
     }
-    this._handlers.push(handler);
+    this.handlers.push(handler);
   }
 
   detach(handler) {
-    var idx = this._handlers.indexOf(handler);
+    var idx = this.handlers.indexOf(handler);
     if (idx < 0) {
       return;
     }
@@ -25,8 +26,8 @@ export let WidgetEvent = class WidgetEvent {
   }
 
   raise() {
-    for (var i = 0; i < this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
+    for (var i = 0; i < this.handlers.length; i++) {
+      this.handlers[i].apply(this, arguments);
     }
   }
 };

@@ -19,6 +19,26 @@ declare module 'periscope-framework' {
     HttpClient
   } from 'aurelia-fetch-client';
   import Swagger from 'swagger-client';
+  export class CacheManager {
+    constructor(storage: any);
+    cleanInterval: any;
+    startCleaner(): any;
+    stopCleaner(): any;
+    getStorage(): any;
+  }
+  export class CacheStorage {
+    setItem(key: any, value: any, expiration: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
+  export class MemoryCacheStorage extends CacheStorage {
+    constructor();
+    setItem(key: any, value: any, seconds: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
   export class PermissionsCustomAttribute {
     constructor(element: any, permissionsManager: any);
     bind(): any;
@@ -49,6 +69,9 @@ declare module 'periscope-framework' {
     }
   ]
   */
+  export class DashboardConfiguration {
+    invoke(): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
@@ -94,38 +117,6 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
-  export class CacheManager {
-    constructor(storage: any);
-    cleanInterval: any;
-    startCleaner(): any;
-    stopCleaner(): any;
-    getStorage(): any;
-  }
-  export class CacheStorage {
-    setItem(key: any, value: any, expiration: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
-  export class MemoryCacheStorage extends CacheStorage {
-    constructor();
-    setItem(key: any, value: any, seconds: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
-  }
-  export class IntellisenceManager {
-    constructor(parser: any, dataSource: any, availableFields: any);
-    populate(searchStr: any, lastWord: any): any;
-  }
-  export class ExpressionParser {
-    constructor(grammarText: any);
-    parse(searchString: any): any;
-    validate(searchString: any): any;
-  }
   export class DataHelper {
     static getNumericFields(fields: any): any;
     static getStringFields(fields: any): any;
@@ -155,6 +146,15 @@ declare module 'periscope-framework' {
   }
   export class DefaultHttpClient extends HttpClient {
     constructor();
+  }
+  export class IntellisenceManager {
+    constructor(parser: any, dataSource: any, availableFields: any);
+    populate(searchStr: any, lastWord: any): any;
+  }
+  export class ExpressionParser {
+    constructor(grammarText: any);
+    parse(searchString: any): any;
+    validate(searchString: any): any;
   }
   export class DashboardManager {
     constructor();
@@ -214,11 +214,14 @@ declare module 'periscope-framework' {
     clearAll(): any;
     createKey(namespace: any, key: any): any;
   }
-  export class Schema {
-    constructor();
-  }
   export class DataService {
     configure(configuration: any): any;
+    url: any;
+    schemaProvider: any;
+    filterParser: any;
+    totalMapper: any;
+    dataMapper: any;
+    httpClient: any;
     getSchema(): any;
     read(options: any): any;
     create(entity: any): any;
@@ -244,17 +247,8 @@ declare module 'periscope-framework' {
     constructor();
     read(options: any): any;
   }
-  export class GrammarExpression extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class GrammarTree extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class Grammar {
-    text: any;
-    getGrammar(): any;
+  export class Schema {
+    constructor();
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

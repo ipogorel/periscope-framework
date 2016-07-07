@@ -33,21 +33,22 @@ define(["exports"], function (exports) {
     function WidgetEvent(widgetName) {
       _classCallCheck(this, WidgetEvent);
 
-      this._handlers = [];
+      this.handlers = [];
+
       this._originatorName = widgetName;
     }
 
     WidgetEvent.prototype.attach = function attach(handler) {
-      if (this._handlers.some(function (e) {
+      if (this.handlers.some(function (e) {
         return e === handler;
       })) {
         return;
       }
-      this._handlers.push(handler);
+      this.handlers.push(handler);
     };
 
     WidgetEvent.prototype.detach = function detach(handler) {
-      var idx = this._handlers.indexOf(handler);
+      var idx = this.handlers.indexOf(handler);
       if (idx < 0) {
         return;
       }
@@ -55,8 +56,8 @@ define(["exports"], function (exports) {
     };
 
     WidgetEvent.prototype.raise = function raise() {
-      for (var i = 0; i < this._handlers.length; i++) {
-        this._handlers[i].apply(this, arguments);
+      for (var i = 0; i < this.handlers.length; i++) {
+        this.handlers[i].apply(this, arguments);
       }
     };
 

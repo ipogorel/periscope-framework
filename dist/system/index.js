@@ -1,6 +1,6 @@
 'use strict';
 
-System.register(['./authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (_export, _context) {
+System.register(['./authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/dashboardbehavior/drill-down-handle-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './navigator/widgetbehavior/drill-down-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (_export, _context) {
   "use strict";
 
   return {
@@ -380,142 +380,158 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
       }
 
       _export(_exportObj47);
-    }, function (_navigatorEventsWidgetEventMessage) {
+    }, function (_navigatorDashboardbehaviorDrillDownHandleBehavior) {
       var _exportObj48 = {};
 
-      for (var _key48 in _navigatorEventsWidgetEventMessage) {
-        if (_key48 !== "default") _exportObj48[_key48] = _navigatorEventsWidgetEventMessage[_key48];
+      for (var _key48 in _navigatorDashboardbehaviorDrillDownHandleBehavior) {
+        if (_key48 !== "default") _exportObj48[_key48] = _navigatorDashboardbehaviorDrillDownHandleBehavior[_key48];
       }
 
       _export(_exportObj48);
-    }, function (_navigatorEventsWidgetEvent) {
+    }, function (_navigatorEventsWidgetEventMessage) {
       var _exportObj49 = {};
 
-      for (var _key49 in _navigatorEventsWidgetEvent) {
-        if (_key49 !== "default") _exportObj49[_key49] = _navigatorEventsWidgetEvent[_key49];
+      for (var _key49 in _navigatorEventsWidgetEventMessage) {
+        if (_key49 !== "default") _exportObj49[_key49] = _navigatorEventsWidgetEventMessage[_key49];
       }
 
       _export(_exportObj49);
-    }, function (_navigatorWidgetbehaviorWidgetBehavior) {
+    }, function (_navigatorEventsWidgetEvent) {
       var _exportObj50 = {};
 
-      for (var _key50 in _navigatorWidgetbehaviorWidgetBehavior) {
-        if (_key50 !== "default") _exportObj50[_key50] = _navigatorWidgetbehaviorWidgetBehavior[_key50];
+      for (var _key50 in _navigatorEventsWidgetEvent) {
+        if (_key50 !== "default") _exportObj50[_key50] = _navigatorEventsWidgetEvent[_key50];
       }
 
       _export(_exportObj50);
-    }, function (_navigatorWidgetbehaviorListnerBehavior) {
+    }, function (_navigatorWidgetbehaviorWidgetBehavior) {
       var _exportObj51 = {};
 
-      for (var _key51 in _navigatorWidgetbehaviorListnerBehavior) {
-        if (_key51 !== "default") _exportObj51[_key51] = _navigatorWidgetbehaviorListnerBehavior[_key51];
+      for (var _key51 in _navigatorWidgetbehaviorWidgetBehavior) {
+        if (_key51 !== "default") _exportObj51[_key51] = _navigatorWidgetbehaviorWidgetBehavior[_key51];
       }
 
       _export(_exportObj51);
-    }, function (_navigatorWidgetbehaviorBroadcasterBehavior) {
+    }, function (_navigatorWidgetbehaviorListnerBehavior) {
       var _exportObj52 = {};
 
-      for (var _key52 in _navigatorWidgetbehaviorBroadcasterBehavior) {
-        if (_key52 !== "default") _exportObj52[_key52] = _navigatorWidgetbehaviorBroadcasterBehavior[_key52];
+      for (var _key52 in _navigatorWidgetbehaviorListnerBehavior) {
+        if (_key52 !== "default") _exportObj52[_key52] = _navigatorWidgetbehaviorListnerBehavior[_key52];
       }
 
       _export(_exportObj52);
-    }, function (_navigatorWidgetbehaviorDataActivatedBehavior) {
+    }, function (_navigatorWidgetbehaviorBroadcasterBehavior) {
       var _exportObj53 = {};
 
-      for (var _key53 in _navigatorWidgetbehaviorDataActivatedBehavior) {
-        if (_key53 !== "default") _exportObj53[_key53] = _navigatorWidgetbehaviorDataActivatedBehavior[_key53];
+      for (var _key53 in _navigatorWidgetbehaviorBroadcasterBehavior) {
+        if (_key53 !== "default") _exportObj53[_key53] = _navigatorWidgetbehaviorBroadcasterBehavior[_key53];
       }
 
       _export(_exportObj53);
-    }, function (_navigatorWidgetbehaviorDataFieldSelectedBehavior) {
+    }, function (_navigatorWidgetbehaviorDataActivatedBehavior) {
       var _exportObj54 = {};
 
-      for (var _key54 in _navigatorWidgetbehaviorDataFieldSelectedBehavior) {
-        if (_key54 !== "default") _exportObj54[_key54] = _navigatorWidgetbehaviorDataFieldSelectedBehavior[_key54];
+      for (var _key54 in _navigatorWidgetbehaviorDataActivatedBehavior) {
+        if (_key54 !== "default") _exportObj54[_key54] = _navigatorWidgetbehaviorDataActivatedBehavior[_key54];
       }
 
       _export(_exportObj54);
-    }, function (_navigatorWidgetbehaviorDataFilterChangedBehavior) {
+    }, function (_navigatorWidgetbehaviorDataFieldSelectedBehavior) {
       var _exportObj55 = {};
 
-      for (var _key55 in _navigatorWidgetbehaviorDataFilterChangedBehavior) {
-        if (_key55 !== "default") _exportObj55[_key55] = _navigatorWidgetbehaviorDataFilterChangedBehavior[_key55];
+      for (var _key55 in _navigatorWidgetbehaviorDataFieldSelectedBehavior) {
+        if (_key55 !== "default") _exportObj55[_key55] = _navigatorWidgetbehaviorDataFieldSelectedBehavior[_key55];
       }
 
       _export(_exportObj55);
-    }, function (_navigatorWidgetbehaviorDataFilterHandleBehavior) {
+    }, function (_navigatorWidgetbehaviorDataFilterChangedBehavior) {
       var _exportObj56 = {};
 
-      for (var _key56 in _navigatorWidgetbehaviorDataFilterHandleBehavior) {
-        if (_key56 !== "default") _exportObj56[_key56] = _navigatorWidgetbehaviorDataFilterHandleBehavior[_key56];
+      for (var _key56 in _navigatorWidgetbehaviorDataFilterChangedBehavior) {
+        if (_key56 !== "default") _exportObj56[_key56] = _navigatorWidgetbehaviorDataFilterChangedBehavior[_key56];
       }
 
       _export(_exportObj56);
-    }, function (_navigatorWidgetbehaviorDataSelectedBehavior) {
+    }, function (_navigatorWidgetbehaviorDataFilterHandleBehavior) {
       var _exportObj57 = {};
 
-      for (var _key57 in _navigatorWidgetbehaviorDataSelectedBehavior) {
-        if (_key57 !== "default") _exportObj57[_key57] = _navigatorWidgetbehaviorDataSelectedBehavior[_key57];
+      for (var _key57 in _navigatorWidgetbehaviorDataFilterHandleBehavior) {
+        if (_key57 !== "default") _exportObj57[_key57] = _navigatorWidgetbehaviorDataFilterHandleBehavior[_key57];
       }
 
       _export(_exportObj57);
-    }, function (_navigatorWidgetbehaviorDataSourceChangedBehavior) {
+    }, function (_navigatorWidgetbehaviorDataSelectedBehavior) {
       var _exportObj58 = {};
 
-      for (var _key58 in _navigatorWidgetbehaviorDataSourceChangedBehavior) {
-        if (_key58 !== "default") _exportObj58[_key58] = _navigatorWidgetbehaviorDataSourceChangedBehavior[_key58];
+      for (var _key58 in _navigatorWidgetbehaviorDataSelectedBehavior) {
+        if (_key58 !== "default") _exportObj58[_key58] = _navigatorWidgetbehaviorDataSelectedBehavior[_key58];
       }
 
       _export(_exportObj58);
-    }, function (_navigatorWidgetbehaviorDataSourceHandleBehavior) {
+    }, function (_navigatorWidgetbehaviorDataSourceChangedBehavior) {
       var _exportObj59 = {};
 
-      for (var _key59 in _navigatorWidgetbehaviorDataSourceHandleBehavior) {
-        if (_key59 !== "default") _exportObj59[_key59] = _navigatorWidgetbehaviorDataSourceHandleBehavior[_key59];
+      for (var _key59 in _navigatorWidgetbehaviorDataSourceChangedBehavior) {
+        if (_key59 !== "default") _exportObj59[_key59] = _navigatorWidgetbehaviorDataSourceChangedBehavior[_key59];
       }
 
       _export(_exportObj59);
-    }, function (_navigatorWidgetbehaviorSettingsHandleBehavior) {
+    }, function (_navigatorWidgetbehaviorDataSourceHandleBehavior) {
       var _exportObj60 = {};
 
-      for (var _key60 in _navigatorWidgetbehaviorSettingsHandleBehavior) {
-        if (_key60 !== "default") _exportObj60[_key60] = _navigatorWidgetbehaviorSettingsHandleBehavior[_key60];
+      for (var _key60 in _navigatorWidgetbehaviorDataSourceHandleBehavior) {
+        if (_key60 !== "default") _exportObj60[_key60] = _navigatorWidgetbehaviorDataSourceHandleBehavior[_key60];
       }
 
       _export(_exportObj60);
-    }, function (_stateStateDiscriminator) {
+    }, function (_navigatorWidgetbehaviorSettingsHandleBehavior) {
       var _exportObj61 = {};
 
-      for (var _key61 in _stateStateDiscriminator) {
-        if (_key61 !== "default") _exportObj61[_key61] = _stateStateDiscriminator[_key61];
+      for (var _key61 in _navigatorWidgetbehaviorSettingsHandleBehavior) {
+        if (_key61 !== "default") _exportObj61[_key61] = _navigatorWidgetbehaviorSettingsHandleBehavior[_key61];
       }
 
       _export(_exportObj61);
-    }, function (_stateStateUrlParser) {
+    }, function (_navigatorWidgetbehaviorDrillDownBehavior) {
       var _exportObj62 = {};
 
-      for (var _key62 in _stateStateUrlParser) {
-        if (_key62 !== "default") _exportObj62[_key62] = _stateStateUrlParser[_key62];
+      for (var _key62 in _navigatorWidgetbehaviorDrillDownBehavior) {
+        if (_key62 !== "default") _exportObj62[_key62] = _navigatorWidgetbehaviorDrillDownBehavior[_key62];
       }
 
       _export(_exportObj62);
-    }, function (_stateStorage) {
+    }, function (_stateStateDiscriminator) {
       var _exportObj63 = {};
 
-      for (var _key63 in _stateStorage) {
-        if (_key63 !== "default") _exportObj63[_key63] = _stateStorage[_key63];
+      for (var _key63 in _stateStateDiscriminator) {
+        if (_key63 !== "default") _exportObj63[_key63] = _stateStateDiscriminator[_key63];
       }
 
       _export(_exportObj63);
-    }, function (_stateUserStateStorage) {
+    }, function (_stateStateUrlParser) {
       var _exportObj64 = {};
 
-      for (var _key64 in _stateUserStateStorage) {
-        if (_key64 !== "default") _exportObj64[_key64] = _stateUserStateStorage[_key64];
+      for (var _key64 in _stateStateUrlParser) {
+        if (_key64 !== "default") _exportObj64[_key64] = _stateStateUrlParser[_key64];
       }
 
       _export(_exportObj64);
+    }, function (_stateStorage) {
+      var _exportObj65 = {};
+
+      for (var _key65 in _stateStorage) {
+        if (_key65 !== "default") _exportObj65[_key65] = _stateStorage[_key65];
+      }
+
+      _export(_exportObj65);
+    }, function (_stateUserStateStorage) {
+      var _exportObj66 = {};
+
+      for (var _key66 in _stateUserStateStorage) {
+        if (_key66 !== "default") _exportObj66[_key66] = _stateUserStateStorage[_key66];
+      }
+
+      _export(_exportObj66);
     }],
     execute: function () {
       function configure(aurelia) {

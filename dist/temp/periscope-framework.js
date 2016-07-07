@@ -3,13 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.DefaultHttpClient = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DrillDownBehaviorConfiguration = exports.DrillDownBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DrillDownHandleBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.Schema = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.ExpressionParser = exports.IntellisenceManager = exports.DefaultHttpClient = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _dec, _class, _class6, _dec2, _class7, _dec3, _class8, _dec4, _class10, _dec5, _class12, _dec6, _desc, _value, _class14;
 
-var _dec, _class, _class6, _dec2, _class7, _dec3, _class8, _dec4, _class9, _dec5, _class11, _dec6, _desc, _value, _class13;
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _lodash = require('lodash');
 
@@ -74,6 +74,104 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var CacheManager = exports.CacheManager = function () {
+  function CacheManager(storage) {
+    _classCallCheck(this, CacheManager);
+
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  CacheManager.prototype.startCleaner = function startCleaner() {
+    var _this = this;
+
+    if (!this.cleaner) {
+      (function () {
+        var self = _this;
+        _this.cleaner = window.setInterval(function () {
+          self._cacheStorage.removeExpired();
+        }, _this._cleanInterval);
+      })();
+    }
+  };
+
+  CacheManager.prototype.stopCleaner = function stopCleaner() {
+    if (this.cleaner) window.clearInterval(this.cleaner);
+  };
+
+  CacheManager.prototype.getStorage = function getStorage() {
+    return this._cacheStorage;
+  };
+
+  _createClass(CacheManager, [{
+    key: 'cleanInterval',
+    get: function get() {
+      return this._cleanInterval;
+    }
+  }]);
+
+  return CacheManager;
+}();
+
+var CacheStorage = exports.CacheStorage = function () {
+  function CacheStorage() {
+    _classCallCheck(this, CacheStorage);
+  }
+
+  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
+
+  CacheStorage.prototype.getItem = function getItem(key) {};
+
+  CacheStorage.prototype.removeItem = function removeItem(key) {};
+
+  CacheStorage.prototype.removeExpired = function removeExpired() {};
+
+  return CacheStorage;
+}();
+
+var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
+  _inherits(MemoryCacheStorage, _CacheStorage);
+
+  function MemoryCacheStorage() {
+    _classCallCheck(this, MemoryCacheStorage);
+
+    var _this2 = _possibleConstructorReturn(this, _CacheStorage.call(this));
+
+    _this2._cache = {};
+    return _this2;
+  }
+
+  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({}, value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  };
+
+  MemoryCacheStorage.prototype.getItem = function getItem(key) {
+    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
+    return null;
+  };
+
+  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
+    delete this._cache[key];
+  };
+
+  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
+    var self = this;
+    _.forOwn(self._cache, function (v, k) {
+      if (self._cache[k].exp < Date.now()) {
+        self.removeItem(k);
+      }
+    });
+  };
+
+  return MemoryCacheStorage;
+}(CacheStorage);
+
 var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0, _aureliaFramework.inject)(Element, PermissionsManager), _dec(_class = function () {
   function PermissionsCustomAttribute(element, permissionsManager) {
     _classCallCheck(this, PermissionsCustomAttribute);
@@ -83,7 +181,7 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
   }
 
   PermissionsCustomAttribute.prototype.bind = function bind() {
-    var _this = this;
+    var _this3 = this;
 
     if (!this.value) return;
     var rGroup = "";
@@ -111,11 +209,11 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
 
       var p = _ref;
 
-      _this.permissionsManager.hasPermisson(p, rGroup).then(function (result) {
+      _this3.permissionsManager.hasPermisson(p, rGroup).then(function (result) {
 
         if (result) {
-          if (p === 'read') _this.element.hidden = false;
-          if (p === 'write') _this.element.disabled = false;
+          if (p === 'read') _this3.element.hidden = false;
+          if (p === 'write') _this3.element.disabled = false;
         }
       }, function (err) {});
     };
@@ -123,9 +221,9 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
     for (var _iterator = permissions, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
       var _ref;
 
-      var _ret = _loop();
+      var _ret2 = _loop();
 
-      if (_ret === 'break') break;
+      if (_ret2 === 'break') break;
     }
   };
 
@@ -188,104 +286,6 @@ var PermissionsManager = exports.PermissionsManager = function () {
 
   return PermissionsManager;
 }();
-
-var CacheManager = exports.CacheManager = function () {
-  function CacheManager(storage) {
-    _classCallCheck(this, CacheManager);
-
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  CacheManager.prototype.startCleaner = function startCleaner() {
-    var _this2 = this;
-
-    if (!this.cleaner) {
-      (function () {
-        var self = _this2;
-        _this2.cleaner = window.setInterval(function () {
-          self._cacheStorage.removeExpired();
-        }, _this2._cleanInterval);
-      })();
-    }
-  };
-
-  CacheManager.prototype.stopCleaner = function stopCleaner() {
-    if (this.cleaner) window.clearInterval(this.cleaner);
-  };
-
-  CacheManager.prototype.getStorage = function getStorage() {
-    return this._cacheStorage;
-  };
-
-  _createClass(CacheManager, [{
-    key: 'cleanInterval',
-    get: function get() {
-      return this._cleanInterval;
-    }
-  }]);
-
-  return CacheManager;
-}();
-
-var CacheStorage = exports.CacheStorage = function () {
-  function CacheStorage() {
-    _classCallCheck(this, CacheStorage);
-  }
-
-  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
-
-  CacheStorage.prototype.getItem = function getItem(key) {};
-
-  CacheStorage.prototype.removeItem = function removeItem(key) {};
-
-  CacheStorage.prototype.removeExpired = function removeExpired() {};
-
-  return CacheStorage;
-}();
-
-var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
-  _inherits(MemoryCacheStorage, _CacheStorage);
-
-  function MemoryCacheStorage() {
-    _classCallCheck(this, MemoryCacheStorage);
-
-    var _this3 = _possibleConstructorReturn(this, _CacheStorage.call(this));
-
-    _this3._cache = {};
-    return _this3;
-  }
-
-  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({}, value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  };
-
-  MemoryCacheStorage.prototype.getItem = function getItem(key) {
-    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
-    return null;
-  };
-
-  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
-    delete this._cache[key];
-  };
-
-  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
-    var self = this;
-    _.forOwn(self._cache, function (v, k) {
-      if (self._cache[k].exp < Date.now()) {
-        self.removeItem(k);
-      }
-    });
-  };
-
-  return MemoryCacheStorage;
-}(CacheStorage);
 
 var DashboardConfiguration = exports.DashboardConfiguration = function () {
   function DashboardConfiguration() {
@@ -544,192 +544,6 @@ var Query = exports.Query = function () {
   return Query;
 }();
 
-var IntellisenceManager = exports.IntellisenceManager = function () {
-  function IntellisenceManager(parser, dataSource, availableFields) {
-    _classCallCheck(this, IntellisenceManager);
-
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  IntellisenceManager.prototype.populate = function populate(searchStr, lastWord) {
-    var parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  };
-
-  IntellisenceManager.prototype._getParserError = function _getParserError(searchStr) {
-    var result = null;
-    if (searchStr != "") {
-      try {
-        this.parser.parse(searchStr);
-        try {
-          this.parser.parse(searchStr + "^");
-        } catch (ex2) {
-          result = ex2;
-        }
-      } catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  };
-
-  IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-
-    var _loop2 = function _loop2(i) {
-      var j = fieldsArray.findIndex(function (x) {
-        return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
-      });
-      if (j >= 0) return {
-          v: fieldsArray[j]
-        };
-    };
-
-    for (var i = tmpArr.length - 1; i >= 0; i--) {
-      var _ret3 = _loop2(i);
-
-      if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
-    }
-    return "";
-  };
-
-  IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (var _iterator3 = ex.expected, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-        var _ref3;
-
-        if (_isArray3) {
-          if (_i3 >= _iterator3.length) break;
-          _ref3 = _iterator3[_i3++];
-        } else {
-          _i3 = _iterator3.next();
-          if (_i3.done) break;
-          _ref3 = _i3.value;
-        }
-
-        var desc = _ref3;
-
-        if (desc.type == "other" || desc.type == "end") {
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  };
-
-  IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
-    var _this6 = this;
-
-    var type = '';
-    var result = [];
-    var lastFldName = '';
-
-    if (!pegException) return new Promise(function (resolve, reject) {
-      resolve([]);
-    });
-
-    var tokenName = this._interpreteParserError(pegException);
-    return new Promise(function (resolve, reject) {
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord ? _.filter(_this6.fields, function (f) {
-            return f.toLowerCase().startsWith(lastWord.toLowerCase());
-          }) : _this6.fields;
-          resolve(_this6._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(_this6._normalizeData("operator", _this6._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = _this6._getLastFieldName(searchStr, _this6.fields, pegException.column);
-          _this6._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this6._normalizeData("string", data));
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = _this6._getLastFieldName(searchStr, _this6.fields, pegException.column);
-          _this6._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this6._normalizeData("array_string", data));
-          });
-          break;
-          resolve(_this6._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(_this6._normalizeData("operator", _this6._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(_this6._normalizeData("operator", _this6._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  };
-
-  IntellisenceManager.prototype._getFieldValuesArray = function _getFieldValuesArray(fieldName, lastWord) {
-    var query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord) query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(function (dH) {
-      var result = _.map(dH.data, fieldName);
-      return _.uniq(result).sort();
-    });
-  };
-
-  IntellisenceManager.prototype._getStringComparisonOperatorsArray = function _getStringComparisonOperatorsArray() {
-    return ["=", "in"];
-  };
-
-  IntellisenceManager.prototype._getLogicalOperatorsArray = function _getLogicalOperatorsArray() {
-    return ["and", "or"];
-  };
-
-  IntellisenceManager.prototype._getComparisonOperatorsArray = function _getComparisonOperatorsArray() {
-    return ["!=", "=", ">", "<", ">=", "<="];
-  };
-
-  IntellisenceManager.prototype._normalizeData = function _normalizeData(type, dataArray) {
-    return _.map(dataArray, function (d) {
-      return { type: type, value: d };
-    });
-  };
-
-  return IntellisenceManager;
-}();
-
-var ExpressionParser = exports.ExpressionParser = function () {
-  function ExpressionParser(grammarText) {
-    _classCallCheck(this, ExpressionParser);
-
-    this.parser = peg.buildParser(grammarText);
-  }
-
-  ExpressionParser.prototype.parse = function parse(searchString) {
-    return this.parser.parse(searchString);
-  };
-
-  ExpressionParser.prototype.validate = function validate(searchString) {
-    try {
-      this.parser.parse(searchString);
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  };
-
-  return ExpressionParser;
-}();
-
 var DataHelper = exports.DataHelper = function () {
   function DataHelper() {
     _classCallCheck(this, DataHelper);
@@ -931,20 +745,206 @@ var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
   function DefaultHttpClient() {
     _classCallCheck(this, DefaultHttpClient);
 
-    var _this7 = _possibleConstructorReturn(this, _HttpClient.call(this));
+    var _this6 = _possibleConstructorReturn(this, _HttpClient.call(this));
 
-    _this7.configure(function (config) {
+    _this6.configure(function (config) {
       config.useStandardConfiguration().withDefaults({
         headers: {
           'Accept': 'application/json'
         }
       });
     });
-    return _this7;
+    return _this6;
   }
 
   return DefaultHttpClient;
 }(_aureliaFetchClient.HttpClient);
+
+var IntellisenceManager = exports.IntellisenceManager = function () {
+  function IntellisenceManager(parser, dataSource, availableFields) {
+    _classCallCheck(this, IntellisenceManager);
+
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  IntellisenceManager.prototype.populate = function populate(searchStr, lastWord) {
+    var parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  };
+
+  IntellisenceManager.prototype._getParserError = function _getParserError(searchStr) {
+    var result = null;
+    if (searchStr != "") {
+      try {
+        this.parser.parse(searchStr);
+        try {
+          this.parser.parse(searchStr + "^");
+        } catch (ex2) {
+          result = ex2;
+        }
+      } catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  };
+
+  IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+
+    var _loop2 = function _loop2(i) {
+      var j = fieldsArray.findIndex(function (x) {
+        return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
+      });
+      if (j >= 0) return {
+          v: fieldsArray[j]
+        };
+    };
+
+    for (var i = tmpArr.length - 1; i >= 0; i--) {
+      var _ret3 = _loop2(i);
+
+      if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+    }
+    return "";
+  };
+
+  IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (var _iterator3 = ex.expected, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+        var _ref3;
+
+        if (_isArray3) {
+          if (_i3 >= _iterator3.length) break;
+          _ref3 = _iterator3[_i3++];
+        } else {
+          _i3 = _iterator3.next();
+          if (_i3.done) break;
+          _ref3 = _i3.value;
+        }
+
+        var desc = _ref3;
+
+        if (desc.type == "other" || desc.type == "end") {
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  };
+
+  IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
+    var _this7 = this;
+
+    var type = '';
+    var result = [];
+    var lastFldName = '';
+
+    if (!pegException) return new Promise(function (resolve, reject) {
+      resolve([]);
+    });
+
+    var tokenName = this._interpreteParserError(pegException);
+    return new Promise(function (resolve, reject) {
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord ? _.filter(_this7.fields, function (f) {
+            return f.toLowerCase().startsWith(lastWord.toLowerCase());
+          }) : _this7.fields;
+          resolve(_this7._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(_this7._normalizeData("operator", _this7._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = _this7._getLastFieldName(searchStr, _this7.fields, pegException.column);
+          _this7._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this7._normalizeData("string", data));
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = _this7._getLastFieldName(searchStr, _this7.fields, pegException.column);
+          _this7._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this7._normalizeData("array_string", data));
+          });
+          break;
+          resolve(_this7._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(_this7._normalizeData("operator", _this7._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(_this7._normalizeData("operator", _this7._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  };
+
+  IntellisenceManager.prototype._getFieldValuesArray = function _getFieldValuesArray(fieldName, lastWord) {
+    var query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord) query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(function (dH) {
+      var result = _.map(dH.data, fieldName);
+      return _.uniq(result).sort();
+    });
+  };
+
+  IntellisenceManager.prototype._getStringComparisonOperatorsArray = function _getStringComparisonOperatorsArray() {
+    return ["=", "in"];
+  };
+
+  IntellisenceManager.prototype._getLogicalOperatorsArray = function _getLogicalOperatorsArray() {
+    return ["and", "or"];
+  };
+
+  IntellisenceManager.prototype._getComparisonOperatorsArray = function _getComparisonOperatorsArray() {
+    return ["!=", "=", ">", "<", ">=", "<="];
+  };
+
+  IntellisenceManager.prototype._normalizeData = function _normalizeData(type, dataArray) {
+    return _.map(dataArray, function (d) {
+      return { type: type, value: d };
+    });
+  };
+
+  return IntellisenceManager;
+}();
+
+var ExpressionParser = exports.ExpressionParser = function () {
+  function ExpressionParser(grammarText) {
+    _classCallCheck(this, ExpressionParser);
+
+    this.parser = peg.buildParser(grammarText);
+  }
+
+  ExpressionParser.prototype.parse = function parse(searchString) {
+    return this.parser.parse(searchString);
+  };
+
+  ExpressionParser.prototype.validate = function validate(searchString) {
+    try {
+      this.parser.parse(searchString);
+      return true;
+    } catch (ex) {
+      return false;
+    }
+  };
+
+  return ExpressionParser;
+}();
 
 var DashboardManager = exports.DashboardManager = function () {
   function DashboardManager() {
@@ -1434,25 +1434,18 @@ var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework
   return UserStateStorage;
 }()) || _class8);
 
-var Schema = exports.Schema = function Schema() {
-  _classCallCheck(this, Schema);
-
-  this.fields = [];
-  this.parameters = [];
-};
-
 var DataService = exports.DataService = function () {
   function DataService() {
     _classCallCheck(this, DataService);
   }
 
   DataService.prototype.configure = function configure(configuration) {
-    this.url = configuration.url;
-    this.schemaProvider = configuration.schemaProvider;
-    this.filterParser = configuration.filterParser;
-    this.totalMapper = configuration.totalMapper;
-    this.dataMapper = configuration.dataMapper;
-    this.httpClient = configuration.httpClient;
+    this.url = configuration.url ? configuration.url : this.url;
+    this.schemaProvider = configuration.schemaProvider ? configuration.schemaProvider : this.schemaProvider;
+    this.filterParser = configuration.filterParser ? configuration.filterParser : this.filterParser;
+    this.totalMapper = configuration.totalMapper ? configuration.totalMapper : this.totalMapper;
+    this.dataMapper = configuration.dataMapper ? configuration.dataMapper : this.dataMapper;
+    this.httpClient = configuration.httpClient ? configuration.httpClient : this.httpClient;
   };
 
   DataService.prototype.getSchema = function getSchema() {
@@ -1519,7 +1512,7 @@ var DataServiceConfiguration = exports.DataServiceConfiguration = function () {
   return DataServiceConfiguration;
 }();
 
-var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.transient)(), _dec4(_class9 = function (_DataService) {
+var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.transient)(), _dec4(_class10 = function (_DataService) {
   _inherits(JsonDataService, _DataService);
 
   function JsonDataService() {
@@ -1535,7 +1528,7 @@ var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.t
     var _this11 = this;
 
     var url = this.url;
-    if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
+    if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : options.filter;
     return this.httpClient.fetch(url).then(function (response) {
       return response.json();
     }).then(function (jsonData) {
@@ -1547,8 +1540,8 @@ var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.t
   };
 
   return JsonDataService;
-}(DataService)) || _class9);
-var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec5(_class11 = function (_DataService2) {
+}(DataService)) || _class10);
+var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec5(_class12 = function (_DataService2) {
   _inherits(StaticJsonDataService, _DataService2);
 
   function StaticJsonDataService() {
@@ -1586,7 +1579,34 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   };
 
   return StaticJsonDataService;
-}(DataService)) || _class11);
+}(DataService)) || _class12);
+
+var Schema = exports.Schema = function Schema() {
+  _classCallCheck(this, Schema);
+
+  this.fields = [];
+  this.parameters = [];
+};
+
+var FormatValueConverter = function () {
+  function FormatValueConverter() {
+    _classCallCheck(this, FormatValueConverter);
+  }
+
+  FormatValueConverter.format = function format(value, _format) {
+    if (DataHelper.isDate(value)) return (0, _moment2.default)(value).format(_format);
+    if (DataHelper.isNumber(value)) return (0, _numeral2.default)(value).format(_format);
+    return value;
+  };
+
+  FormatValueConverter.prototype.toView = function toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  };
+
+  return FormatValueConverter;
+}();
+
+exports.FormatValueConverter = FormatValueConverter;
 
 
 var DSL_GRAMMAR_EXPRESSION = '\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = "record.";\n \t\tvar result = "";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))\n              result = prefix + fieldname + ".toLowerCase().includes(\'" + v.substring(1,value.length-1) + "\')"\n          else if (v.indexOf("%")===0)\n              result = prefix + fieldname + ".toLowerCase().endsWith(\'" + v.substring(1,value.length) + "\')"\n          else if (v.lastIndexOf("%")===(value.length-1))\n              result = prefix + fieldname + ".toLowerCase().startsWith(\'" + v.substring(0,value.length-1) + "\')"\n        }\n        if (result == "")\n          result = prefix + fieldname + ".toLowerCase() == \'" + v + "\'";\n\n        result="(" + prefix + fieldname + "!=null && " + result + ")"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = "";\n    var values = value.split(\',\');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = \'[\\"\\\']\';\n      var re = new RegExp(find, \'g\');\n      var v = values[i].replace(new RegExp(find, \'g\'), "");\n      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += " || ";\n    }\n    if (result.length>0)\n      result = "(" + result + ")"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin "LOGIC_OPERATOR"\n     = and\n     / or\n\nand = space* "and"i space* {return " && ";}\n\nor = space* "or"i space* {return " || ";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}\n          / "(" space? e:expression space* ")" space* {return "(" + e +")";}\n\n\n\nvaluesArray "STRING_VALUES_ARRAY"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* "," space* v:stringValue) {return  nv}\n\n\n\ndateValue "DATE_VALUE"\n        = quote? dt:$(date+) quote? {return "\'" + dt + "\'";}\n\n\nstringValue  "STRING_VALUE"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return "";}\n\n\nnumericValue  "NUMERIC_VALUE"\n       = $(numeric+)\n\n\nop "OPERATOR"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq "STRING_OPERATOR_EQUAL"\n  = eq\n  / not_eq\n\nop_in "STRING_OPERATOR_IN"\n  = in\n\neq = space* "=" space* {return "==";}\n\nnot_eq = space* "!=" space* {return "!=";}\n\ngt = space* v:">" space* {return v;}\n\nge = space* v:">=" space* {return v;}\n\nlt = space* v:"<" space* {return v;}\n\nle = space* v:"<=" space* {return v;}\n\nin = space* v:"in" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield "FIELD_NAME"\n      = stringField\n     / numericField\n     / dateField\n\nstringField "STRING_FIELD_NAME"\n     = @S@\n\nnumericField "NUMERIC_FIELD_NAME"\n     = @N@\n\ndateField "DATE_FIELD_NAME"\n     = @D@\n\nquote = [\\\'\\"]\n\n\n';
@@ -1674,26 +1694,6 @@ var Grammar = exports.Grammar = function () {
 
   return Grammar;
 }();
-
-var FormatValueConverter = function () {
-  function FormatValueConverter() {
-    _classCallCheck(this, FormatValueConverter);
-  }
-
-  FormatValueConverter.format = function format(value, _format) {
-    if (DataHelper.isDate(value)) return (0, _moment2.default)(value).format(_format);
-    if (DataHelper.isNumber(value)) return (0, _numeral2.default)(value).format(_format);
-    return value;
-  };
-
-  FormatValueConverter.prototype.toView = function toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  };
-
-  return FormatValueConverter;
-}();
-
-exports.FormatValueConverter = FormatValueConverter;
 
 var DashboardBase = exports.DashboardBase = function () {
   function DashboardBase() {
@@ -1806,7 +1806,7 @@ var DashboardBase = exports.DashboardBase = function () {
   return DashboardBase;
 }();
 
-var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class13 = function () {
+var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class14 = function () {
   function LayoutWidget() {
     _classCallCheck(this, LayoutWidget);
 
@@ -1837,7 +1837,7 @@ var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.compute
   }]);
 
   return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class13.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class13.prototype, 'hasNavStack'), _class13.prototype)), _class13));
+}(), (_applyDecoratedDescriptor(_class14.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class14.prototype, 'hasNavStack'), _class14.prototype)), _class14));
 
 var Chart = exports.Chart = function (_Widget) {
   _inherits(Chart, _Widget);
@@ -2364,20 +2364,58 @@ var DashboardBehavior = exports.DashboardBehavior = function () {
   return DashboardBehavior;
 }();
 
-var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = function (_DashboardBehavior3) {
-  _inherits(ManageNavigationStackBehavior, _DashboardBehavior3);
+var DrillDownHandleBehavior = exports.DrillDownHandleBehavior = function (_DashboardBehavior3) {
+  _inherits(DrillDownHandleBehavior, _DashboardBehavior3);
+
+  function DrillDownHandleBehavior(settings) {
+    _classCallCheck(this, DrillDownHandleBehavior);
+
+    var _this25 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
+
+    _this25._channel = settings.channel;
+    _this25._widgetType = settings.widgetType;
+    _this25._widgetSettings = settings.widgetSettings;
+    _this25._eventAggregator = settings.eventAggregator;
+    _this25._widgetToReplaceName = settings.widgetToReplaceName;
+    return _this25;
+  }
+
+  DrillDownHandleBehavior.prototype.attach = function attach(dashboard) {
+    _DashboardBehavior3.prototype.attach.call(this, dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      w.dataFilter = message.params.dataFilter;
+      w.dataSource.transport.readService.configure({ url: message.params.dataServiceUrl });
+      w.refresh();
+    });
+  };
+
+  DrillDownHandleBehavior.prototype.detach = function detach() {
+    _DashboardBehavior3.prototype.detach.call(this, dashboard);
+    if (this.subscription) this.subscription.dispose();
+  };
+
+  return DrillDownHandleBehavior;
+}(DashboardBehavior);
+
+var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = function (_DashboardBehavior4) {
+  _inherits(ManageNavigationStackBehavior, _DashboardBehavior4);
 
   function ManageNavigationStackBehavior(eventAggregator) {
     _classCallCheck(this, ManageNavigationStackBehavior);
 
-    var _this25 = _possibleConstructorReturn(this, _DashboardBehavior3.call(this));
+    var _this26 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
 
-    _this25._eventAggregator = eventAggregator;
-    return _this25;
+    _this26._eventAggregator = eventAggregator;
+    return _this26;
   }
 
   ManageNavigationStackBehavior.prototype.attach = function attach(dashboard) {
-    _DashboardBehavior3.prototype.attach.call(this, dashboard);
+    _DashboardBehavior4.prototype.attach.call(this, dashboard);
     var me = this;
 
     this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", function (message) {
@@ -2390,33 +2428,33 @@ var ManageNavigationStackBehavior = exports.ManageNavigationStackBehavior = func
   };
 
   ManageNavigationStackBehavior.prototype.detach = function detach() {
-    _DashboardBehavior3.prototype.detach.call(this, dashboard);
+    _DashboardBehavior4.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
   return ManageNavigationStackBehavior;
 }(DashboardBehavior);
 
-var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_DashboardBehavior4) {
-  _inherits(ReplaceWidgetBehavior, _DashboardBehavior4);
+var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_DashboardBehavior5) {
+  _inherits(ReplaceWidgetBehavior, _DashboardBehavior5);
 
   function ReplaceWidgetBehavior(settings) {
     _classCallCheck(this, ReplaceWidgetBehavior);
 
-    var _this26 = _possibleConstructorReturn(this, _DashboardBehavior4.call(this));
+    var _this27 = _possibleConstructorReturn(this, _DashboardBehavior5.call(this));
 
-    _this26._channel = settings.channel;
-    _this26._widgetType = settings.widgetType;
-    _this26._widgetSettings = settings.widgetSettings;
-    _this26._eventAggregator = settings.eventAggregator;
-    _this26._widgetToReplaceName = settings.widgetToReplaceName;
-    _this26._mapper = settings.mapper;
-    _this26._queryPattern = settings.queryPattern;
-    return _this26;
+    _this27._channel = settings.channel;
+    _this27._widgetType = settings.widgetType;
+    _this27._widgetSettings = settings.widgetSettings;
+    _this27._eventAggregator = settings.eventAggregator;
+    _this27._widgetToReplaceName = settings.widgetToReplaceName;
+    _this27._mapper = settings.mapper;
+    _this27._queryPattern = settings.queryPattern;
+    return _this27;
   }
 
   ReplaceWidgetBehavior.prototype.attach = function attach(dashboard) {
-    _DashboardBehavior4.prototype.attach.call(this, dashboard);
+    _DashboardBehavior5.prototype.attach.call(this, dashboard);
     var me = this;
     this.subscription = this._eventAggregator.subscribe(this._channel, function (message) {
       var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
@@ -2428,7 +2466,7 @@ var ReplaceWidgetBehavior = exports.ReplaceWidgetBehavior = function (_Dashboard
   };
 
   ReplaceWidgetBehavior.prototype.detach = function detach() {
-    _DashboardBehavior4.prototype.detach.call(this, dashboard);
+    _DashboardBehavior5.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
   };
 
@@ -2456,21 +2494,22 @@ var WidgetEvent = exports.WidgetEvent = function () {
   function WidgetEvent(widgetName) {
     _classCallCheck(this, WidgetEvent);
 
-    this._handlers = [];
+    this.handlers = [];
+
     this._originatorName = widgetName;
   }
 
   WidgetEvent.prototype.attach = function attach(handler) {
-    if (this._handlers.some(function (e) {
+    if (this.handlers.some(function (e) {
       return e === handler;
     })) {
       return;
     }
-    this._handlers.push(handler);
+    this.handlers.push(handler);
   };
 
   WidgetEvent.prototype.detach = function detach(handler) {
-    var idx = this._handlers.indexOf(handler);
+    var idx = this.handlers.indexOf(handler);
     if (idx < 0) {
       return;
     }
@@ -2478,8 +2517,8 @@ var WidgetEvent = exports.WidgetEvent = function () {
   };
 
   WidgetEvent.prototype.raise = function raise() {
-    for (var i = 0; i < this._handlers.length; i++) {
-      this._handlers[i].apply(this, arguments);
+    for (var i = 0; i < this.handlers.length; i++) {
+      this.handlers[i].apply(this, arguments);
     }
   };
 
@@ -2499,10 +2538,10 @@ var BroadcasterBehavior = exports.BroadcasterBehavior = function (_WidgetBehavio
   function BroadcasterBehavior() {
     _classCallCheck(this, BroadcasterBehavior);
 
-    var _this27 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
+    var _this28 = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-    _this27.type = BehaviorType.broadcaster;
-    return _this27;
+    _this28.type = BehaviorType.broadcaster;
+    return _this28;
   }
 
   BroadcasterBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2519,12 +2558,12 @@ var DataActivatedBehavior = exports.DataActivatedBehavior = function (_Broadcast
   function DataActivatedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataActivatedBehavior);
 
-    var _this28 = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
+    var _this29 = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-    _this28.channel = channel;
-    _this28.eventToAttach = "dataActivated";
-    _this28._eventAggregator = eventAggregator;
-    return _this28;
+    _this29.channel = channel;
+    _this29.eventToAttach = "dataActivated";
+    _this29._eventAggregator = eventAggregator;
+    return _this29;
   }
 
   DataActivatedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2551,13 +2590,13 @@ var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_B
   function DataFieldSelectedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataFieldSelectedBehavior);
 
-    var _this29 = _possibleConstructorReturn(this, _BroadcasterBehavior2.call(this));
+    var _this30 = _possibleConstructorReturn(this, _BroadcasterBehavior2.call(this));
 
-    _this29.channel = channel;
-    _this29.eventToAttach = "dataSelected";
+    _this30.channel = channel;
+    _this30.eventToAttach = "dataSelected";
 
-    _this29._eventAggregator = eventAggregator;
-    return _this29;
+    _this30._eventAggregator = eventAggregator;
+    return _this30;
   }
 
   DataFieldSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2585,12 +2624,12 @@ var DataFilterChangedBehavior = exports.DataFilterChangedBehavior = function (_B
   function DataFilterChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataFilterChangedBehavior);
 
-    var _this30 = _possibleConstructorReturn(this, _BroadcasterBehavior3.call(this));
+    var _this31 = _possibleConstructorReturn(this, _BroadcasterBehavior3.call(this));
 
-    _this30.channel = channel;
-    _this30.eventToAttach = "dataFilterChanged";
-    _this30._eventAggregator = eventAggregator;
-    return _this30;
+    _this31.channel = channel;
+    _this31.eventToAttach = "dataFilterChanged";
+    _this31._eventAggregator = eventAggregator;
+    return _this31;
   }
 
   DataFilterChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2616,12 +2655,12 @@ var DataFilterHandleBehavior = exports.DataFilterHandleBehavior = function (_Lis
   function DataFilterHandleBehavior(channel, eventAggregator, filterMapper) {
     _classCallCheck(this, DataFilterHandleBehavior);
 
-    var _this31 = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
+    var _this32 = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-    _this31.channel = channel;
-    _this31._eventAggregator = eventAggregator;
-    _this31._filterMapper = filterMapper;
-    return _this31;
+    _this32.channel = channel;
+    _this32._eventAggregator = eventAggregator;
+    _this32._filterMapper = filterMapper;
+    return _this32;
   }
 
   DataFilterHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2648,12 +2687,12 @@ var DataSelectedBehavior = exports.DataSelectedBehavior = function (_Broadcaster
   function DataSelectedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSelectedBehavior);
 
-    var _this32 = _possibleConstructorReturn(this, _BroadcasterBehavior4.call(this));
+    var _this33 = _possibleConstructorReturn(this, _BroadcasterBehavior4.call(this));
 
-    _this32.channel = channel;
-    _this32.eventToAttach = "dataSelected";
-    _this32._eventAggregator = eventAggregator;
-    return _this32;
+    _this33.channel = channel;
+    _this33.eventToAttach = "dataSelected";
+    _this33._eventAggregator = eventAggregator;
+    return _this33;
   }
 
   DataSelectedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2681,12 +2720,12 @@ var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_B
   function DataSourceChangedBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceChangedBehavior);
 
-    var _this33 = _possibleConstructorReturn(this, _BroadcasterBehavior5.call(this));
+    var _this34 = _possibleConstructorReturn(this, _BroadcasterBehavior5.call(this));
 
-    _this33.channel = channel;
-    _this33.eventToAttach = "dataSourceChanged";
-    _this33._eventAggregator = eventAggregator;
-    return _this33;
+    _this34.channel = channel;
+    _this34.eventToAttach = "dataSourceChanged";
+    _this34._eventAggregator = eventAggregator;
+    return _this34;
   }
 
   DataSourceChangedBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2712,12 +2751,12 @@ var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_Lis
   function DataSourceHandleBehavior(channel, eventAggregator) {
     _classCallCheck(this, DataSourceHandleBehavior);
 
-    var _this34 = _possibleConstructorReturn(this, _ListenerBehavior2.call(this));
+    var _this35 = _possibleConstructorReturn(this, _ListenerBehavior2.call(this));
 
-    _this34.channel = channel;
+    _this35.channel = channel;
 
-    _this34._eventAggregator = eventAggregator;
-    return _this34;
+    _this35._eventAggregator = eventAggregator;
+    return _this35;
   }
 
   DataSourceHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2737,16 +2776,69 @@ var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_Lis
   return DataSourceHandleBehavior;
 }(ListenerBehavior);
 
+var DrillDownBehavior = exports.DrillDownBehavior = function (_BroadcasterBehavior6) {
+  _inherits(DrillDownBehavior, _BroadcasterBehavior6);
+
+  function DrillDownBehavior(channel, eventAggregator, dataSource) {
+    _classCallCheck(this, DrillDownBehavior);
+
+    var _this36 = _possibleConstructorReturn(this, _BroadcasterBehavior6.call(this));
+
+    _this36.queryPattern = "";
+    _this36.dataServiceUrl = "";
+    _this36.isConfigured = false;
+
+    _this36.channel = channel;
+    _this36.eventToAttach = "dataActivated";
+    _this36._eventAggregator = eventAggregator;
+    _this36._dataSource = dataSource;
+    return _this36;
+  }
+
+  DrillDownBehavior.prototype.configure = function configure(drillDownBehaviorConfiguration) {
+    this.queryPattern = drillDownBehaviorConfiguration.queryPattern;
+    this.dataServiceUrl = drillDownBehaviorConfiguration.dataServiceUrl;
+    this.isConfigured = true;
+  };
+
+  DrillDownBehavior.prototype.attachToWidget = function attachToWidget(widget) {
+    _BroadcasterBehavior6.prototype.attachToWidget.call(this, widget);
+    var me = this;
+
+    widget[this.eventToAttach] = function (currentRecord) {
+      if (!me.isConfigured) return;
+      var message = new WidgetEventMessage(me.widget.name);
+      var query = me.queryPattern;
+      _.forOwn(currentRecord, function (value, key) {
+        query = StringHelper.replaceAll(query, "@" + key, value);
+      });
+
+      message.params = { dataFilter: query, dataServiceUrl: me.dataServiceUrl };
+      me._eventAggregator.publish(me.channel, message);
+    };
+  };
+
+  DrillDownBehavior.prototype.detach = function detach() {
+    _BroadcasterBehavior6.prototype.detach.call(this, dashboard);
+  };
+
+  return DrillDownBehavior;
+}(BroadcasterBehavior);
+
+var DrillDownBehaviorConfiguration = exports.DrillDownBehaviorConfiguration = function DrillDownBehaviorConfiguration() {
+  _classCallCheck(this, DrillDownBehaviorConfiguration);
+};
+
 var ListenerBehavior = exports.ListenerBehavior = function (_WidgetBehavior2) {
   _inherits(ListenerBehavior, _WidgetBehavior2);
 
   function ListenerBehavior() {
     _classCallCheck(this, ListenerBehavior);
 
-    var _this35 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
+    var _this37 = _possibleConstructorReturn(this, _WidgetBehavior2.call(this));
 
-    _this35.type = BehaviorType.listener;
-    return _this35;
+    _this37.type = BehaviorType.listener;
+    return _this37;
   }
 
   return ListenerBehavior;
@@ -2758,13 +2850,13 @@ var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_Listene
   function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
     _classCallCheck(this, SettingsHandleBehavior);
 
-    var _this36 = _possibleConstructorReturn(this, _ListenerBehavior3.call(this));
+    var _this38 = _possibleConstructorReturn(this, _ListenerBehavior3.call(this));
 
-    _this36.channel = channel;
-    _this36._eventAggregator = eventAggregator;
+    _this38.channel = channel;
+    _this38._eventAggregator = eventAggregator;
 
-    _this36._messageMapper = messageMapper;
-    return _this36;
+    _this38._messageMapper = messageMapper;
+    return _this38;
   }
 
   SettingsHandleBehavior.prototype.attachToWidget = function attachToWidget(widget) {
@@ -2907,17 +2999,17 @@ var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvi
   function StaticSchemaProvider(schema) {
     _classCallCheck(this, StaticSchemaProvider);
 
-    var _this38 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+    var _this40 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
 
-    _this38._schema = schema;
-    return _this38;
+    _this40._schema = schema;
+    return _this40;
   }
 
   StaticSchemaProvider.prototype.getSchema = function getSchema() {
-    var _this39 = this;
+    var _this41 = this;
 
     return new Promise(function (resolve, reject) {
-      resolve(_this39._schema);
+      resolve(_this41._schema);
     });
   };
 
@@ -2930,13 +3022,13 @@ var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaPro
   function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
     _classCallCheck(this, SwaggerSchemaProvider);
 
-    var _this40 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+    var _this42 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
 
-    _this40._modelName = modelName;
-    _this40._methodName = methodName;
-    _this40._apiName = apiName;
-    _this40._definitionUrl = definitionUrl;
-    return _this40;
+    _this42._modelName = modelName;
+    _this42._methodName = methodName;
+    _this42._apiName = apiName;
+    _this42._definitionUrl = definitionUrl;
+    return _this42;
   }
 
   SwaggerSchemaProvider.prototype.getSchema = function getSchema() {

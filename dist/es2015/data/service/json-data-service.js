@@ -13,7 +13,7 @@ export let JsonDataService = (_dec = transient(), _dec(_class = class JsonDataSe
 
   read(options) {
     let url = this.url;
-    if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : "";
+    if (options.filter) url += this.filterParser ? this.filterParser.getFilter(options.filter) : options.filter;
     return this.httpClient.fetch(url).then(response => {
       return response.json();
     }).then(jsonData => {
