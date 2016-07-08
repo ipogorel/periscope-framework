@@ -1,4 +1,12 @@
-﻿export class DataService{
+﻿import {EmptySchemaProvider} from './../schema/providers/empty-schema-provider';
+export class DataService{
+  url = "";
+  schemaProvider = new EmptySchemaProvider();
+  filterParser;
+  totalMapper;
+  dataMapper;
+  httpClient;
+
   configure(configuration){
     this.url = configuration.url?configuration.url:this.url;
     this.schemaProvider = configuration.schemaProvider?configuration.schemaProvider:this.schemaProvider;
@@ -7,13 +15,6 @@
     this.dataMapper = configuration.dataMapper?configuration.dataMapper:this.dataMapper;
     this.httpClient = configuration.httpClient?configuration.httpClient:this.httpClient;
   }
-
-  url;
-  schemaProvider;
-  filterParser;
-  totalMapper;
-  dataMapper;
-  httpClient;
 
   getSchema(){
     return this.schemaProvider.getSchema();

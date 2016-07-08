@@ -3,7 +3,7 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {inject,bindable,resolver,transient,customElement,useView,Decorators,noView,computedFrom} from 'aurelia-framework';
+import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 
 @inject(Element, PermissionsManager)
@@ -116,6 +116,81 @@ export class PermissionsManager {
   }
 ]
 */
+
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+    return null;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
 
 
 export class DataHolder {
@@ -359,6 +434,164 @@ export class Query {
 }
 
 
+export class IntellisenceManager {
+  constructor(parser, dataSource, availableFields){
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  populate(searchStr, lastWord){
+    let parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  }
+
+
+  _getParserError(searchStr) {
+    let result = null;
+    if (searchStr!="") {
+      try {
+        this.parser.parse(searchStr);
+        try{
+          this.parser.parse(searchStr + "^");
+        }
+        catch(ex2){
+          result = ex2;
+        }
+      }
+      catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  }
+
+
+
+  _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+    for (let i=(tmpArr.length-1); i>=0; i--)  {
+      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
+      if (j>=0)
+        return fieldsArray[j];
+      //return tmpArr[i].trim();
+    }
+    return "";
+  }
+
+  _interpreteParserError(ex){
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (let desc of ex.expected) {
+        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  }
+
+  _getIntellisenseData (searchStr, lastWord, pegException) {
+    let type='';
+    let result = [];
+    let lastFldName = '';
+
+    if (!pegException)
+      return new Promise((resolve, reject)=>{ resolve([])});
+
+    let tokenName = this._interpreteParserError(pegException);
+    return new Promise((resolve, reject)=>{
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
+          resolve(this._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("string", data))
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("array_string", data))
+          });
+          break;
+          resolve(this._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  }
+
+
+  _getFieldValuesArray(fieldName, lastWord) {
+    let query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord)
+      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(dH=>{
+      var result = _.map(dH.data,fieldName);
+      return _.uniq(result).sort();
+    })
+  }
+
+  _getStringComparisonOperatorsArray() {
+    return (["=", "in"]);
+  }
+
+  _getLogicalOperatorsArray() {
+    return (["and", "or"]);
+  }
+
+  _getComparisonOperatorsArray() {
+    return (["!=", "=", ">", "<", ">=", "<="])
+  }
+
+  _normalizeData(type, dataArray) {
+    return _.map(dataArray,d=>{ return { type: type, value: d }});
+  }
+}
+
+export class ExpressionParser {
+
+  constructor(grammarText) {
+    this.parser =  peg.buildParser(grammarText);
+  }
+
+  parse(searchString) {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString) {
+    try{
+      this.parser.parse(searchString);
+      return true;
+    }
+    catch(ex) {
+      return false;
+    }
+  }
+}
+
 export class DataHelper {
   static getNumericFields(fields){
     return _.filter(fields, f => {
@@ -556,168 +789,18 @@ export class UrlHelper {
 
 }
 
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
-
-export class IntellisenceManager {
-  constructor(parser, dataSource, availableFields){
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  populate(searchStr, lastWord){
-    let parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  }
-
-
-  _getParserError(searchStr) {
-    let result = null;
-    if (searchStr!="") {
-      try {
-        this.parser.parse(searchStr);
-        try{
-          this.parser.parse(searchStr + "^");
-        }
-        catch(ex2){
-          result = ex2;
-        }
-      }
-      catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  }
-
-
-
-  _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-    for (let i=(tmpArr.length-1); i>=0; i--)  {
-      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
-      if (j>=0)
-        return fieldsArray[j];
-      //return tmpArr[i].trim();
-    }
-    return "";
-  }
-
-  _interpreteParserError(ex){
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (let desc of ex.expected) {
-        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  }
-
-  _getIntellisenseData (searchStr, lastWord, pegException) {
-    let type='';
-    let result = [];
-    let lastFldName = '';
-
-    if (!pegException)
-      return new Promise((resolve, reject)=>{ resolve([])});
-
-    let tokenName = this._interpreteParserError(pegException);
-    return new Promise((resolve, reject)=>{
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
-          resolve(this._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("string", data))
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("array_string", data))
-          });
-          break;
-          resolve(this._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
+export class DefaultHttpClient extends HttpClient {
+  constructor() {
+    super();
+    this.configure(config => {
+      config
+        .useStandardConfiguration()
+        .withDefaults({
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
     });
-  }
-
-
-  _getFieldValuesArray(fieldName, lastWord) {
-    let query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord)
-      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(dH=>{
-      var result = _.map(dH.data,fieldName);
-      return _.uniq(result).sort();
-    })
-  }
-
-  _getStringComparisonOperatorsArray() {
-    return (["=", "in"]);
-  }
-
-  _getLogicalOperatorsArray() {
-    return (["and", "or"]);
-  }
-
-  _getComparisonOperatorsArray() {
-    return (["!=", "=", ">", "<", ">=", "<="])
-  }
-
-  _normalizeData(type, dataArray) {
-    return _.map(dataArray,d=>{ return { type: type, value: d }});
-  }
-}
-
-export class ExpressionParser {
-
-  constructor(grammarText) {
-    this.parser =  peg.buildParser(grammarText);
-  }
-
-  parse(searchString) {
-    return this.parser.parse(searchString);
-  }
-
-  validate(searchString) {
-    try{
-      this.parser.parse(searchString);
-      return true;
-    }
-    catch(ex) {
-      return false;
-    }
   }
 }
 
@@ -1048,89 +1131,6 @@ export class UserStateStorage{
 
 }
 
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-    return null;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
-
-export class DefaultHttpClient extends HttpClient {
-  constructor() {
-    super();
-    this.configure(config => {
-      config
-        .useStandardConfiguration()
-        .withDefaults({
-          headers: {
-            'Accept': 'application/json'
-          }
-        })
-    });
-  }
-}
-
 export class Schema {
   constructor(){
     this.fields = [];
@@ -1139,6 +1139,13 @@ export class Schema {
 }
 
 export class DataService{
+  url = "";
+  schemaProvider = new EmptySchemaProvider();
+  filterParser;
+  totalMapper;
+  dataMapper;
+  httpClient;
+
   configure(configuration){
     this.url = configuration.url?configuration.url:this.url;
     this.schemaProvider = configuration.schemaProvider?configuration.schemaProvider:this.schemaProvider;
@@ -1147,13 +1154,6 @@ export class DataService{
     this.dataMapper = configuration.dataMapper?configuration.dataMapper:this.dataMapper;
     this.httpClient = configuration.httpClient?configuration.httpClient:this.httpClient;
   }
-
-  url;
-  schemaProvider;
-  filterParser;
-  totalMapper;
-  dataMapper;
-  httpClient;
 
   getSchema(){
     return this.schemaProvider.getSchema();
@@ -1315,20 +1315,6 @@ export class StaticJsonDataService extends DataService {
       });
   }
 
-}
-
-export class FormatValueConverter {
-  static format(value, format){
-    if (DataHelper.isDate(value))
-      return moment(value).format(format);
-    if (DataHelper.isNumber(value))
-      return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
 }
 
 const DSL_GRAMMAR_EXPRESSION = `
@@ -1692,6 +1678,165 @@ export class Grammar{
   getGrammar(){
   }
   
+}
+
+export class FormatValueConverter {
+  static format(value, format){
+    if (DataHelper.isDate(value))
+      return moment(value).format(format);
+    if (DataHelper.isNumber(value))
+      return numeral(value).format(format);
+    return value;
+  }
+
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  }
+}
+
+export class DashboardBase
+{
+  constructor() {
+  }
+
+  name;
+  resourceGroup;
+  title;
+  layout = [];
+  behaviors = [];
+
+  configure(dashboardConfiguration){
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
+  }
+
+
+  getWidgetByName(widgetName) {
+    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
+    if (wl)
+      return wl.widget;
+  }
+
+  addWidget(widget, dimensions) {
+    let lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this.layout.push(lw);
+    widget.dashboard = this;
+  }
+
+  removeWidget(widget) {
+    _.remove(this.layout, w=>{
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  replaceWidget(oldWidget, newWidget) {
+    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
+    if (oldLw){
+      newWidget.dashboard = this;
+      let newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
+    }
+  }
+
+  restoreWidget(currentWidget){
+    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
+    let previousWidget = lw.navigationStack.pop();
+    if (previousWidget){
+      let previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
+    }
+  }
+
+
+  resizeWidget(widget, newSize){
+    var lw = _.find(this.layout, w=> {return w.widget === widget});
+    if (newSize) {
+      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
+      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
+      lw.resize(x, y);
+    }
+    else
+      lw.rollbackResize()
+  }
+
+
+  refreshWidget(widget){
+    widget.refresh();
+  }
+  
+  refresh() {
+    for (let i=0; i<this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
+    }
+  }
+
+  dispose(){
+    for (let i=0; i<this.layout.length; i++) {
+      this.layout[i].widget.dispose();
+    }
+    this.layout = [];
+
+    while(true) {
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
+      else
+        break;
+    }
+  }
+}
+
+export class LayoutWidget{
+
+  widget;
+  navigationStack = [];
+  sizeX;
+  sizeY;
+  col;
+  row;
+  resized = false;
+
+  @computedFrom('navigationStack')
+  get hasNavStack() {
+    return this.navigationStack && this.navigationStack.length > 0;
+  }
+
+  resize(newSizeX, newSizeY){
+    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  }
+
+  rollbackResize(){
+    if (this._originalDimensions){
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  }
+
 }
 
 export class Chart extends Widget {
@@ -2060,151 +2205,6 @@ export class Widget {
 
 
 
-
-export class DashboardBase
-{
-  constructor() {
-  }
-
-  name;
-  resourceGroup;
-  title;
-  layout = [];
-  behaviors = [];
-
-  configure(dashboardConfiguration){
-    this.name = dashboardConfiguration.name;
-    this.title = dashboardConfiguration.title;
-    this.resourceGroup = dashboardConfiguration.resourceGroup;
-  }
-
-
-  getWidgetByName(widgetName) {
-    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
-    if (wl)
-      return wl.widget;
-  }
-
-  addWidget(widget, dimensions) {
-    let lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this.layout.push(lw);
-    widget.dashboard = this;
-  }
-
-  removeWidget(widget) {
-    _.remove(this.layout, w=>{
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  }
-
-  replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
-    if (oldLw){
-      newWidget.dashboard = this;
-      let newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
-    }
-  }
-
-  restoreWidget(currentWidget){
-    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
-    let previousWidget = lw.navigationStack.pop();
-    if (previousWidget){
-      let previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
-    }
-  }
-
-
-  resizeWidget(widget, newSize){
-    var lw = _.find(this.layout, w=> {return w.widget === widget});
-    if (newSize) {
-      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
-      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
-      lw.resize(x, y);
-    }
-    else
-      lw.rollbackResize()
-  }
-
-
-  refreshWidget(widget){
-    widget.refresh();
-  }
-  
-  refresh() {
-    for (let i=0; i<this.layout.length; i++) {
-      this.refreshWidget(this.layout[i].widget);
-    }
-  }
-
-  dispose(){
-    for (let i=0; i<this.layout.length; i++) {
-      this.layout[i].widget.dispose();
-    }
-    this.layout = [];
-
-    while(true) {
-      if (this.behaviors.length>0)
-        this.behaviors[0].detach();
-      else
-        break;
-    }
-  }
-}
-
-export class LayoutWidget{
-
-  widget;
-  navigationStack = [];
-  sizeX;
-  sizeY;
-  col;
-  row;
-  resized = false;
-
-  @computedFrom('navigationStack')
-  get hasNavStack() {
-    return this.navigationStack && this.navigationStack.length > 0;
-  }
-
-  resize(newSizeX, newSizeY){
-    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  }
-
-  rollbackResize(){
-    if (this._originalDimensions){
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
-  }
-
-}
 
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
@@ -2865,6 +2865,17 @@ export class AstToJavascriptParser extends AstParser{
     return result;
   }
 
+}
+
+export class EmptySchemaProvider extends SchemaProvider{
+  constructor(){
+    super();
+  }
+  getSchema(){
+    return new Promise((resolve, reject)=>{
+      resolve(new Schema());
+    });
+  }
 }
 
 export class SchemaProvider{

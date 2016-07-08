@@ -1,9 +1,9 @@
 "use strict";
 
-System.register([], function (_export, _context) {
+System.register(["./../schema/providers/empty-schema-provider"], function (_export, _context) {
   "use strict";
 
-  var _createClass, DataService, DataServiceConfiguration;
+  var EmptySchemaProvider, _createClass, DataService, DataServiceConfiguration;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -12,7 +12,9 @@ System.register([], function (_export, _context) {
   }
 
   return {
-    setters: [],
+    setters: [function (_schemaProvidersEmptySchemaProvider) {
+      EmptySchemaProvider = _schemaProvidersEmptySchemaProvider.EmptySchemaProvider;
+    }],
     execute: function () {
       _createClass = function () {
         function defineProperties(target, props) {
@@ -35,6 +37,9 @@ System.register([], function (_export, _context) {
       _export("DataService", DataService = function () {
         function DataService() {
           _classCallCheck(this, DataService);
+
+          this.url = "";
+          this.schemaProvider = new EmptySchemaProvider();
         }
 
         DataService.prototype.configure = function configure(configuration) {

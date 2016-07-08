@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DrillDownBehaviorConfiguration = exports.DrillDownBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DrillDownHandleBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.LayoutWidget = exports.DashboardBase = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.DefaultHttpClient = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.ExpressionParser = exports.IntellisenceManager = exports.DashboardConfiguration = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.EmptySchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DrillDownBehaviorConfiguration = exports.DrillDownBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DrillDownHandleBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.FormatValueConverter = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.DefaultHttpClient = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.ExpressionParser = exports.IntellisenceManager = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -189,6 +189,114 @@ var PermissionsManager = exports.PermissionsManager = function () {
   return PermissionsManager;
 }();
 
+var CacheManager = exports.CacheManager = function () {
+  function CacheManager(storage) {
+    _classCallCheck(this, CacheManager);
+
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  CacheManager.prototype.startCleaner = function startCleaner() {
+    var _this2 = this;
+
+    if (!this.cleaner) {
+      (function () {
+        var self = _this2;
+        _this2.cleaner = window.setInterval(function () {
+          self._cacheStorage.removeExpired();
+        }, _this2._cleanInterval);
+      })();
+    }
+  };
+
+  CacheManager.prototype.stopCleaner = function stopCleaner() {
+    if (this.cleaner) window.clearInterval(this.cleaner);
+  };
+
+  CacheManager.prototype.getStorage = function getStorage() {
+    return this._cacheStorage;
+  };
+
+  _createClass(CacheManager, [{
+    key: 'cleanInterval',
+    get: function get() {
+      return this._cleanInterval;
+    }
+  }]);
+
+  return CacheManager;
+}();
+
+var CacheStorage = exports.CacheStorage = function () {
+  function CacheStorage() {
+    _classCallCheck(this, CacheStorage);
+  }
+
+  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
+
+  CacheStorage.prototype.getItem = function getItem(key) {};
+
+  CacheStorage.prototype.removeItem = function removeItem(key) {};
+
+  CacheStorage.prototype.removeExpired = function removeExpired() {};
+
+  return CacheStorage;
+}();
+
+var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
+  _inherits(MemoryCacheStorage, _CacheStorage);
+
+  function MemoryCacheStorage() {
+    _classCallCheck(this, MemoryCacheStorage);
+
+    var _this3 = _possibleConstructorReturn(this, _CacheStorage.call(this));
+
+    _this3._cache = {};
+    return _this3;
+  }
+
+  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({}, value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  };
+
+  MemoryCacheStorage.prototype.getItem = function getItem(key) {
+    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
+    return null;
+  };
+
+  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
+    delete this._cache[key];
+  };
+
+  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
+    var self = this;
+    _.forOwn(self._cache, function (v, k) {
+      if (self._cache[k].exp < Date.now()) {
+        self.removeItem(k);
+      }
+    });
+  };
+
+  return MemoryCacheStorage;
+}(CacheStorage);
+
+var DashboardConfiguration = exports.DashboardConfiguration = function () {
+  function DashboardConfiguration() {
+    _classCallCheck(this, DashboardConfiguration);
+  }
+
+  DashboardConfiguration.prototype.invoke = function invoke() {};
+
+  return DashboardConfiguration;
+}();
+
 var DataHolder = exports.DataHolder = function () {
   function DataHolder() {
     _classCallCheck(this, DataHolder);
@@ -235,7 +343,7 @@ var Datasource = exports.Datasource = function () {
   }
 
   Datasource.prototype.getData = function getData(query) {
-    var _this2 = this;
+    var _this4 = this;
 
     if (!this.transport && !this.transport.readService) throw "readService is not configured";
 
@@ -246,18 +354,18 @@ var Datasource = exports.Datasource = function () {
     } else {
       if (this._liveRequest[cacheKey]) {
         this._liveRequest[cacheKey] = this._liveRequest[cacheKey].then(function (l) {
-          return _this2._fromCache(cacheKey);
+          return _this4._fromCache(cacheKey);
         }).then(function (data) {
-          return _this2._processData(cacheKey, query, data);
+          return _this4._processData(cacheKey, query, data);
         }, function (err) {
-          return _this2._doWebRequest(cacheKey, query);
+          return _this4._doWebRequest(cacheKey, query);
         });
         return this._liveRequest[cacheKey];
       }
       try {
         var data = this._fromCache(cacheKey);
         return Promise.resolve(data).then(function (d) {
-          return _this2._processData(cacheKey, query, d);
+          return _this4._processData(cacheKey, query, d);
         });
       } catch (ex) {}
       this._liveRequest[cacheKey] = this._doWebRequest(cacheKey, query);
@@ -281,7 +389,7 @@ var Datasource = exports.Datasource = function () {
   };
 
   Datasource.prototype._doWebRequest = function _doWebRequest(cacheKey, query) {
-    var _this3 = this;
+    var _this5 = this;
 
     return this.transport.readService.read({
       fields: query.fields,
@@ -291,7 +399,7 @@ var Datasource = exports.Datasource = function () {
       sort: query.sort,
       sortDir: query.sortDir
     }).then(function (d) {
-      return _this3._processData(cacheKey, query, d);
+      return _this5._processData(cacheKey, query, d);
     });
   };
 
@@ -434,6 +542,192 @@ var Query = exports.Query = function () {
   }]);
 
   return Query;
+}();
+
+var IntellisenceManager = exports.IntellisenceManager = function () {
+  function IntellisenceManager(parser, dataSource, availableFields) {
+    _classCallCheck(this, IntellisenceManager);
+
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  IntellisenceManager.prototype.populate = function populate(searchStr, lastWord) {
+    var parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  };
+
+  IntellisenceManager.prototype._getParserError = function _getParserError(searchStr) {
+    var result = null;
+    if (searchStr != "") {
+      try {
+        this.parser.parse(searchStr);
+        try {
+          this.parser.parse(searchStr + "^");
+        } catch (ex2) {
+          result = ex2;
+        }
+      } catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  };
+
+  IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+
+    var _loop2 = function _loop2(i) {
+      var j = fieldsArray.findIndex(function (x) {
+        return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
+      });
+      if (j >= 0) return {
+          v: fieldsArray[j]
+        };
+    };
+
+    for (var i = tmpArr.length - 1; i >= 0; i--) {
+      var _ret3 = _loop2(i);
+
+      if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+    }
+    return "";
+  };
+
+  IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (var _iterator3 = ex.expected, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+        var _ref3;
+
+        if (_isArray3) {
+          if (_i3 >= _iterator3.length) break;
+          _ref3 = _iterator3[_i3++];
+        } else {
+          _i3 = _iterator3.next();
+          if (_i3.done) break;
+          _ref3 = _i3.value;
+        }
+
+        var desc = _ref3;
+
+        if (desc.type == "other" || desc.type == "end") {
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  };
+
+  IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
+    var _this6 = this;
+
+    var type = '';
+    var result = [];
+    var lastFldName = '';
+
+    if (!pegException) return new Promise(function (resolve, reject) {
+      resolve([]);
+    });
+
+    var tokenName = this._interpreteParserError(pegException);
+    return new Promise(function (resolve, reject) {
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord ? _.filter(_this6.fields, function (f) {
+            return f.toLowerCase().startsWith(lastWord.toLowerCase());
+          }) : _this6.fields;
+          resolve(_this6._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(_this6._normalizeData("operator", _this6._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = _this6._getLastFieldName(searchStr, _this6.fields, pegException.column);
+          _this6._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this6._normalizeData("string", data));
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = _this6._getLastFieldName(searchStr, _this6.fields, pegException.column);
+          _this6._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this6._normalizeData("array_string", data));
+          });
+          break;
+          resolve(_this6._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(_this6._normalizeData("operator", _this6._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(_this6._normalizeData("operator", _this6._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  };
+
+  IntellisenceManager.prototype._getFieldValuesArray = function _getFieldValuesArray(fieldName, lastWord) {
+    var query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord) query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(function (dH) {
+      var result = _.map(dH.data, fieldName);
+      return _.uniq(result).sort();
+    });
+  };
+
+  IntellisenceManager.prototype._getStringComparisonOperatorsArray = function _getStringComparisonOperatorsArray() {
+    return ["=", "in"];
+  };
+
+  IntellisenceManager.prototype._getLogicalOperatorsArray = function _getLogicalOperatorsArray() {
+    return ["and", "or"];
+  };
+
+  IntellisenceManager.prototype._getComparisonOperatorsArray = function _getComparisonOperatorsArray() {
+    return ["!=", "=", ">", "<", ">=", "<="];
+  };
+
+  IntellisenceManager.prototype._normalizeData = function _normalizeData(type, dataArray) {
+    return _.map(dataArray, function (d) {
+      return { type: type, value: d };
+    });
+  };
+
+  return IntellisenceManager;
+}();
+
+var ExpressionParser = exports.ExpressionParser = function () {
+  function ExpressionParser(grammarText) {
+    _classCallCheck(this, ExpressionParser);
+
+    this.parser = peg.buildParser(grammarText);
+  }
+
+  ExpressionParser.prototype.parse = function parse(searchString) {
+    return this.parser.parse(searchString);
+  };
+
+  ExpressionParser.prototype.validate = function validate(searchString) {
+    try {
+      this.parser.parse(searchString);
+      return true;
+    } catch (ex) {
+      return false;
+    }
+  };
+
+  return ExpressionParser;
 }();
 
 var DataHelper = exports.DataHelper = function () {
@@ -631,201 +925,26 @@ var UrlHelper = exports.UrlHelper = function () {
   return UrlHelper;
 }();
 
-var DashboardConfiguration = exports.DashboardConfiguration = function () {
-  function DashboardConfiguration() {
-    _classCallCheck(this, DashboardConfiguration);
-  }
+var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
+  _inherits(DefaultHttpClient, _HttpClient);
 
-  DashboardConfiguration.prototype.invoke = function invoke() {};
+  function DefaultHttpClient() {
+    _classCallCheck(this, DefaultHttpClient);
 
-  return DashboardConfiguration;
-}();
+    var _this7 = _possibleConstructorReturn(this, _HttpClient.call(this));
 
-var IntellisenceManager = exports.IntellisenceManager = function () {
-  function IntellisenceManager(parser, dataSource, availableFields) {
-    _classCallCheck(this, IntellisenceManager);
-
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  IntellisenceManager.prototype.populate = function populate(searchStr, lastWord) {
-    var parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  };
-
-  IntellisenceManager.prototype._getParserError = function _getParserError(searchStr) {
-    var result = null;
-    if (searchStr != "") {
-      try {
-        this.parser.parse(searchStr);
-        try {
-          this.parser.parse(searchStr + "^");
-        } catch (ex2) {
-          result = ex2;
+    _this7.configure(function (config) {
+      config.useStandardConfiguration().withDefaults({
+        headers: {
+          'Accept': 'application/json'
         }
-      } catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  };
-
-  IntellisenceManager.prototype._getLastFieldName = function _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-
-    var _loop2 = function _loop2(i) {
-      var j = fieldsArray.findIndex(function (x) {
-        return x.toLowerCase() == tmpArr[i].trim().toLowerCase();
       });
-      if (j >= 0) return {
-          v: fieldsArray[j]
-        };
-    };
-
-    for (var i = tmpArr.length - 1; i >= 0; i--) {
-      var _ret2 = _loop2(i);
-
-      if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
-    }
-    return "";
-  };
-
-  IntellisenceManager.prototype._interpreteParserError = function _interpreteParserError(ex) {
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (var _iterator3 = ex.expected, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-        var _ref3;
-
-        if (_isArray3) {
-          if (_i3 >= _iterator3.length) break;
-          _ref3 = _iterator3[_i3++];
-        } else {
-          _i3 = _iterator3.next();
-          if (_i3.done) break;
-          _ref3 = _i3.value;
-        }
-
-        var desc = _ref3;
-
-        if (desc.type == "other" || desc.type == "end") {
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  };
-
-  IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
-    var _this4 = this;
-
-    var type = '';
-    var result = [];
-    var lastFldName = '';
-
-    if (!pegException) return new Promise(function (resolve, reject) {
-      resolve([]);
     });
-
-    var tokenName = this._interpreteParserError(pegException);
-    return new Promise(function (resolve, reject) {
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord ? _.filter(_this4.fields, function (f) {
-            return f.toLowerCase().startsWith(lastWord.toLowerCase());
-          }) : _this4.fields;
-          resolve(_this4._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(_this4._normalizeData("operator", _this4._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
-          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this4._normalizeData("string", data));
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
-          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this4._normalizeData("array_string", data));
-          });
-          break;
-          resolve(_this4._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(_this4._normalizeData("operator", _this4._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(_this4._normalizeData("operator", _this4._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  };
-
-  IntellisenceManager.prototype._getFieldValuesArray = function _getFieldValuesArray(fieldName, lastWord) {
-    var query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord) query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(function (dH) {
-      var result = _.map(dH.data, fieldName);
-      return _.uniq(result).sort();
-    });
-  };
-
-  IntellisenceManager.prototype._getStringComparisonOperatorsArray = function _getStringComparisonOperatorsArray() {
-    return ["=", "in"];
-  };
-
-  IntellisenceManager.prototype._getLogicalOperatorsArray = function _getLogicalOperatorsArray() {
-    return ["and", "or"];
-  };
-
-  IntellisenceManager.prototype._getComparisonOperatorsArray = function _getComparisonOperatorsArray() {
-    return ["!=", "=", ">", "<", ">=", "<="];
-  };
-
-  IntellisenceManager.prototype._normalizeData = function _normalizeData(type, dataArray) {
-    return _.map(dataArray, function (d) {
-      return { type: type, value: d };
-    });
-  };
-
-  return IntellisenceManager;
-}();
-
-var ExpressionParser = exports.ExpressionParser = function () {
-  function ExpressionParser(grammarText) {
-    _classCallCheck(this, ExpressionParser);
-
-    this.parser = peg.buildParser(grammarText);
+    return _this7;
   }
 
-  ExpressionParser.prototype.parse = function parse(searchString) {
-    return this.parser.parse(searchString);
-  };
-
-  ExpressionParser.prototype.validate = function validate(searchString) {
-    try {
-      this.parser.parse(searchString);
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  };
-
-  return ExpressionParser;
-}();
+  return DefaultHttpClient;
+}(_aureliaFetchClient.HttpClient);
 
 var DashboardManager = exports.DashboardManager = function () {
   function DashboardManager() {
@@ -891,14 +1010,14 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = functi
   }
 
   Factory.prototype.get = function get(container) {
-    var _this5 = this;
+    var _this8 = this;
 
     return function () {
       for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
         rest[_key] = arguments[_key];
       }
 
-      return container.invoke(_this5.Type, rest);
+      return container.invoke(_this8.Type, rest);
     };
   };
 
@@ -939,7 +1058,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
   }
 
   HistoryStep.prototype.run = function run(routingContext, next) {
-    var _this6 = this;
+    var _this9 = this;
 
     if (routingContext.getAllInstructions().some(function (i) {
       return i.config.name === "dashboard";
@@ -950,17 +1069,17 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
         var storageWidgetsState;
 
         (function () {
-          if (_this6.currentRouteItem) {
+          if (_this9.currentRouteItem) {
             (function () {
-              var currentWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_this6.currentRouteItem.dashboardName));
-              var url = "/" + _this6.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+              var currentWidgetsState = StateDiscriminator.discriminate(_this9._userStateStorage.getAll(_this9.currentRouteItem.dashboardName));
+              var url = "/" + _this9.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
 
-              if (_.filter(_this6._navigationHistory.items, function (i) {
+              if (_.filter(_this9._navigationHistory.items, function (i) {
                 return StringHelper.compare(i.url, url);
               }).length === 0) {
-                _this6._navigationHistory.add(url, _this6.currentRouteItem.title, _this6.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-              } else if (!StringHelper.compare(url, _this6.currentRouteItem.route)) {
-                _this6._navigationHistory.update(url, new Date());
+                _this9._navigationHistory.add(url, _this9.currentRouteItem.title, _this9.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+              } else if (!StringHelper.compare(url, _this9.currentRouteItem.route)) {
+                _this9._navigationHistory.update(url, new Date());
               }
             })();
           }
@@ -968,7 +1087,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
           var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
 
           routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          storageWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_dashboard.name));
+          storageWidgetsState = StateDiscriminator.discriminate(_this9._userStateStorage.getAll(_dashboard.name));
 
           for (var _iterator4 = storageWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
             var _ref4;
@@ -984,7 +1103,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
 
             var oldSt = _ref4;
 
-            _this6._userStateStorage.remove(oldSt.key);
+            _this9._userStateStorage.remove(oldSt.key);
           }for (var _iterator5 = routeWidgetsState, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
             var _ref5;
 
@@ -999,15 +1118,15 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
 
             var newSt = _ref5;
 
-            _this6._userStateStorage.set(newSt.key, newSt.value);
+            _this9._userStateStorage.set(newSt.key, newSt.value);
           }
-          if (_.filter(_this6._navigationHistory.items, function (i) {
+          if (_.filter(_this9._navigationHistory.items, function (i) {
             return StringHelper.compare(i.url, fullUrl);
           }).length === 0) {
-            _this6._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this6._userStateStorage.getAll(_dashboard.name), new Date());
+            _this9._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this9._userStateStorage.getAll(_dashboard.name), new Date());
           }
 
-          _this6.currentRouteItem = {
+          _this9.currentRouteItem = {
             dashboardName: _dashboard.name,
             title: _dashboard.title,
             route: fullUrl
@@ -1315,125 +1434,6 @@ var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework
   return UserStateStorage;
 }()) || _class8);
 
-var CacheManager = exports.CacheManager = function () {
-  function CacheManager(storage) {
-    _classCallCheck(this, CacheManager);
-
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  CacheManager.prototype.startCleaner = function startCleaner() {
-    var _this7 = this;
-
-    if (!this.cleaner) {
-      (function () {
-        var self = _this7;
-        _this7.cleaner = window.setInterval(function () {
-          self._cacheStorage.removeExpired();
-        }, _this7._cleanInterval);
-      })();
-    }
-  };
-
-  CacheManager.prototype.stopCleaner = function stopCleaner() {
-    if (this.cleaner) window.clearInterval(this.cleaner);
-  };
-
-  CacheManager.prototype.getStorage = function getStorage() {
-    return this._cacheStorage;
-  };
-
-  _createClass(CacheManager, [{
-    key: 'cleanInterval',
-    get: function get() {
-      return this._cleanInterval;
-    }
-  }]);
-
-  return CacheManager;
-}();
-
-var CacheStorage = exports.CacheStorage = function () {
-  function CacheStorage() {
-    _classCallCheck(this, CacheStorage);
-  }
-
-  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
-
-  CacheStorage.prototype.getItem = function getItem(key) {};
-
-  CacheStorage.prototype.removeItem = function removeItem(key) {};
-
-  CacheStorage.prototype.removeExpired = function removeExpired() {};
-
-  return CacheStorage;
-}();
-
-var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
-  _inherits(MemoryCacheStorage, _CacheStorage);
-
-  function MemoryCacheStorage() {
-    _classCallCheck(this, MemoryCacheStorage);
-
-    var _this8 = _possibleConstructorReturn(this, _CacheStorage.call(this));
-
-    _this8._cache = {};
-    return _this8;
-  }
-
-  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({}, value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  };
-
-  MemoryCacheStorage.prototype.getItem = function getItem(key) {
-    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
-    return null;
-  };
-
-  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
-    delete this._cache[key];
-  };
-
-  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
-    var self = this;
-    _.forOwn(self._cache, function (v, k) {
-      if (self._cache[k].exp < Date.now()) {
-        self.removeItem(k);
-      }
-    });
-  };
-
-  return MemoryCacheStorage;
-}(CacheStorage);
-
-var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
-  _inherits(DefaultHttpClient, _HttpClient);
-
-  function DefaultHttpClient() {
-    _classCallCheck(this, DefaultHttpClient);
-
-    var _this9 = _possibleConstructorReturn(this, _HttpClient.call(this));
-
-    _this9.configure(function (config) {
-      config.useStandardConfiguration().withDefaults({
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-    });
-    return _this9;
-  }
-
-  return DefaultHttpClient;
-}(_aureliaFetchClient.HttpClient);
-
 var Schema = exports.Schema = function Schema() {
   _classCallCheck(this, Schema);
 
@@ -1444,6 +1444,9 @@ var Schema = exports.Schema = function Schema() {
 var DataService = exports.DataService = function () {
   function DataService() {
     _classCallCheck(this, DataService);
+
+    this.url = "";
+    this.schemaProvider = new EmptySchemaProvider();
   }
 
   DataService.prototype.configure = function configure(configuration) {
@@ -1588,26 +1591,6 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   return StaticJsonDataService;
 }(DataService)) || _class12);
 
-var FormatValueConverter = function () {
-  function FormatValueConverter() {
-    _classCallCheck(this, FormatValueConverter);
-  }
-
-  FormatValueConverter.format = function format(value, _format) {
-    if (DataHelper.isDate(value)) return (0, _moment2.default)(value).format(_format);
-    if (DataHelper.isNumber(value)) return (0, _numeral2.default)(value).format(_format);
-    return value;
-  };
-
-  FormatValueConverter.prototype.toView = function toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  };
-
-  return FormatValueConverter;
-}();
-
-exports.FormatValueConverter = FormatValueConverter;
-
 
 var DSL_GRAMMAR_EXPRESSION = '\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = "record.";\n \t\tvar result = "";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))\n              result = prefix + fieldname + ".toLowerCase().includes(\'" + v.substring(1,value.length-1) + "\')"\n          else if (v.indexOf("%")===0)\n              result = prefix + fieldname + ".toLowerCase().endsWith(\'" + v.substring(1,value.length) + "\')"\n          else if (v.lastIndexOf("%")===(value.length-1))\n              result = prefix + fieldname + ".toLowerCase().startsWith(\'" + v.substring(0,value.length-1) + "\')"\n        }\n        if (result == "")\n          result = prefix + fieldname + ".toLowerCase() == \'" + v + "\'";\n\n        result="(" + prefix + fieldname + "!=null && " + result + ")"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = "";\n    var values = value.split(\',\');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = \'[\\"\\\']\';\n      var re = new RegExp(find, \'g\');\n      var v = values[i].replace(new RegExp(find, \'g\'), "");\n      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += " || ";\n    }\n    if (result.length>0)\n      result = "(" + result + ")"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin "LOGIC_OPERATOR"\n     = and\n     / or\n\nand = space* "and"i space* {return " && ";}\n\nor = space* "or"i space* {return " || ";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}\n          / "(" space? e:expression space* ")" space* {return "(" + e +")";}\n\n\n\nvaluesArray "STRING_VALUES_ARRAY"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* "," space* v:stringValue) {return  nv}\n\n\n\ndateValue "DATE_VALUE"\n        = quote? dt:$(date+) quote? {return "\'" + dt + "\'";}\n\n\nstringValue  "STRING_VALUE"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return "";}\n\n\nnumericValue  "NUMERIC_VALUE"\n       = $(numeric+)\n\n\nop "OPERATOR"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq "STRING_OPERATOR_EQUAL"\n  = eq\n  / not_eq\n\nop_in "STRING_OPERATOR_IN"\n  = in\n\neq = space* "=" space* {return "==";}\n\nnot_eq = space* "!=" space* {return "!=";}\n\ngt = space* v:">" space* {return v;}\n\nge = space* v:">=" space* {return v;}\n\nlt = space* v:"<" space* {return v;}\n\nle = space* v:"<=" space* {return v;}\n\nin = space* v:"in" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield "FIELD_NAME"\n      = stringField\n     / numericField\n     / dateField\n\nstringField "STRING_FIELD_NAME"\n     = @S@\n\nnumericField "NUMERIC_FIELD_NAME"\n     = @N@\n\ndateField "DATE_FIELD_NAME"\n     = @D@\n\nquote = [\\\'\\"]\n\n\n';
 
@@ -1694,6 +1677,170 @@ var Grammar = exports.Grammar = function () {
 
   return Grammar;
 }();
+
+var FormatValueConverter = function () {
+  function FormatValueConverter() {
+    _classCallCheck(this, FormatValueConverter);
+  }
+
+  FormatValueConverter.format = function format(value, _format) {
+    if (DataHelper.isDate(value)) return (0, _moment2.default)(value).format(_format);
+    if (DataHelper.isNumber(value)) return (0, _numeral2.default)(value).format(_format);
+    return value;
+  };
+
+  FormatValueConverter.prototype.toView = function toView(value, format) {
+    return FormatValueConverter.format(value, format);
+  };
+
+  return FormatValueConverter;
+}();
+
+exports.FormatValueConverter = FormatValueConverter;
+
+var DashboardBase = exports.DashboardBase = function () {
+  function DashboardBase() {
+    _classCallCheck(this, DashboardBase);
+
+    this.layout = [];
+    this.behaviors = [];
+  }
+
+  DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
+  };
+
+  DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
+    var wl = _.find(this.layout, function (w) {
+      return w.widget.name === widgetName;
+    });
+    if (wl) return wl.widget;
+  };
+
+  DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
+    var lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this.layout.push(lw);
+    widget.dashboard = this;
+  };
+
+  DashboardBase.prototype.removeWidget = function removeWidget(widget) {
+    _.remove(this.layout, function (w) {
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  };
+
+  DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
+    var oldLw = _.find(this.layout, function (w) {
+      return w.widget === oldWidget;
+    });
+    if (oldLw) {
+      newWidget.dashboard = this;
+      var newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this.layout.splice(_.indexOf(this.layout, oldLw), 1, newLw);
+    }
+  };
+
+  DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
+    var lw = _.find(this.layout, function (w) {
+      return w.widget === currentWidget;
+    });
+    var previousWidget = lw.navigationStack.pop();
+    if (previousWidget) {
+      var previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this.layout.splice(_.indexOf(this.layout, lw), 1, previousLw);
+    }
+  };
+
+  DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
+    var lw = _.find(this.layout, function (w) {
+      return w.widget === widget;
+    });
+    if (newSize) {
+      var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
+      var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
+      lw.resize(x, y);
+    } else lw.rollbackResize();
+  };
+
+  DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
+    widget.refresh();
+  };
+
+  DashboardBase.prototype.refresh = function refresh() {
+    for (var i = 0; i < this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
+    }
+  };
+
+  DashboardBase.prototype.dispose = function dispose() {
+    for (var i = 0; i < this.layout.length; i++) {
+      this.layout[i].widget.dispose();
+    }
+    this.layout = [];
+
+    while (true) {
+      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+    }
+  };
+
+  return DashboardBase;
+}();
+
+var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class14 = function () {
+  function LayoutWidget() {
+    _classCallCheck(this, LayoutWidget);
+
+    this.navigationStack = [];
+    this.resized = false;
+  }
+
+  LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
+    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  };
+
+  LayoutWidget.prototype.rollbackResize = function rollbackResize() {
+    if (this._originalDimensions) {
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  };
+
+  _createClass(LayoutWidget, [{
+    key: 'hasNavStack',
+    get: function get() {
+      return this.navigationStack && this.navigationStack.length > 0;
+    }
+  }]);
+
+  return LayoutWidget;
+}(), (_applyDecoratedDescriptor(_class14.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class14.prototype, 'hasNavStack'), _class14.prototype)), _class14));
 
 var Chart = exports.Chart = function (_Widget) {
   _inherits(Chart, _Widget);
@@ -2115,150 +2262,6 @@ var Widget = exports.Widget = function () {
 
   return Widget;
 }();
-
-var DashboardBase = exports.DashboardBase = function () {
-  function DashboardBase() {
-    _classCallCheck(this, DashboardBase);
-
-    this.layout = [];
-    this.behaviors = [];
-  }
-
-  DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
-    this.name = dashboardConfiguration.name;
-    this.title = dashboardConfiguration.title;
-    this.resourceGroup = dashboardConfiguration.resourceGroup;
-  };
-
-  DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
-    var wl = _.find(this.layout, function (w) {
-      return w.widget.name === widgetName;
-    });
-    if (wl) return wl.widget;
-  };
-
-  DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
-    var lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this.layout.push(lw);
-    widget.dashboard = this;
-  };
-
-  DashboardBase.prototype.removeWidget = function removeWidget(widget) {
-    _.remove(this.layout, function (w) {
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  };
-
-  DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
-    var oldLw = _.find(this.layout, function (w) {
-      return w.widget === oldWidget;
-    });
-    if (oldLw) {
-      newWidget.dashboard = this;
-      var newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this.layout.splice(_.indexOf(this.layout, oldLw), 1, newLw);
-    }
-  };
-
-  DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
-    var lw = _.find(this.layout, function (w) {
-      return w.widget === currentWidget;
-    });
-    var previousWidget = lw.navigationStack.pop();
-    if (previousWidget) {
-      var previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this.layout.splice(_.indexOf(this.layout, lw), 1, previousLw);
-    }
-  };
-
-  DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
-    var lw = _.find(this.layout, function (w) {
-      return w.widget === widget;
-    });
-    if (newSize) {
-      var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
-      var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
-      lw.resize(x, y);
-    } else lw.rollbackResize();
-  };
-
-  DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
-    widget.refresh();
-  };
-
-  DashboardBase.prototype.refresh = function refresh() {
-    for (var i = 0; i < this.layout.length; i++) {
-      this.refreshWidget(this.layout[i].widget);
-    }
-  };
-
-  DashboardBase.prototype.dispose = function dispose() {
-    for (var i = 0; i < this.layout.length; i++) {
-      this.layout[i].widget.dispose();
-    }
-    this.layout = [];
-
-    while (true) {
-      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
-    }
-  };
-
-  return DashboardBase;
-}();
-
-var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class14 = function () {
-  function LayoutWidget() {
-    _classCallCheck(this, LayoutWidget);
-
-    this.navigationStack = [];
-    this.resized = false;
-  }
-
-  LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
-    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  };
-
-  LayoutWidget.prototype.rollbackResize = function rollbackResize() {
-    if (this._originalDimensions) {
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
-  };
-
-  _createClass(LayoutWidget, [{
-    key: 'hasNavStack',
-    get: function get() {
-      return this.navigationStack && this.navigationStack.length > 0;
-    }
-  }]);
-
-  return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class14.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class14.prototype, 'hasNavStack'), _class14.prototype)), _class14));
 
 var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBehavior) {
   _inherits(ChangeRouteBehavior, _DashboardBehavior);
@@ -2983,6 +2986,24 @@ var AstToJavascriptParser = exports.AstToJavascriptParser = function (_AstParser
   return AstToJavascriptParser;
 }(AstParser);
 
+var EmptySchemaProvider = exports.EmptySchemaProvider = function (_SchemaProvider) {
+  _inherits(EmptySchemaProvider, _SchemaProvider);
+
+  function EmptySchemaProvider() {
+    _classCallCheck(this, EmptySchemaProvider);
+
+    return _possibleConstructorReturn(this, _SchemaProvider.call(this));
+  }
+
+  EmptySchemaProvider.prototype.getSchema = function getSchema() {
+    return new Promise(function (resolve, reject) {
+      resolve(new Schema());
+    });
+  };
+
+  return EmptySchemaProvider;
+}(SchemaProvider);
+
 var SchemaProvider = exports.SchemaProvider = function () {
   function SchemaProvider() {
     _classCallCheck(this, SchemaProvider);
@@ -2993,42 +3014,42 @@ var SchemaProvider = exports.SchemaProvider = function () {
   return SchemaProvider;
 }();
 
-var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvider) {
-  _inherits(StaticSchemaProvider, _SchemaProvider);
+var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvider2) {
+  _inherits(StaticSchemaProvider, _SchemaProvider2);
 
   function StaticSchemaProvider(schema) {
     _classCallCheck(this, StaticSchemaProvider);
 
-    var _this40 = _possibleConstructorReturn(this, _SchemaProvider.call(this));
+    var _this41 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
 
-    _this40._schema = schema;
-    return _this40;
+    _this41._schema = schema;
+    return _this41;
   }
 
   StaticSchemaProvider.prototype.getSchema = function getSchema() {
-    var _this41 = this;
+    var _this42 = this;
 
     return new Promise(function (resolve, reject) {
-      resolve(_this41._schema);
+      resolve(_this42._schema);
     });
   };
 
   return StaticSchemaProvider;
 }(SchemaProvider);
 
-var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaProvider2) {
-  _inherits(SwaggerSchemaProvider, _SchemaProvider2);
+var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaProvider3) {
+  _inherits(SwaggerSchemaProvider, _SchemaProvider3);
 
   function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
     _classCallCheck(this, SwaggerSchemaProvider);
 
-    var _this42 = _possibleConstructorReturn(this, _SchemaProvider2.call(this));
+    var _this43 = _possibleConstructorReturn(this, _SchemaProvider3.call(this));
 
-    _this42._modelName = modelName;
-    _this42._methodName = methodName;
-    _this42._apiName = apiName;
-    _this42._definitionUrl = definitionUrl;
-    return _this42;
+    _this43._modelName = modelName;
+    _this43._methodName = methodName;
+    _this43._apiName = apiName;
+    _this43._definitionUrl = definitionUrl;
+    return _this43;
   }
 
   SwaggerSchemaProvider.prototype.getSchema = function getSchema() {

@@ -1,4 +1,10 @@
+import { EmptySchemaProvider } from './../schema/providers/empty-schema-provider';
 export let DataService = class DataService {
+  constructor() {
+    this.url = "";
+    this.schemaProvider = new EmptySchemaProvider();
+  }
+
   configure(configuration) {
     this.url = configuration.url ? configuration.url : this.url;
     this.schemaProvider = configuration.schemaProvider ? configuration.schemaProvider : this.schemaProvider;

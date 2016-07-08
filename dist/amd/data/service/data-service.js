@@ -1,9 +1,10 @@
-define(["exports"], function (exports) {
+define(["exports", "./../schema/providers/empty-schema-provider"], function (exports, _emptySchemaProvider) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+  exports.DataServiceConfiguration = exports.DataService = undefined;
 
   var _createClass = function () {
     function defineProperties(target, props) {
@@ -32,6 +33,9 @@ define(["exports"], function (exports) {
   var DataService = exports.DataService = function () {
     function DataService() {
       _classCallCheck(this, DataService);
+
+      this.url = "";
+      this.schemaProvider = new _emptySchemaProvider.EmptySchemaProvider();
     }
 
     DataService.prototype.configure = function configure(configuration) {
