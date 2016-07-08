@@ -3,13 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DrillDownBehaviorConfiguration = exports.DrillDownBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DrillDownHandleBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.LayoutWidget = exports.DashboardBase = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.Schema = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.ExpressionParser = exports.IntellisenceManager = exports.DefaultHttpClient = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.DashboardConfiguration = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = undefined;
+exports.SwaggerSchemaProvider = exports.StaticSchemaProvider = exports.SchemaProvider = exports.AstToJavascriptParser = exports.AstParser = exports.WidgetBehavior = exports.SettingsHandleBehavior = exports.ListenerBehavior = exports.DrillDownBehaviorConfiguration = exports.DrillDownBehavior = exports.DataSourceHandleBehavior = exports.DataSourceChangedBehavior = exports.DataSelectedBehavior = exports.DataFilterHandleBehavior = exports.DataFilterChangedBehavior = exports.DataFieldSelectedBehavior = exports.DataActivatedBehavior = exports.BroadcasterBehavior = exports.WidgetEvent = exports.WidgetEventMessage = exports.ReplaceWidgetBehavior = exports.ManageNavigationStackBehavior = exports.DrillDownHandleBehavior = exports.DashboardBehavior = exports.CreateWidgetBehavior = exports.ChangeRouteBehavior = exports.LayoutWidget = exports.DashboardBase = exports.Widget = exports.SearchBox = exports.Grid = exports.DetailedView = exports.DataSourceConfigurator = exports.Chart = exports.Grammar = exports.GrammarTree = exports.GrammarExpression = exports.FormatValueConverter = exports.StaticJsonDataService = exports.JsonDataService = exports.DataServiceConfiguration = exports.DataService = exports.Schema = exports.DefaultHttpClient = exports.MemoryCacheStorage = exports.CacheStorage = exports.CacheManager = exports.UserStateStorage = exports.Storage = exports.StateUrlParser = exports.StateDiscriminator = exports.NavigationHistory = exports.HistoryStep = exports.BehaviorType = exports.Factory = exports.DatasourceManager = exports.DashboardManager = exports.ExpressionParser = exports.IntellisenceManager = exports.DashboardConfiguration = exports.UrlHelper = exports.StringHelper = exports.GuidHelper = exports.DataHelper = exports.Query = exports.QueryExpressionEvaluator = exports.DataSourceConfiguration = exports.Datasource = exports.DataHolder = exports.PermissionsManager = exports.PermissionsManagerConfiguration = exports.PermissionsCustomAttribute = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-var _dec, _class, _class6, _dec2, _class7, _dec3, _class8, _dec4, _class10, _dec5, _class12, _dec6, _desc, _value, _class14;
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _dec, _class, _class6, _dec2, _class7, _dec3, _class8, _dec4, _class10, _dec5, _class12, _dec6, _desc, _value, _class14;
 
 var _lodash = require('lodash');
 
@@ -74,104 +74,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CacheManager = exports.CacheManager = function () {
-  function CacheManager(storage) {
-    _classCallCheck(this, CacheManager);
-
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  CacheManager.prototype.startCleaner = function startCleaner() {
-    var _this = this;
-
-    if (!this.cleaner) {
-      (function () {
-        var self = _this;
-        _this.cleaner = window.setInterval(function () {
-          self._cacheStorage.removeExpired();
-        }, _this._cleanInterval);
-      })();
-    }
-  };
-
-  CacheManager.prototype.stopCleaner = function stopCleaner() {
-    if (this.cleaner) window.clearInterval(this.cleaner);
-  };
-
-  CacheManager.prototype.getStorage = function getStorage() {
-    return this._cacheStorage;
-  };
-
-  _createClass(CacheManager, [{
-    key: 'cleanInterval',
-    get: function get() {
-      return this._cleanInterval;
-    }
-  }]);
-
-  return CacheManager;
-}();
-
-var CacheStorage = exports.CacheStorage = function () {
-  function CacheStorage() {
-    _classCallCheck(this, CacheStorage);
-  }
-
-  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
-
-  CacheStorage.prototype.getItem = function getItem(key) {};
-
-  CacheStorage.prototype.removeItem = function removeItem(key) {};
-
-  CacheStorage.prototype.removeExpired = function removeExpired() {};
-
-  return CacheStorage;
-}();
-
-var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
-  _inherits(MemoryCacheStorage, _CacheStorage);
-
-  function MemoryCacheStorage() {
-    _classCallCheck(this, MemoryCacheStorage);
-
-    var _this2 = _possibleConstructorReturn(this, _CacheStorage.call(this));
-
-    _this2._cache = {};
-    return _this2;
-  }
-
-  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({}, value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  };
-
-  MemoryCacheStorage.prototype.getItem = function getItem(key) {
-    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
-    return null;
-  };
-
-  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
-    delete this._cache[key];
-  };
-
-  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
-    var self = this;
-    _.forOwn(self._cache, function (v, k) {
-      if (self._cache[k].exp < Date.now()) {
-        self.removeItem(k);
-      }
-    });
-  };
-
-  return MemoryCacheStorage;
-}(CacheStorage);
-
 var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0, _aureliaFramework.inject)(Element, PermissionsManager), _dec(_class = function () {
   function PermissionsCustomAttribute(element, permissionsManager) {
     _classCallCheck(this, PermissionsCustomAttribute);
@@ -181,7 +83,7 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
   }
 
   PermissionsCustomAttribute.prototype.bind = function bind() {
-    var _this3 = this;
+    var _this = this;
 
     if (!this.value) return;
     var rGroup = "";
@@ -209,11 +111,11 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
 
       var p = _ref;
 
-      _this3.permissionsManager.hasPermisson(p, rGroup).then(function (result) {
+      _this.permissionsManager.hasPermisson(p, rGroup).then(function (result) {
 
         if (result) {
-          if (p === 'read') _this3.element.hidden = false;
-          if (p === 'write') _this3.element.disabled = false;
+          if (p === 'read') _this.element.hidden = false;
+          if (p === 'write') _this.element.disabled = false;
         }
       }, function (err) {});
     };
@@ -221,9 +123,9 @@ var PermissionsCustomAttribute = exports.PermissionsCustomAttribute = (_dec = (0
     for (var _iterator = permissions, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
       var _ref;
 
-      var _ret2 = _loop();
+      var _ret = _loop();
 
-      if (_ret2 === 'break') break;
+      if (_ret === 'break') break;
     }
   };
 
@@ -287,16 +189,6 @@ var PermissionsManager = exports.PermissionsManager = function () {
   return PermissionsManager;
 }();
 
-var DashboardConfiguration = exports.DashboardConfiguration = function () {
-  function DashboardConfiguration() {
-    _classCallCheck(this, DashboardConfiguration);
-  }
-
-  DashboardConfiguration.prototype.invoke = function invoke() {};
-
-  return DashboardConfiguration;
-}();
-
 var DataHolder = exports.DataHolder = function () {
   function DataHolder() {
     _classCallCheck(this, DataHolder);
@@ -343,7 +235,7 @@ var Datasource = exports.Datasource = function () {
   }
 
   Datasource.prototype.getData = function getData(query) {
-    var _this4 = this;
+    var _this2 = this;
 
     if (!this.transport && !this.transport.readService) throw "readService is not configured";
 
@@ -354,18 +246,18 @@ var Datasource = exports.Datasource = function () {
     } else {
       if (this._liveRequest[cacheKey]) {
         this._liveRequest[cacheKey] = this._liveRequest[cacheKey].then(function (l) {
-          return _this4._fromCache(cacheKey);
+          return _this2._fromCache(cacheKey);
         }).then(function (data) {
-          return _this4._processData(cacheKey, query, data);
+          return _this2._processData(cacheKey, query, data);
         }, function (err) {
-          return _this4._doWebRequest(cacheKey, query);
+          return _this2._doWebRequest(cacheKey, query);
         });
         return this._liveRequest[cacheKey];
       }
       try {
         var data = this._fromCache(cacheKey);
         return Promise.resolve(data).then(function (d) {
-          return _this4._processData(cacheKey, query, d);
+          return _this2._processData(cacheKey, query, d);
         });
       } catch (ex) {}
       this._liveRequest[cacheKey] = this._doWebRequest(cacheKey, query);
@@ -389,7 +281,7 @@ var Datasource = exports.Datasource = function () {
   };
 
   Datasource.prototype._doWebRequest = function _doWebRequest(cacheKey, query) {
-    var _this5 = this;
+    var _this3 = this;
 
     return this.transport.readService.read({
       fields: query.fields,
@@ -399,7 +291,7 @@ var Datasource = exports.Datasource = function () {
       sort: query.sort,
       sortDir: query.sortDir
     }).then(function (d) {
-      return _this5._processData(cacheKey, query, d);
+      return _this3._processData(cacheKey, query, d);
     });
   };
 
@@ -739,26 +631,15 @@ var UrlHelper = exports.UrlHelper = function () {
   return UrlHelper;
 }();
 
-var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
-  _inherits(DefaultHttpClient, _HttpClient);
-
-  function DefaultHttpClient() {
-    _classCallCheck(this, DefaultHttpClient);
-
-    var _this6 = _possibleConstructorReturn(this, _HttpClient.call(this));
-
-    _this6.configure(function (config) {
-      config.useStandardConfiguration().withDefaults({
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-    });
-    return _this6;
+var DashboardConfiguration = exports.DashboardConfiguration = function () {
+  function DashboardConfiguration() {
+    _classCallCheck(this, DashboardConfiguration);
   }
 
-  return DefaultHttpClient;
-}(_aureliaFetchClient.HttpClient);
+  DashboardConfiguration.prototype.invoke = function invoke() {};
+
+  return DashboardConfiguration;
+}();
 
 var IntellisenceManager = exports.IntellisenceManager = function () {
   function IntellisenceManager(parser, dataSource, availableFields) {
@@ -804,9 +685,9 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
     };
 
     for (var i = tmpArr.length - 1; i >= 0; i--) {
-      var _ret3 = _loop2(i);
+      var _ret2 = _loop2(i);
 
-      if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+      if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
     }
     return "";
   };
@@ -836,7 +717,7 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
   };
 
   IntellisenceManager.prototype._getIntellisenseData = function _getIntellisenseData(searchStr, lastWord, pegException) {
-    var _this7 = this;
+    var _this4 = this;
 
     var type = '';
     var result = [];
@@ -852,36 +733,36 @@ var IntellisenceManager = exports.IntellisenceManager = function () {
         case "STRING_FIELD_NAME":
         case "NUMERIC_FIELD_NAME":
         case "DATE_FIELD_NAME":
-          var filteredFields = lastWord ? _.filter(_this7.fields, function (f) {
+          var filteredFields = lastWord ? _.filter(_this4.fields, function (f) {
             return f.toLowerCase().startsWith(lastWord.toLowerCase());
-          }) : _this7.fields;
-          resolve(_this7._normalizeData("field", filteredFields.sort()));
+          }) : _this4.fields;
+          resolve(_this4._normalizeData("field", filteredFields.sort()));
           break;
         case "STRING_OPERATOR_EQUAL":
         case "STRING_OPERATOR_IN":
-          resolve(_this7._normalizeData("operator", _this7._getStringComparisonOperatorsArray()));
+          resolve(_this4._normalizeData("operator", _this4._getStringComparisonOperatorsArray()));
           break;
         case "STRING_VALUE":
         case "STRING_PATTERN":
-          lastFldName = _this7._getLastFieldName(searchStr, _this7.fields, pegException.column);
-          _this7._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this7._normalizeData("string", data));
+          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
+          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this4._normalizeData("string", data));
           });
           break;
         case "STRING_VALUES_ARRAY":
-          lastFldName = _this7._getLastFieldName(searchStr, _this7.fields, pegException.column);
-          _this7._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
-            resolve(_this7._normalizeData("array_string", data));
+          lastFldName = _this4._getLastFieldName(searchStr, _this4.fields, pegException.column);
+          _this4._getFieldValuesArray(lastFldName, lastWord).then(function (data) {
+            resolve(_this4._normalizeData("array_string", data));
           });
           break;
-          resolve(_this7._normalizeData("array_string", []));
+          resolve(_this4._normalizeData("array_string", []));
           break;
         case "OPERATOR":
-          resolve(_this7._normalizeData("operator", _this7._getComparisonOperatorsArray()));
+          resolve(_this4._normalizeData("operator", _this4._getComparisonOperatorsArray()));
           break;
         case "LOGIC_OPERATOR":
         case "end of input":
-          resolve(_this7._normalizeData("operator", _this7._getLogicalOperatorsArray()));
+          resolve(_this4._normalizeData("operator", _this4._getLogicalOperatorsArray()));
           break;
         default:
           resolve([]);
@@ -1010,14 +891,14 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = functi
   }
 
   Factory.prototype.get = function get(container) {
-    var _this8 = this;
+    var _this5 = this;
 
     return function () {
       for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
         rest[_key] = arguments[_key];
       }
 
-      return container.invoke(_this8.Type, rest);
+      return container.invoke(_this5.Type, rest);
     };
   };
 
@@ -1058,7 +939,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
   }
 
   HistoryStep.prototype.run = function run(routingContext, next) {
-    var _this9 = this;
+    var _this6 = this;
 
     if (routingContext.getAllInstructions().some(function (i) {
       return i.config.name === "dashboard";
@@ -1069,17 +950,17 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
         var storageWidgetsState;
 
         (function () {
-          if (_this9.currentRouteItem) {
+          if (_this6.currentRouteItem) {
             (function () {
-              var currentWidgetsState = StateDiscriminator.discriminate(_this9._userStateStorage.getAll(_this9.currentRouteItem.dashboardName));
-              var url = "/" + _this9.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+              var currentWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_this6.currentRouteItem.dashboardName));
+              var url = "/" + _this6.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
 
-              if (_.filter(_this9._navigationHistory.items, function (i) {
+              if (_.filter(_this6._navigationHistory.items, function (i) {
                 return StringHelper.compare(i.url, url);
               }).length === 0) {
-                _this9._navigationHistory.add(url, _this9.currentRouteItem.title, _this9.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-              } else if (!StringHelper.compare(url, _this9.currentRouteItem.route)) {
-                _this9._navigationHistory.update(url, new Date());
+                _this6._navigationHistory.add(url, _this6.currentRouteItem.title, _this6.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+              } else if (!StringHelper.compare(url, _this6.currentRouteItem.route)) {
+                _this6._navigationHistory.update(url, new Date());
               }
             })();
           }
@@ -1087,7 +968,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
           var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
 
           routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          storageWidgetsState = StateDiscriminator.discriminate(_this9._userStateStorage.getAll(_dashboard.name));
+          storageWidgetsState = StateDiscriminator.discriminate(_this6._userStateStorage.getAll(_dashboard.name));
 
           for (var _iterator4 = storageWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
             var _ref4;
@@ -1103,7 +984,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
 
             var oldSt = _ref4;
 
-            _this9._userStateStorage.remove(oldSt.key);
+            _this6._userStateStorage.remove(oldSt.key);
           }for (var _iterator5 = routeWidgetsState, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
             var _ref5;
 
@@ -1118,15 +999,15 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
 
             var newSt = _ref5;
 
-            _this9._userStateStorage.set(newSt.key, newSt.value);
+            _this6._userStateStorage.set(newSt.key, newSt.value);
           }
-          if (_.filter(_this9._navigationHistory.items, function (i) {
+          if (_.filter(_this6._navigationHistory.items, function (i) {
             return StringHelper.compare(i.url, fullUrl);
           }).length === 0) {
-            _this9._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this9._userStateStorage.getAll(_dashboard.name), new Date());
+            _this6._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this6._userStateStorage.getAll(_dashboard.name), new Date());
           }
 
-          _this9.currentRouteItem = {
+          _this6.currentRouteItem = {
             dashboardName: _dashboard.name,
             title: _dashboard.title,
             route: fullUrl
@@ -1434,6 +1315,132 @@ var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework
   return UserStateStorage;
 }()) || _class8);
 
+var CacheManager = exports.CacheManager = function () {
+  function CacheManager(storage) {
+    _classCallCheck(this, CacheManager);
+
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  CacheManager.prototype.startCleaner = function startCleaner() {
+    var _this7 = this;
+
+    if (!this.cleaner) {
+      (function () {
+        var self = _this7;
+        _this7.cleaner = window.setInterval(function () {
+          self._cacheStorage.removeExpired();
+        }, _this7._cleanInterval);
+      })();
+    }
+  };
+
+  CacheManager.prototype.stopCleaner = function stopCleaner() {
+    if (this.cleaner) window.clearInterval(this.cleaner);
+  };
+
+  CacheManager.prototype.getStorage = function getStorage() {
+    return this._cacheStorage;
+  };
+
+  _createClass(CacheManager, [{
+    key: 'cleanInterval',
+    get: function get() {
+      return this._cleanInterval;
+    }
+  }]);
+
+  return CacheManager;
+}();
+
+var CacheStorage = exports.CacheStorage = function () {
+  function CacheStorage() {
+    _classCallCheck(this, CacheStorage);
+  }
+
+  CacheStorage.prototype.setItem = function setItem(key, value, expiration) {};
+
+  CacheStorage.prototype.getItem = function getItem(key) {};
+
+  CacheStorage.prototype.removeItem = function removeItem(key) {};
+
+  CacheStorage.prototype.removeExpired = function removeExpired() {};
+
+  return CacheStorage;
+}();
+
+var MemoryCacheStorage = exports.MemoryCacheStorage = function (_CacheStorage) {
+  _inherits(MemoryCacheStorage, _CacheStorage);
+
+  function MemoryCacheStorage() {
+    _classCallCheck(this, MemoryCacheStorage);
+
+    var _this8 = _possibleConstructorReturn(this, _CacheStorage.call(this));
+
+    _this8._cache = {};
+    return _this8;
+  }
+
+  MemoryCacheStorage.prototype.setItem = function setItem(key, value, seconds) {
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({}, value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  };
+
+  MemoryCacheStorage.prototype.getItem = function getItem(key) {
+    if (this._cache[key] && this._cache[key].exp >= Date.now()) return this._cache[key].value;
+    return null;
+  };
+
+  MemoryCacheStorage.prototype.removeItem = function removeItem(key) {
+    delete this._cache[key];
+  };
+
+  MemoryCacheStorage.prototype.removeExpired = function removeExpired() {
+    var self = this;
+    _.forOwn(self._cache, function (v, k) {
+      if (self._cache[k].exp < Date.now()) {
+        self.removeItem(k);
+      }
+    });
+  };
+
+  return MemoryCacheStorage;
+}(CacheStorage);
+
+var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
+  _inherits(DefaultHttpClient, _HttpClient);
+
+  function DefaultHttpClient() {
+    _classCallCheck(this, DefaultHttpClient);
+
+    var _this9 = _possibleConstructorReturn(this, _HttpClient.call(this));
+
+    _this9.configure(function (config) {
+      config.useStandardConfiguration().withDefaults({
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+    });
+    return _this9;
+  }
+
+  return DefaultHttpClient;
+}(_aureliaFetchClient.HttpClient);
+
+var Schema = exports.Schema = function Schema() {
+  _classCallCheck(this, Schema);
+
+  this.fields = [];
+  this.parameters = [];
+};
+
 var DataService = exports.DataService = function () {
   function DataService() {
     _classCallCheck(this, DataService);
@@ -1581,13 +1588,6 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   return StaticJsonDataService;
 }(DataService)) || _class12);
 
-var Schema = exports.Schema = function Schema() {
-  _classCallCheck(this, Schema);
-
-  this.fields = [];
-  this.parameters = [];
-};
-
 var FormatValueConverter = function () {
   function FormatValueConverter() {
     _classCallCheck(this, FormatValueConverter);
@@ -1694,150 +1694,6 @@ var Grammar = exports.Grammar = function () {
 
   return Grammar;
 }();
-
-var DashboardBase = exports.DashboardBase = function () {
-  function DashboardBase() {
-    _classCallCheck(this, DashboardBase);
-
-    this.layout = [];
-    this.behaviors = [];
-  }
-
-  DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
-    this.name = dashboardConfiguration.name;
-    this.title = dashboardConfiguration.title;
-    this.resourceGroup = dashboardConfiguration.resourceGroup;
-  };
-
-  DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
-    var wl = _.find(this.layout, function (w) {
-      return w.widget.name === widgetName;
-    });
-    if (wl) return wl.widget;
-  };
-
-  DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
-    var lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this.layout.push(lw);
-    widget.dashboard = this;
-  };
-
-  DashboardBase.prototype.removeWidget = function removeWidget(widget) {
-    _.remove(this.layout, function (w) {
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  };
-
-  DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
-    var oldLw = _.find(this.layout, function (w) {
-      return w.widget === oldWidget;
-    });
-    if (oldLw) {
-      newWidget.dashboard = this;
-      var newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this.layout.splice(_.indexOf(this.layout, oldLw), 1, newLw);
-    }
-  };
-
-  DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
-    var lw = _.find(this.layout, function (w) {
-      return w.widget === currentWidget;
-    });
-    var previousWidget = lw.navigationStack.pop();
-    if (previousWidget) {
-      var previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this.layout.splice(_.indexOf(this.layout, lw), 1, previousLw);
-    }
-  };
-
-  DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
-    var lw = _.find(this.layout, function (w) {
-      return w.widget === widget;
-    });
-    if (newSize) {
-      var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
-      var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
-      lw.resize(x, y);
-    } else lw.rollbackResize();
-  };
-
-  DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
-    widget.refresh();
-  };
-
-  DashboardBase.prototype.refresh = function refresh() {
-    for (var i = 0; i < this.layout.length; i++) {
-      this.refreshWidget(this.layout[i].widget);
-    }
-  };
-
-  DashboardBase.prototype.dispose = function dispose() {
-    for (var i = 0; i < this.layout.length; i++) {
-      this.layout[i].widget.dispose();
-    }
-    this.layout = [];
-
-    while (true) {
-      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
-    }
-  };
-
-  return DashboardBase;
-}();
-
-var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class14 = function () {
-  function LayoutWidget() {
-    _classCallCheck(this, LayoutWidget);
-
-    this.navigationStack = [];
-    this.resized = false;
-  }
-
-  LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
-    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  };
-
-  LayoutWidget.prototype.rollbackResize = function rollbackResize() {
-    if (this._originalDimensions) {
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
-  };
-
-  _createClass(LayoutWidget, [{
-    key: 'hasNavStack',
-    get: function get() {
-      return this.navigationStack && this.navigationStack.length > 0;
-    }
-  }]);
-
-  return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class14.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class14.prototype, 'hasNavStack'), _class14.prototype)), _class14));
 
 var Chart = exports.Chart = function (_Widget) {
   _inherits(Chart, _Widget);
@@ -2260,6 +2116,150 @@ var Widget = exports.Widget = function () {
   return Widget;
 }();
 
+var DashboardBase = exports.DashboardBase = function () {
+  function DashboardBase() {
+    _classCallCheck(this, DashboardBase);
+
+    this.layout = [];
+    this.behaviors = [];
+  }
+
+  DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
+  };
+
+  DashboardBase.prototype.getWidgetByName = function getWidgetByName(widgetName) {
+    var wl = _.find(this.layout, function (w) {
+      return w.widget.name === widgetName;
+    });
+    if (wl) return wl.widget;
+  };
+
+  DashboardBase.prototype.addWidget = function addWidget(widget, dimensions) {
+    var lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this.layout.push(lw);
+    widget.dashboard = this;
+  };
+
+  DashboardBase.prototype.removeWidget = function removeWidget(widget) {
+    _.remove(this.layout, function (w) {
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  };
+
+  DashboardBase.prototype.replaceWidget = function replaceWidget(oldWidget, newWidget) {
+    var oldLw = _.find(this.layout, function (w) {
+      return w.widget === oldWidget;
+    });
+    if (oldLw) {
+      newWidget.dashboard = this;
+      var newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this.layout.splice(_.indexOf(this.layout, oldLw), 1, newLw);
+    }
+  };
+
+  DashboardBase.prototype.restoreWidget = function restoreWidget(currentWidget) {
+    var lw = _.find(this.layout, function (w) {
+      return w.widget === currentWidget;
+    });
+    var previousWidget = lw.navigationStack.pop();
+    if (previousWidget) {
+      var previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this.layout.splice(_.indexOf(this.layout, lw), 1, previousLw);
+    }
+  };
+
+  DashboardBase.prototype.resizeWidget = function resizeWidget(widget, newSize) {
+    var lw = _.find(this.layout, function (w) {
+      return w.widget === widget;
+    });
+    if (newSize) {
+      var x = newSize.sizeX ? newSize.sizeX : lw.sizeX;
+      var y = newSize.sizeY ? newSize.sizeY : lw.sizeY;
+      lw.resize(x, y);
+    } else lw.rollbackResize();
+  };
+
+  DashboardBase.prototype.refreshWidget = function refreshWidget(widget) {
+    widget.refresh();
+  };
+
+  DashboardBase.prototype.refresh = function refresh() {
+    for (var i = 0; i < this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
+    }
+  };
+
+  DashboardBase.prototype.dispose = function dispose() {
+    for (var i = 0; i < this.layout.length; i++) {
+      this.layout[i].widget.dispose();
+    }
+    this.layout = [];
+
+    while (true) {
+      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+    }
+  };
+
+  return DashboardBase;
+}();
+
+var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class14 = function () {
+  function LayoutWidget() {
+    _classCallCheck(this, LayoutWidget);
+
+    this.navigationStack = [];
+    this.resized = false;
+  }
+
+  LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
+    this._originalDimensions = { sizeX: this.sizeX, sizeY: this.sizeY };
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  };
+
+  LayoutWidget.prototype.rollbackResize = function rollbackResize() {
+    if (this._originalDimensions) {
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  };
+
+  _createClass(LayoutWidget, [{
+    key: 'hasNavStack',
+    get: function get() {
+      return this.navigationStack && this.navigationStack.length > 0;
+    }
+  }]);
+
+  return LayoutWidget;
+}(), (_applyDecoratedDescriptor(_class14.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class14.prototype, 'hasNavStack'), _class14.prototype)), _class14));
+
 var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBehavior) {
   _inherits(ChangeRouteBehavior, _DashboardBehavior);
 
@@ -2297,17 +2297,17 @@ var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBeha
 var CreateWidgetBehavior = exports.CreateWidgetBehavior = function (_DashboardBehavior2) {
   _inherits(CreateWidgetBehavior, _DashboardBehavior2);
 
-  function CreateWidgetBehavior(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
+  function CreateWidgetBehavior(settings) {
     _classCallCheck(this, CreateWidgetBehavior);
 
     var _this23 = _possibleConstructorReturn(this, _DashboardBehavior2.call(this));
 
-    _this23._chanel = chanel;
-    _this23._widgetType = widgetType;
-    _this23._widgetSettings = widgetSettings;
-    _this23._widgetDimensions = widgetDimensions;
-    _this23._eventAggregator = eventAggregator;
-    _this23._filterMapper = filterMapper;
+    _this23._chanel = settings.chanel;
+    _this23._widgetType = settings.widgetType;
+    _this23._widgetSettings = settings.widgetSettings;
+    _this23._widgetDimensions = settings.widgetDimensions;
+    _this23._eventAggregator = settings.eventAggregator;
+    _this23._filterMapper = settings.filterMapper;
     return _this23;
   }
 

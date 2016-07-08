@@ -2,14 +2,14 @@ import {DashboardBehavior} from './dashboard-behavior';
 
 export class CreateWidgetBehavior extends DashboardBehavior {
 
-  constructor(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
+  constructor(settings) {
     super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._widgetDimensions = widgetDimensions;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
+    this._chanel = settings.chanel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._widgetDimensions = settings.widgetDimensions;
+    this._eventAggregator = settings.eventAggregator;
+    this._filterMapper = settings.filterMapper;
   }
 
   attach(dashboard){

@@ -9,36 +9,16 @@ declare module 'periscope-framework' {
     bindable,
     resolver,
     transient,
-    computedFrom,
     customElement,
     useView,
     Decorators,
-    noView
+    noView,
+    computedFrom
   } from 'aurelia-framework';
   import {
     HttpClient
   } from 'aurelia-fetch-client';
   import Swagger from 'swagger-client';
-  export class CacheManager {
-    constructor(storage: any);
-    cleanInterval: any;
-    startCleaner(): any;
-    stopCleaner(): any;
-    getStorage(): any;
-  }
-  export class CacheStorage {
-    setItem(key: any, value: any, expiration: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
-  export class MemoryCacheStorage extends CacheStorage {
-    constructor();
-    setItem(key: any, value: any, seconds: any): any;
-    getItem(key: any): any;
-    removeItem(key: any): any;
-    removeExpired(): any;
-  }
   export class PermissionsCustomAttribute {
     constructor(element: any, permissionsManager: any);
     bind(): any;
@@ -69,9 +49,6 @@ declare module 'periscope-framework' {
     }
   ]
   */
-  export class DashboardConfiguration {
-    invoke(): any;
-  }
   export class DataHolder {
     constructor();
     data: any;
@@ -144,8 +121,8 @@ declare module 'periscope-framework' {
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
   }
-  export class DefaultHttpClient extends HttpClient {
-    constructor();
+  export class DashboardConfiguration {
+    invoke(): any;
   }
   export class IntellisenceManager {
     constructor(parser: any, dataSource: any, availableFields: any);
@@ -214,6 +191,32 @@ declare module 'periscope-framework' {
     clearAll(): any;
     createKey(namespace: any, key: any): any;
   }
+  export class CacheManager {
+    constructor(storage: any);
+    cleanInterval: any;
+    startCleaner(): any;
+    stopCleaner(): any;
+    getStorage(): any;
+  }
+  export class CacheStorage {
+    setItem(key: any, value: any, expiration: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
+  export class MemoryCacheStorage extends CacheStorage {
+    constructor();
+    setItem(key: any, value: any, seconds: any): any;
+    getItem(key: any): any;
+    removeItem(key: any): any;
+    removeExpired(): any;
+  }
+  export class DefaultHttpClient extends HttpClient {
+    constructor();
+  }
+  export class Schema {
+    constructor();
+  }
   export class DataService {
     configure(configuration: any): any;
     url: any;
@@ -246,9 +249,6 @@ declare module 'periscope-framework' {
   export class StaticJsonDataService extends DataService {
     constructor();
     read(options: any): any;
-  }
-  export class Schema {
-    constructor();
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

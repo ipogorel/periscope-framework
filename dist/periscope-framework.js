@@ -3,76 +3,8 @@ import * as peg from 'pegjs';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
-import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
+import {inject,bindable,resolver,transient,customElement,useView,Decorators,noView,computedFrom} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
-
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-    return null;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
 
 @inject(Element, PermissionsManager)
 export class PermissionsCustomAttribute {
@@ -184,13 +116,6 @@ export class PermissionsManager {
   }
 ]
 */
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
 
 
 export class DataHolder {
@@ -631,20 +556,12 @@ export class UrlHelper {
 
 }
 
-export class DefaultHttpClient extends HttpClient {
-  constructor() {
-    super();
-    this.configure(config => {
-      config
-        .useStandardConfiguration()
-        .withDefaults({
-          headers: {
-            'Accept': 'application/json'
-          }
-        })
-    });
+export class DashboardConfiguration {
+  invoke(){
+
   }
 }
+
 
 export class IntellisenceManager {
   constructor(parser, dataSource, availableFields){
@@ -1131,6 +1048,96 @@ export class UserStateStorage{
 
 }
 
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+    return null;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
+
+export class DefaultHttpClient extends HttpClient {
+  constructor() {
+    super();
+    this.configure(config => {
+      config
+        .useStandardConfiguration()
+        .withDefaults({
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+    });
+  }
+}
+
+export class Schema {
+  constructor(){
+    this.fields = [];
+    this.parameters = [];
+  }
+}
+
 export class DataService{
   configure(configuration){
     this.url = configuration.url?configuration.url:this.url;
@@ -1308,13 +1315,6 @@ export class StaticJsonDataService extends DataService {
       });
   }
 
-}
-
-export class Schema {
-  constructor(){
-    this.fields = [];
-    this.parameters = [];
-  }
 }
 
 export class FormatValueConverter {
@@ -1694,151 +1694,6 @@ export class Grammar{
   
 }
 
-export class DashboardBase
-{
-  constructor() {
-  }
-
-  name;
-  resourceGroup;
-  title;
-  layout = [];
-  behaviors = [];
-
-  configure(dashboardConfiguration){
-    this.name = dashboardConfiguration.name;
-    this.title = dashboardConfiguration.title;
-    this.resourceGroup = dashboardConfiguration.resourceGroup;
-  }
-
-
-  getWidgetByName(widgetName) {
-    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
-    if (wl)
-      return wl.widget;
-  }
-
-  addWidget(widget, dimensions) {
-    let lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this.layout.push(lw);
-    widget.dashboard = this;
-  }
-
-  removeWidget(widget) {
-    _.remove(this.layout, w=>{
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  }
-
-  replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
-    if (oldLw){
-      newWidget.dashboard = this;
-      let newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
-    }
-  }
-
-  restoreWidget(currentWidget){
-    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
-    let previousWidget = lw.navigationStack.pop();
-    if (previousWidget){
-      let previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
-    }
-  }
-
-
-  resizeWidget(widget, newSize){
-    var lw = _.find(this.layout, w=> {return w.widget === widget});
-    if (newSize) {
-      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
-      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
-      lw.resize(x, y);
-    }
-    else
-      lw.rollbackResize()
-  }
-
-
-  refreshWidget(widget){
-    widget.refresh();
-  }
-  
-  refresh() {
-    for (let i=0; i<this.layout.length; i++) {
-      this.refreshWidget(this.layout[i].widget);
-    }
-  }
-
-  dispose(){
-    for (let i=0; i<this.layout.length; i++) {
-      this.layout[i].widget.dispose();
-    }
-    this.layout = [];
-
-    while(true) {
-      if (this.behaviors.length>0)
-        this.behaviors[0].detach();
-      else
-        break;
-    }
-  }
-}
-
-export class LayoutWidget{
-
-  widget;
-  navigationStack = [];
-  sizeX;
-  sizeY;
-  col;
-  row;
-  resized = false;
-
-  @computedFrom('navigationStack')
-  get hasNavStack() {
-    return this.navigationStack && this.navigationStack.length > 0;
-  }
-
-  resize(newSizeX, newSizeY){
-    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  }
-
-  rollbackResize(){
-    if (this._originalDimensions){
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
-  }
-
-}
-
 export class Chart extends Widget {
   constructor(settings) {
     super(settings);
@@ -2206,6 +2061,151 @@ export class Widget {
 
 
 
+export class DashboardBase
+{
+  constructor() {
+  }
+
+  name;
+  resourceGroup;
+  title;
+  layout = [];
+  behaviors = [];
+
+  configure(dashboardConfiguration){
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
+  }
+
+
+  getWidgetByName(widgetName) {
+    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
+    if (wl)
+      return wl.widget;
+  }
+
+  addWidget(widget, dimensions) {
+    let lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this.layout.push(lw);
+    widget.dashboard = this;
+  }
+
+  removeWidget(widget) {
+    _.remove(this.layout, w=>{
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  replaceWidget(oldWidget, newWidget) {
+    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
+    if (oldLw){
+      newWidget.dashboard = this;
+      let newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
+    }
+  }
+
+  restoreWidget(currentWidget){
+    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
+    let previousWidget = lw.navigationStack.pop();
+    if (previousWidget){
+      let previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
+    }
+  }
+
+
+  resizeWidget(widget, newSize){
+    var lw = _.find(this.layout, w=> {return w.widget === widget});
+    if (newSize) {
+      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
+      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
+      lw.resize(x, y);
+    }
+    else
+      lw.rollbackResize()
+  }
+
+
+  refreshWidget(widget){
+    widget.refresh();
+  }
+  
+  refresh() {
+    for (let i=0; i<this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
+    }
+  }
+
+  dispose(){
+    for (let i=0; i<this.layout.length; i++) {
+      this.layout[i].widget.dispose();
+    }
+    this.layout = [];
+
+    while(true) {
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
+      else
+        break;
+    }
+  }
+}
+
+export class LayoutWidget{
+
+  widget;
+  navigationStack = [];
+  sizeX;
+  sizeY;
+  col;
+  row;
+  resized = false;
+
+  @computedFrom('navigationStack')
+  get hasNavStack() {
+    return this.navigationStack && this.navigationStack.length > 0;
+  }
+
+  resize(newSizeX, newSizeY){
+    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  }
+
+  rollbackResize(){
+    if (this._originalDimensions){
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  }
+
+}
+
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
     super();
@@ -2237,14 +2237,14 @@ export class ChangeRouteBehavior extends DashboardBehavior {
 
 export class CreateWidgetBehavior extends DashboardBehavior {
 
-  constructor(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
+  constructor(settings) {
     super();
-    this._chanel = chanel;
-    this._widgetType = widgetType;
-    this._widgetSettings = widgetSettings;
-    this._widgetDimensions = widgetDimensions;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
+    this._chanel = settings.chanel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._widgetDimensions = settings.widgetDimensions;
+    this._eventAggregator = settings.eventAggregator;
+    this._filterMapper = settings.filterMapper;
   }
 
   attach(dashboard){

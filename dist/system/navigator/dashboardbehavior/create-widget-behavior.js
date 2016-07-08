@@ -43,17 +43,17 @@ System.register(["./dashboard-behavior"], function (_export, _context) {
       _export("CreateWidgetBehavior", CreateWidgetBehavior = function (_DashboardBehavior) {
         _inherits(CreateWidgetBehavior, _DashboardBehavior);
 
-        function CreateWidgetBehavior(chanel, widgetType, widgetSettings, widgetDimensions, eventAggregator, filterMapper) {
+        function CreateWidgetBehavior(settings) {
           _classCallCheck(this, CreateWidgetBehavior);
 
           var _this = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-          _this._chanel = chanel;
-          _this._widgetType = widgetType;
-          _this._widgetSettings = widgetSettings;
-          _this._widgetDimensions = widgetDimensions;
-          _this._eventAggregator = eventAggregator;
-          _this._filterMapper = filterMapper;
+          _this._chanel = settings.chanel;
+          _this._widgetType = settings.widgetType;
+          _this._widgetSettings = settings.widgetSettings;
+          _this._widgetDimensions = settings.widgetDimensions;
+          _this._eventAggregator = settings.eventAggregator;
+          _this._filterMapper = settings.filterMapper;
           return _this;
         }
 
