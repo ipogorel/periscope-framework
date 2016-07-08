@@ -1,8 +1,6 @@
 "use strict";
 
 System.register(["../helpers/string-helper"], function (_export, _context) {
-  "use strict";
-
   var StringHelper, _createClass, Query;
 
   function _classCallCheck(instance, Constructor) {

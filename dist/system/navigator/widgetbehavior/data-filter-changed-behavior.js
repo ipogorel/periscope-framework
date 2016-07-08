@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./broadcaster-behavior', '../events/widget-event-message'], function (_export, _context) {
-  "use strict";
-
   var BroadcasterBehavior, WidgetEventMessage, DataFilterChangedBehavior;
 
   function _classCallCheck(instance, Constructor) {

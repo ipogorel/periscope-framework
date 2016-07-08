@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['lodash', './../data/query'], function (_export, _context) {
-  "use strict";
-
   var _, Query, _typeof, IntellisenceManager;
 
   function _classCallCheck(instance, Constructor) {

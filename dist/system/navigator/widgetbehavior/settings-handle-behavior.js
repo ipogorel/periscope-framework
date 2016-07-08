@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./listner-behavior', 'lodash'], function (_export, _context) {
-  "use strict";
-
   var ListenerBehavior, _, SettingsHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {

@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['pegjs'], function (_export, _context) {
-  "use strict";
-
   var peg, ExpressionParser;
 
   function _classCallCheck(instance, Constructor) {

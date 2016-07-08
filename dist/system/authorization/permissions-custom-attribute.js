@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['aurelia-framework', 'lodash', './permissions-manager'], function (_export, _context) {
-  "use strict";
-
   var inject, bindable, _, PermissionsManager, _dec, _class, PermissionsCustomAttribute;
 
   function _classCallCheck(instance, Constructor) {

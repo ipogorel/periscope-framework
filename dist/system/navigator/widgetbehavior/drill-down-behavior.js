@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./broadcaster-behavior', '../events/widget-event-message', '../../helpers/string-helper', 'lodash'], function (_export, _context) {
-  "use strict";
-
   var BroadcasterBehavior, WidgetEventMessage, StringHelper, _, DrillDownBehavior, DrillDownBehaviorConfiguration;
 
   function _classCallCheck(instance, Constructor) {

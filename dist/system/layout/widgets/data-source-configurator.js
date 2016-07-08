@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./widget', './../../navigator/events/widget-event'], function (_export, _context) {
-  "use strict";
-
   var Widget, WidgetEvent, _createClass, DataSourceConfigurator;
 
   function _classCallCheck(instance, Constructor) {

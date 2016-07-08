@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['aurelia-framework', 'lodash', './../infrastructure/dashboard-manager', './../state/user-state-storage', './navigation-history', './../state/state-discriminator', './../state/state-url-parser', './../helpers/string-helper'], function (_export, _context) {
-  "use strict";
-
   var inject, _, DashboardManager, UserStateStorage, NavigationHistory, StateDiscriminator, StateUrlParser, StringHelper, _createClass, _dec, _class, HistoryStep;
 
   function _classCallCheck(instance, Constructor) {

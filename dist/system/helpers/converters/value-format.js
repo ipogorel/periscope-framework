@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./../data-helper', 'numeral', 'moment'], function (_export, _context) {
-  "use strict";
-
   var DataHelper, numeral, moment, FormatValueConverter;
 
   function _classCallCheck(instance, Constructor) {

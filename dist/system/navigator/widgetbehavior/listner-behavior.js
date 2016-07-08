@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./widget-behavior', './../behavior-type'], function (_export, _context) {
-  "use strict";
-
   var WidgetBehavior, BehaviorType, ListenerBehavior;
 
   function _classCallCheck(instance, Constructor) {

@@ -1,8 +1,6 @@
 "use strict";
 
 System.register(["./../helpers/url-helper"], function (_export, _context) {
-  "use strict";
-
   var UrlHelper, StateUrlParser;
 
   function _classCallCheck(instance, Constructor) {

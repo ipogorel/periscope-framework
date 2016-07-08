@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['aurelia-fetch-client'], function (_export, _context) {
-  "use strict";
-
   var HttpClient, DefaultHttpClient;
 
   function _classCallCheck(instance, Constructor) {

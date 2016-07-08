@@ -1,8 +1,6 @@
 'use strict';
 
 System.register(['./listner-behavior'], function (_export, _context) {
-  "use strict";
-
   var ListenerBehavior, DataFilterHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {
