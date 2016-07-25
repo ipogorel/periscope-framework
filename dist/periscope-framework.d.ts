@@ -69,6 +69,9 @@ declare module 'periscope-framework' {
     removeItem(key: any): any;
     removeExpired(): any;
   }
+  export class DashboardConfiguration {
+    invoke(): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
@@ -116,6 +119,15 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
+  export class IntellisenceManager {
+    constructor(parser: any, dataSource: any, availableFields: any);
+    populate(searchStr: any, lastWord: any): any;
+  }
+  export class ExpressionParser {
+    constructor(grammarText: any);
+    parse(searchString: any): any;
+    validate(searchString: any): any;
+  }
   export class DataHelper {
     static getNumericFields(fields: any): any;
     static getStringFields(fields: any): any;
@@ -145,18 +157,6 @@ declare module 'periscope-framework' {
   }
   export class DefaultHttpClient extends HttpClient {
     constructor();
-  }
-  export class IntellisenceManager {
-    constructor(parser: any, dataSource: any, availableFields: any);
-    populate(searchStr: any, lastWord: any): any;
-  }
-  export class ExpressionParser {
-    constructor(grammarText: any);
-    parse(searchString: any): any;
-    validate(searchString: any): any;
-  }
-  export class DashboardConfiguration {
-    invoke(): any;
   }
   export class DashboardManager {
     constructor();
@@ -296,6 +296,18 @@ declare module 'periscope-framework' {
   export class StaticJsonDataService extends DataService {
     constructor();
     read(options: any): any;
+  }
+  export class GrammarExpression extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class GrammarTree extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class Grammar {
+    text: any;
+    getGrammar(): any;
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

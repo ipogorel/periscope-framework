@@ -45,8 +45,7 @@ define(['exports', './broadcaster-behavior', '../events/widget-event-message'], 
       var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
       _this.channel = channel;
-      _this.eventToAttach = "dataSelected";
-
+      _this.eventToAttach = "dataFieldSelected";
       _this._eventAggregator = eventAggregator;
       return _this;
     }

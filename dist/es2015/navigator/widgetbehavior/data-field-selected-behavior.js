@@ -5,8 +5,7 @@ export let DataFieldSelectedBehavior = class DataFieldSelectedBehavior extends B
   constructor(channel, eventAggregator) {
     super();
     this.channel = channel;
-    this.eventToAttach = "dataSelected";
-
+    this.eventToAttach = "dataFieldSelected";
     this._eventAggregator = eventAggregator;
   }
 
