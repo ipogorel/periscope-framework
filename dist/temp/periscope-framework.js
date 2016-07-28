@@ -9,7 +9,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _dec, _class, _class6, _dec2, _class7, _dec3, _class8, _dec4, _class10, _dec5, _class12, _dec6, _desc, _value, _class14;
+var _dec, _class, _dec2, _class6, _class8, _dec3, _class9, _dec4, _class10, _dec5, _class12, _dec6, _class14, _dec7, _desc, _value, _class16;
 
 var _lodash = require('lodash');
 
@@ -18,6 +18,10 @@ var _ = _interopRequireWildcard(_lodash);
 var _pegjs = require('pegjs');
 
 var peg = _interopRequireWildcard(_pegjs);
+
+var _jsBase = require('js-base64');
+
+var base64 = _interopRequireWildcard(_jsBase);
 
 var _numeral = require('numeral');
 
@@ -30,6 +34,8 @@ var _moment2 = _interopRequireDefault(_moment);
 var _aureliaFramework = require('aurelia-framework');
 
 var _aureliaFetchClient = require('aurelia-fetch-client');
+
+var _aureliaRouter = require('aurelia-router');
 
 var _swaggerClient = require('swagger-client');
 
@@ -905,12 +911,16 @@ var UrlHelper = exports.UrlHelper = function () {
     _classCallCheck(this, UrlHelper);
   }
 
+  UrlHelper.getAbsoluteBaseUrl = function getAbsoluteBaseUrl() {
+    return window.location.protocol + "//" + window.location.hostname + (window.location.port ? ":" + window.location.port : "");
+  };
+
   UrlHelper.objectToQuery = function objectToQuery(ar) {
     return encodeURIComponent(JSON.stringify(ar));
   };
 
   UrlHelper.queryToObject = function queryToObject(queryParam) {
-    return JSON.parse(queryParam);
+    return JSON.parse(decodeURIComponent(queryParam));
   };
 
   UrlHelper.getParameterByName = function getParameterByName(name, url) {
@@ -946,33 +956,36 @@ var DefaultHttpClient = exports.DefaultHttpClient = function (_HttpClient) {
   return DefaultHttpClient;
 }(_aureliaFetchClient.HttpClient);
 
-var DashboardManager = exports.DashboardManager = function () {
-  function DashboardManager() {
+var DashboardManager = exports.DashboardManager = (_dec2 = (0, _aureliaFramework.inject)(_aureliaRouter.Router), _dec2(_class6 = function () {
+  function DashboardManager(router) {
     _classCallCheck(this, DashboardManager);
 
-    this._dashboards = [];
+    this.dashboards = [];
+
+    this._router = router;
   }
 
+  DashboardManager.prototype.configure = function configure(configuration) {
+    this.dashboardRouteName = configuration.dashboardRouteName;
+  };
+
   DashboardManager.prototype.find = function find(dashboardName) {
-    return _.find(this._dashboards, { name: dashboardName });
+    return _.find(this.dashboards, { name: dashboardName });
   };
 
   DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
     var dashboard = new type();
     dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
+    if (this.dashboardRouteName) {
+      dashboard.route = UrlHelper.getAbsoluteBaseUrl() + "/" + this._router.generate(this.dashboardRouteName, { dashboard: dashboard.name });
+    }
+
+    this.dashboards.push(dashboard);
     return dashboard;
   };
 
-  _createClass(DashboardManager, [{
-    key: 'dashboards',
-    get: function get() {
-      return this._dashboards;
-    }
-  }]);
-
   return DashboardManager;
-}();
+}()) || _class6);
 
 var DatasourceManager = exports.DatasourceManager = function () {
   function DatasourceManager() {
@@ -1002,7 +1015,7 @@ var DatasourceManager = exports.DatasourceManager = function () {
   return DatasourceManager;
 }();
 
-var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = function () {
+var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class8 = function () {
   function Factory(Type) {
     _classCallCheck(this, Factory);
 
@@ -1026,7 +1039,7 @@ var Factory = exports.Factory = (0, _aureliaFramework.resolver)(_class6 = functi
   };
 
   return Factory;
-}()) || _class6;
+}()) || _class8;
 
 var BehaviorType = exports.BehaviorType = function () {
   function BehaviorType() {
@@ -1048,12 +1061,11 @@ var BehaviorType = exports.BehaviorType = function () {
   return BehaviorType;
 }();
 
-var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(UserStateStorage, NavigationHistory, DashboardManager), _dec2(_class7 = function () {
-  function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
+var HistoryStep = exports.HistoryStep = (_dec3 = (0, _aureliaFramework.inject)(NavigationHistory, DashboardManager), _dec3(_class9 = function () {
+  function HistoryStep(navigationHistory, dashboardManager) {
     _classCallCheck(this, HistoryStep);
 
     this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
     this._dashboardManager = dashboardManager;
   }
 
@@ -1065,71 +1077,45 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
     })) {
       var _dashboard = this._dashboardManager.find(routingContext.params.dashboard);
       if (_dashboard) {
-        var routeWidgetsState;
-        var storageWidgetsState;
-
         (function () {
           if (_this9.currentRouteItem) {
             (function () {
-              var currentWidgetsState = StateDiscriminator.discriminate(_this9._userStateStorage.getAll(_this9.currentRouteItem.dashboardName));
-              var url = "/" + _this9.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+              var currentDashboard = _this9._dashboardManager.find(_this9.currentRouteItem.dashboardName);
+              var currentWidgetsState = StateDiscriminator.discriminate(currentDashboard.getState());
+
+              var url = currentDashboard.getRoute();
 
               if (_.filter(_this9._navigationHistory.items, function (i) {
                 return StringHelper.compare(i.url, url);
               }).length === 0) {
-                _this9._navigationHistory.add(url, _this9.currentRouteItem.title, _this9.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+                _this9._navigationHistory.add(url, _this9.currentRouteItem.title, currentDashboard.name, currentWidgetsState, new Date());
               } else if (!StringHelper.compare(url, _this9.currentRouteItem.route)) {
                 _this9._navigationHistory.update(url, new Date());
               }
             })();
           }
 
-          var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
+          var newUrl = window.location.href;
 
-          routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          storageWidgetsState = StateDiscriminator.discriminate(_this9._userStateStorage.getAll(_dashboard.name));
+          var allWidgetsState = StateDiscriminator.discriminate(_dashboard.getState());
+          var routeWidgetsState = StateUrlParser.queryToState(newUrl);
+          _.forEach(allWidgetsState, function (as) {
+            var rs = _.find(routeWidgetsState, { "name": as.name });
+            if (rs) as.value = rs.value;else as.value = null;
+          });
 
-          for (var _iterator4 = storageWidgetsState, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-            var _ref4;
+          _dashboard.setState(allWidgetsState);
 
-            if (_isArray4) {
-              if (_i4 >= _iterator4.length) break;
-              _ref4 = _iterator4[_i4++];
-            } else {
-              _i4 = _iterator4.next();
-              if (_i4.done) break;
-              _ref4 = _i4.value;
-            }
-
-            var oldSt = _ref4;
-
-            _this9._userStateStorage.remove(oldSt.key);
-          }for (var _iterator5 = routeWidgetsState, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-            var _ref5;
-
-            if (_isArray5) {
-              if (_i5 >= _iterator5.length) break;
-              _ref5 = _iterator5[_i5++];
-            } else {
-              _i5 = _iterator5.next();
-              if (_i5.done) break;
-              _ref5 = _i5.value;
-            }
-
-            var newSt = _ref5;
-
-            _this9._userStateStorage.set(newSt.key, newSt.value);
-          }
           if (_.filter(_this9._navigationHistory.items, function (i) {
-            return StringHelper.compare(i.url, fullUrl);
+            return StringHelper.compare(i.url, newUrl);
           }).length === 0) {
-            _this9._navigationHistory.add(fullUrl, _dashboard.title, _dashboard.name, _this9._userStateStorage.getAll(_dashboard.name), new Date());
+            _this9._navigationHistory.add(newUrl, _dashboard.title, _dashboard.name, _dashboard.getState(), new Date());
           }
 
           _this9.currentRouteItem = {
             dashboardName: _dashboard.name,
             title: _dashboard.title,
-            route: fullUrl
+            route: newUrl
           };
         })();
       }
@@ -1148,7 +1134,7 @@ var HistoryStep = exports.HistoryStep = (_dec2 = (0, _aureliaFramework.inject)(U
   }]);
 
   return HistoryStep;
-}()) || _class7);
+}()) || _class9);
 
 var NavigationHistory = exports.NavigationHistory = function () {
   function NavigationHistory() {
@@ -1162,19 +1148,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.update = function update(url, dateTime) {
-    for (var _iterator6 = this._history, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-      var _ref6;
+    for (var _iterator4 = this._history, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+      var _ref4;
 
-      if (_isArray6) {
-        if (_i6 >= _iterator6.length) break;
-        _ref6 = _iterator6[_i6++];
+      if (_isArray4) {
+        if (_i4 >= _iterator4.length) break;
+        _ref4 = _iterator4[_i4++];
       } else {
-        _i6 = _iterator6.next();
-        if (_i6.done) break;
-        _ref6 = _i6.value;
+        _i4 = _iterator4.next();
+        if (_i4.done) break;
+        _ref4 = _i4.value;
       }
 
-      var h = _ref6;
+      var h = _ref4;
 
       if (h.url === url) {
         h.dateTime = dateTime;
@@ -1184,19 +1170,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.delete = function _delete(url) {
-    for (var _iterator7 = this._history, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
-      var _ref7;
+    for (var _iterator5 = this._history, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+      var _ref5;
 
-      if (_isArray7) {
-        if (_i7 >= _iterator7.length) break;
-        _ref7 = _iterator7[_i7++];
+      if (_isArray5) {
+        if (_i5 >= _iterator5.length) break;
+        _ref5 = _iterator5[_i5++];
       } else {
-        _i7 = _iterator7.next();
-        if (_i7.done) break;
-        _ref7 = _i7.value;
+        _i5 = _iterator5.next();
+        if (_i5.done) break;
+        _ref5 = _i5.value;
       }
 
-      var i = _ref7;
+      var i = _ref5;
 
       if (i.url === url) {
         this._history.splice(i, 1);
@@ -1219,19 +1205,19 @@ var NavigationHistory = exports.NavigationHistory = function () {
   };
 
   NavigationHistory.prototype.exists = function exists(url) {
-    for (var _iterator8 = this._history, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
-      var _ref8;
+    for (var _iterator6 = this._history, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+      var _ref6;
 
-      if (_isArray8) {
-        if (_i8 >= _iterator8.length) break;
-        _ref8 = _iterator8[_i8++];
+      if (_isArray6) {
+        if (_i6 >= _iterator6.length) break;
+        _ref6 = _iterator6[_i6++];
       } else {
-        _i8 = _iterator8.next();
-        if (_i8.done) break;
-        _ref8 = _i8.value;
+        _i6 = _iterator6.next();
+        if (_i6.done) break;
+        _ref6 = _i6.value;
       }
 
-      var i = _ref8;
+      var i = _ref6;
 
       if (i.route === url) return true;
     }
@@ -1255,21 +1241,21 @@ var StateDiscriminator = exports.StateDiscriminator = function () {
 
   StateDiscriminator.discriminate = function discriminate(widgetStates) {
     var result = [];
-    for (var _iterator9 = widgetStates, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
-      var _ref9;
+    for (var _iterator7 = widgetStates, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
+      var _ref7;
 
-      if (_isArray9) {
-        if (_i9 >= _iterator9.length) break;
-        _ref9 = _iterator9[_i9++];
+      if (_isArray7) {
+        if (_i7 >= _iterator7.length) break;
+        _ref7 = _iterator7[_i7++];
       } else {
-        _i9 = _iterator9.next();
-        if (_i9.done) break;
-        _ref9 = _i9.value;
+        _i7 = _iterator7.next();
+        if (_i7.done) break;
+        _ref7 = _i7.value;
       }
 
-      var ws = _ref9;
+      var ws = _ref7;
 
-      if (ws.value.stateType === "searchBoxState") result.push(ws);
+      if (ws.stateType === "searchBoxState") result.push(ws);
     }
     return result;
   };
@@ -1284,45 +1270,45 @@ var StateUrlParser = exports.StateUrlParser = function () {
 
   StateUrlParser.stateToQuery = function stateToQuery(widgetStates) {
     var params = [];
-    for (var _iterator10 = widgetStates, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
-      var _ref10;
+    for (var _iterator8 = widgetStates, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
+      var _ref8;
 
-      if (_isArray10) {
-        if (_i10 >= _iterator10.length) break;
-        _ref10 = _iterator10[_i10++];
+      if (_isArray8) {
+        if (_i8 >= _iterator8.length) break;
+        _ref8 = _iterator8[_i8++];
       } else {
-        _i10 = _iterator10.next();
-        if (_i10.done) break;
-        _ref10 = _i10.value;
+        _i8 = _iterator8.next();
+        if (_i8.done) break;
+        _ref8 = _i8.value;
       }
 
-      var widgetState = _ref10;
+      var widgetState = _ref8;
 
-      params.push({ "sk": widgetState.key, "sv": widgetState.value });
+      if (widgetState.value) params.push({ "sn": widgetState.name, "sv": widgetState.value });
     }
-    return params.length > 0 ? "?q=" + UrlHelper.objectToQuery(params) : "";
+    return params.length > 0 ? "?q=" + Base64.encode(UrlHelper.objectToQuery(params)) : "";
   };
 
   StateUrlParser.queryToState = function queryToState(url) {
     var result = [];
     var q = UrlHelper.getParameterByName("q", url);
     if (q) {
-      var widgetStates = UrlHelper.queryToObject(q);
-      for (var _iterator11 = widgetStates, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
-        var _ref11;
+      var widgetStates = UrlHelper.queryToObject(Base64.decode(q));
+      for (var _iterator9 = widgetStates, _isArray9 = Array.isArray(_iterator9), _i9 = 0, _iterator9 = _isArray9 ? _iterator9 : _iterator9[Symbol.iterator]();;) {
+        var _ref9;
 
-        if (_isArray11) {
-          if (_i11 >= _iterator11.length) break;
-          _ref11 = _iterator11[_i11++];
+        if (_isArray9) {
+          if (_i9 >= _iterator9.length) break;
+          _ref9 = _iterator9[_i9++];
         } else {
-          _i11 = _iterator11.next();
-          if (_i11.done) break;
-          _ref11 = _i11.value;
+          _i9 = _iterator9.next();
+          if (_i9.done) break;
+          _ref9 = _i9.value;
         }
 
-        var ws = _ref11;
+        var ws = _ref9;
 
-        result.push({ "key": ws.sk, "value": ws.sv });
+        result.push({ "name": ws.sn, "value": ws.sv });
       }
     }
     return result;
@@ -1367,7 +1353,7 @@ var Storage = exports.Storage = function () {
 
 var STORAGE_KEY = "prcpfwk23875hrw28esgfds";
 
-var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework.inject)(Storage), _dec3(_class8 = function () {
+var UserStateStorage = exports.UserStateStorage = (_dec4 = (0, _aureliaFramework.inject)(Storage), _dec4(_class10 = function () {
   function UserStateStorage(storage) {
     _classCallCheck(this, UserStateStorage);
 
@@ -1432,7 +1418,7 @@ var UserStateStorage = exports.UserStateStorage = (_dec3 = (0, _aureliaFramework
   };
 
   return UserStateStorage;
-}()) || _class8);
+}()) || _class10);
 
 var Schema = exports.Schema = function Schema() {
   _classCallCheck(this, Schema);
@@ -1522,7 +1508,7 @@ var DataServiceConfiguration = exports.DataServiceConfiguration = function () {
   return DataServiceConfiguration;
 }();
 
-var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.transient)(), _dec4(_class10 = function (_DataService) {
+var JsonDataService = exports.JsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec5(_class12 = function (_DataService) {
   _inherits(JsonDataService, _DataService);
 
   function JsonDataService() {
@@ -1550,8 +1536,8 @@ var JsonDataService = exports.JsonDataService = (_dec4 = (0, _aureliaFramework.t
   };
 
   return JsonDataService;
-}(DataService)) || _class10);
-var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureliaFramework.transient)(), _dec5(_class12 = function (_DataService2) {
+}(DataService)) || _class12);
+var StaticJsonDataService = exports.StaticJsonDataService = (_dec6 = (0, _aureliaFramework.transient)(), _dec6(_class14 = function (_DataService2) {
   _inherits(StaticJsonDataService, _DataService2);
 
   function StaticJsonDataService() {
@@ -1589,7 +1575,7 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec5 = (0, _aureli
   };
 
   return StaticJsonDataService;
-}(DataService)) || _class12);
+}(DataService)) || _class14);
 
 
 var DSL_GRAMMAR_EXPRESSION = '\n{\nfunction createStringExpression(fieldname, value){\n \t\tvar prefix = "record.";\n \t\tvar result = "";\n \t\tvar v = value.trim().toLowerCase();\n        if (v.length>=2){\n          if ((v.indexOf("%")===0)&&(v.lastIndexOf("%")===(v.length-1)))\n              result = prefix + fieldname + ".toLowerCase().includes(\'" + v.substring(1,value.length-1) + "\')"\n          else if (v.indexOf("%")===0)\n              result = prefix + fieldname + ".toLowerCase().endsWith(\'" + v.substring(1,value.length) + "\')"\n          else if (v.lastIndexOf("%")===(value.length-1))\n              result = prefix + fieldname + ".toLowerCase().startsWith(\'" + v.substring(0,value.length-1) + "\')"\n        }\n        if (result == "")\n          result = prefix + fieldname + ".toLowerCase() == \'" + v + "\'";\n\n        result="(" + prefix + fieldname + "!=null && " + result + ")"\n\n        return result;\n }\n  function createInExpression (fieldname, value) {\n    var result = "";\n    var values = value.split(\',\');\n    for (var i=0;i<values.length;i++)\n    {\n      var find = \'[\\"\\\']\';\n      var re = new RegExp(find, \'g\');\n      var v = values[i].replace(new RegExp(find, \'g\'), "");\n      //result += "record." + fieldname + ".toLowerCase() ==" + v.trim().toLowerCase();\n      result += createStringExpression(fieldname, v)\n      if (i<(values.length-1))\n        result += " || ";\n    }\n    if (result.length>0)\n      result = "(" + result + ")"\n    return result;\n  }\n}\n\nstart = expression\n\nexpression = c:condition j:join e:expression space? {return c+j+e;}\n           / c:condition space? {return c;}\n\njoin "LOGIC_OPERATOR"\n     = and\n     / or\n\nand = space* "and"i space* {return " && ";}\n\nor = space* "or"i space* {return " || ";}\n\n\ncondition = space? f:stringField o:op_eq v:stringValue {return createStringExpression(f,v);}\n          / space? f:stringField o:op_in a:valuesArray {return createInExpression(f,a);}\n          / space? f:numericField o:op v:numericValue {return "record." + f + o + v;}\n          / space? f:dateField o:op v:dateValue {return "record." + f + o + v;}\n          / "(" space? e:expression space* ")" space* {return "(" + e +")";}\n\n\n\nvaluesArray "STRING_VALUES_ARRAY"\n      = parentheses_l va:$(v:stringValue space* nextValue*)+ parentheses_r {return  va }\n\nnextValue = nv:(space* "," space* v:stringValue) {return  nv}\n\n\n\ndateValue "DATE_VALUE"\n        = quote? dt:$(date+) quote? {return "\'" + dt + "\'";}\n\n\nstringValue  "STRING_VALUE"\n\t  = quote w:$(char+) quote {return  w }\n      / quote quote {return "";}\n\n\nnumericValue  "NUMERIC_VALUE"\n       = $(numeric+)\n\n\nop "OPERATOR"\n   = op_eq\n   / ge\n   / gt\n   / le\n   / lt\n\nop_eq "STRING_OPERATOR_EQUAL"\n  = eq\n  / not_eq\n\nop_in "STRING_OPERATOR_IN"\n  = in\n\neq = space* "=" space* {return "==";}\n\nnot_eq = space* "!=" space* {return "!=";}\n\ngt = space* v:">" space* {return v;}\n\nge = space* v:">=" space* {return v;}\n\nlt = space* v:"<" space* {return v;}\n\nle = space* v:"<=" space* {return v;}\n\nin = space* v:"in" space* {return v;}\n\n\ndate = [0-9 \\:\\/]\n\nchar = [a-z0-9 \\%\\$\\_\\-\\:\\,\\.\\/]i\n\nnumeric = [0-9-\\.]\n\nspace = [ \\t\\n\\r]+\n\nparentheses_l = [\\(] space*\n\nparentheses_r = space* [\\)]\n\nfield "FIELD_NAME"\n      = stringField\n     / numericField\n     / dateField\n\nstringField "STRING_FIELD_NAME"\n     = @S@\n\nnumericField "NUMERIC_FIELD_NAME"\n     = @N@\n\ndateField "DATE_FIELD_NAME"\n     = @D@\n\nquote = [\\\'\\"]\n\n\n';
@@ -1702,8 +1688,8 @@ var DashboardBase = exports.DashboardBase = function () {
   function DashboardBase() {
     _classCallCheck(this, DashboardBase);
 
-    this.layout = [];
     this.behaviors = [];
+    this.layout = [];
   }
 
   DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
@@ -1806,10 +1792,58 @@ var DashboardBase = exports.DashboardBase = function () {
     }
   };
 
+  DashboardBase.prototype.getState = function getState() {
+    var result = [];
+    _.forEach(this.layout, function (lw) {
+      result.push({ name: lw.widget.name, value: lw.widget.getState(), stateType: lw.widget.stateType });
+    });
+    return result;
+  };
+
+  DashboardBase.prototype.setState = function setState(state) {
+    for (var _iterator10 = state, _isArray10 = Array.isArray(_iterator10), _i10 = 0, _iterator10 = _isArray10 ? _iterator10 : _iterator10[Symbol.iterator]();;) {
+      var _ref10;
+
+      if (_isArray10) {
+        if (_i10 >= _iterator10.length) break;
+        _ref10 = _iterator10[_i10++];
+      } else {
+        _i10 = _iterator10.next();
+        if (_i10.done) break;
+        _ref10 = _i10.value;
+      }
+
+      var s = _ref10;
+
+      for (var _iterator11 = this.layout, _isArray11 = Array.isArray(_iterator11), _i11 = 0, _iterator11 = _isArray11 ? _iterator11 : _iterator11[Symbol.iterator]();;) {
+        var _ref11;
+
+        if (_isArray11) {
+          if (_i11 >= _iterator11.length) break;
+          _ref11 = _iterator11[_i11++];
+        } else {
+          _i11 = _iterator11.next();
+          if (_i11.done) break;
+          _ref11 = _i11.value;
+        }
+
+        var lw = _ref11;
+
+        if (lw.widget.name === s.name) {
+          lw.widget.setState(s.value);
+        }
+      }
+    }
+  };
+
+  DashboardBase.prototype.getRoute = function getRoute() {
+    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
+  };
+
   return DashboardBase;
 }();
 
-var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class14 = function () {
+var LayoutWidget = exports.LayoutWidget = (_dec7 = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class16 = function () {
   function LayoutWidget() {
     _classCallCheck(this, LayoutWidget);
 
@@ -1840,7 +1874,7 @@ var LayoutWidget = exports.LayoutWidget = (_dec6 = (0, _aureliaFramework.compute
   }]);
 
   return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class14.prototype, 'hasNavStack', [_dec6], Object.getOwnPropertyDescriptor(_class14.prototype, 'hasNavStack'), _class14.prototype)), _class14));
+}(), (_applyDecoratedDescriptor(_class16.prototype, 'hasNavStack', [_dec7], Object.getOwnPropertyDescriptor(_class16.prototype, 'hasNavStack'), _class16.prototype)), _class16));
 
 var Chart = exports.Chart = function (_Widget) {
   _inherits(Chart, _Widget);
@@ -1966,11 +2000,12 @@ var Grid = exports.Grid = function (_Widget4) {
   }
 
   Grid.prototype.saveState = function saveState() {
-    this.state = { columns: this.columns };
+    this.setState({ columns: this.columns });
   };
 
   Grid.prototype.restoreState = function restoreState() {
-    if (this.state) this.columns = this.state.columns;
+    var s = this.getState();
+    if (s) this.columns = s.columns;
   };
 
   _createClass(Grid, [{
@@ -2058,11 +2093,12 @@ var SearchBox = exports.SearchBox = function (_Widget5) {
   }
 
   SearchBox.prototype.saveState = function saveState() {
-    this.state = this.searchString;
+    this.setState(this.searchString);
   };
 
   SearchBox.prototype.restoreState = function restoreState() {
-    if (this.state) this.searchString = this.state;else this.searchString = "";
+    var s = this.getState();
+    if (s) this.searchString = s;else this.searchString = "";
   };
 
   _createClass(SearchBox, [{
@@ -2093,6 +2129,25 @@ var Widget = exports.Widget = function () {
     this._settings = settings;
     this._behaviors = [];
   }
+
+  Widget.prototype.getStateKey = function getStateKey() {
+    if (this.stateStorage) return this.stateStorage.createKey(this.dashboard.name, this.name);
+    return "";
+  };
+
+  Widget.prototype.getState = function getState() {
+    if (this.stateStorage) {
+      var s = this.stateStorage.get(this.getStateKey());
+      if (s) return s;
+    }
+    return undefined;
+  };
+
+  Widget.prototype.setState = function setState(value) {
+    if (this.stateStorage) {
+      if (!value) this.stateStorage.remove(this.getStateKey());else this.stateStorage.set(this.getStateKey(), value);
+    }
+  };
 
   Widget.prototype.attachBehavior = function attachBehavior(behavior) {
     behavior.attachToWidget(this);
@@ -2170,25 +2225,6 @@ var Widget = exports.Widget = function () {
     },
     set: function set(value) {
       this.settings.minHeight = value;
-    }
-  }, {
-    key: 'state',
-    get: function get() {
-      if (this.stateStorage) {
-        var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-        var s = this.stateStorage.get(key);
-        if (s) return s.stateObject;
-      }
-      return undefined;
-    },
-    set: function set(value) {
-      if (this.stateStorage) {
-        var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-        if (!value) this.stateStorage.remove(key);else {
-          var s = { stateType: this.stateType, stateObject: value };
-          this.stateStorage.set(key, s);
-        }
-      }
     }
   }, {
     key: 'stateType',

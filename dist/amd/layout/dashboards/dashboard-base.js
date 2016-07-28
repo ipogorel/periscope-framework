@@ -1,4 +1,4 @@
-define(['exports', 'aurelia-framework', 'lodash'], function (exports, _aureliaFramework, _lodash) {
+define(['exports', 'aurelia-framework', 'lodash', './../../state/state-discriminator', './../../state/state-url-parser'], function (exports, _aureliaFramework, _lodash, _stateDiscriminator, _stateUrlParser) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -84,8 +84,8 @@ define(['exports', 'aurelia-framework', 'lodash'], function (exports, _aureliaFr
     function DashboardBase() {
       _classCallCheck(this, DashboardBase);
 
-      this.layout = [];
       this.behaviors = [];
+      this.layout = [];
     }
 
     DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
@@ -186,6 +186,54 @@ define(['exports', 'aurelia-framework', 'lodash'], function (exports, _aureliaFr
       while (true) {
         if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
       }
+    };
+
+    DashboardBase.prototype.getState = function getState() {
+      var result = [];
+      _.forEach(this.layout, function (lw) {
+        result.push({ name: lw.widget.name, value: lw.widget.getState(), stateType: lw.widget.stateType });
+      });
+      return result;
+    };
+
+    DashboardBase.prototype.setState = function setState(state) {
+      for (var _iterator = state, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+        var _ref;
+
+        if (_isArray) {
+          if (_i >= _iterator.length) break;
+          _ref = _iterator[_i++];
+        } else {
+          _i = _iterator.next();
+          if (_i.done) break;
+          _ref = _i.value;
+        }
+
+        var s = _ref;
+
+        for (var _iterator2 = this.layout, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+          var _ref2;
+
+          if (_isArray2) {
+            if (_i2 >= _iterator2.length) break;
+            _ref2 = _iterator2[_i2++];
+          } else {
+            _i2 = _iterator2.next();
+            if (_i2.done) break;
+            _ref2 = _i2.value;
+          }
+
+          var lw = _ref2;
+
+          if (lw.widget.name === s.name) {
+            lw.widget.setState(s.value);
+          }
+        }
+      }
+    };
+
+    DashboardBase.prototype.getRoute = function getRoute() {
+      return this.route + _stateUrlParser.StateUrlParser.stateToQuery(_stateDiscriminator.StateDiscriminator.discriminate(this.getState()));
     };
 
     return DashboardBase;

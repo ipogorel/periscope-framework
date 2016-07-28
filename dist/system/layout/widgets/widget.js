@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-System.register(['lodash'], function (_export, _context) {
+System.register(["lodash"], function (_export, _context) {
   var lodash, _createClass, Widget;
 
   function _classCallCheck(instance, Constructor) {
@@ -32,13 +32,32 @@ System.register(['lodash'], function (_export, _context) {
         };
       }();
 
-      _export('Widget', Widget = function () {
+      _export("Widget", Widget = function () {
         function Widget(settings) {
           _classCallCheck(this, Widget);
 
           this._settings = settings;
           this._behaviors = [];
         }
+
+        Widget.prototype.getStateKey = function getStateKey() {
+          if (this.stateStorage) return this.stateStorage.createKey(this.dashboard.name, this.name);
+          return "";
+        };
+
+        Widget.prototype.getState = function getState() {
+          if (this.stateStorage) {
+            var s = this.stateStorage.get(this.getStateKey());
+            if (s) return s;
+          }
+          return undefined;
+        };
+
+        Widget.prototype.setState = function setState(value) {
+          if (this.stateStorage) {
+            if (!value) this.stateStorage.remove(this.getStateKey());else this.stateStorage.set(this.getStateKey(), value);
+          }
+        };
 
         Widget.prototype.attachBehavior = function attachBehavior(behavior) {
           behavior.attachToWidget(this);
@@ -85,32 +104,32 @@ System.register(['lodash'], function (_export, _context) {
         };
 
         _createClass(Widget, [{
-          key: 'self',
+          key: "self",
           get: function get() {
             return this;
           }
         }, {
-          key: 'settings',
+          key: "settings",
           get: function get() {
             return this._settings;
           }
         }, {
-          key: 'behaviors',
+          key: "behaviors",
           get: function get() {
             return this._behaviors;
           }
         }, {
-          key: 'name',
+          key: "name",
           get: function get() {
             return this.settings.name;
           }
         }, {
-          key: 'resourceGroup',
+          key: "resourceGroup",
           get: function get() {
             return this.settings.resourceGroup;
           }
         }, {
-          key: 'minHeight',
+          key: "minHeight",
           get: function get() {
             return this.settings.minHeight;
           },
@@ -118,26 +137,7 @@ System.register(['lodash'], function (_export, _context) {
             this.settings.minHeight = value;
           }
         }, {
-          key: 'state',
-          get: function get() {
-            if (this.stateStorage) {
-              var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-              var s = this.stateStorage.get(key);
-              if (s) return s.stateObject;
-            }
-            return undefined;
-          },
-          set: function set(value) {
-            if (this.stateStorage) {
-              var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-              if (!value) this.stateStorage.remove(key);else {
-                var s = { stateType: this.stateType, stateObject: value };
-                this.stateStorage.set(key, s);
-              }
-            }
-          }
-        }, {
-          key: 'stateType',
+          key: "stateType",
           get: function get() {
             return this._type;
           },
@@ -145,12 +145,12 @@ System.register(['lodash'], function (_export, _context) {
             this._type = value;
           }
         }, {
-          key: 'showHeader',
+          key: "showHeader",
           get: function get() {
             return this.settings.showHeader;
           }
         }, {
-          key: 'dataHolder',
+          key: "dataHolder",
           set: function set(value) {
             this._dataHolder = value;
           },
@@ -158,7 +158,7 @@ System.register(['lodash'], function (_export, _context) {
             return this._dataHolder;
           }
         }, {
-          key: 'header',
+          key: "header",
           get: function get() {
             return this.settings.header;
           },
@@ -166,12 +166,12 @@ System.register(['lodash'], function (_export, _context) {
             this.settings.header = value;
           }
         }, {
-          key: 'stateStorage',
+          key: "stateStorage",
           get: function get() {
             return this.settings.stateStorage;
           }
         }, {
-          key: 'dataSource',
+          key: "dataSource",
           set: function set(value) {
             this.settings.dataSource = value;
           },
@@ -179,12 +179,12 @@ System.register(['lodash'], function (_export, _context) {
             return this.settings.dataSource;
           }
         }, {
-          key: 'dataMapper',
+          key: "dataMapper",
           get: function get() {
             return this.settings.dataMapper;
           }
         }, {
-          key: 'dataFilter',
+          key: "dataFilter",
           get: function get() {
             return this._dataFilter;
           },
@@ -192,12 +192,12 @@ System.register(['lodash'], function (_export, _context) {
             this._dataFilter = value;
           }
         }, {
-          key: 'type',
+          key: "type",
           get: function get() {
             return this._type;
           }
         }, {
-          key: 'dashboard',
+          key: "dashboard",
           get: function get() {
             return this._dashboard;
           },
@@ -209,7 +209,7 @@ System.register(['lodash'], function (_export, _context) {
         return Widget;
       }());
 
-      _export('Widget', Widget);
+      _export("Widget", Widget);
     }
   };
 });

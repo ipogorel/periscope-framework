@@ -32,7 +32,7 @@ define(["exports"], function (exports) {
 
         var ws = _ref;
 
-        if (ws.value.stateType === "searchBoxState") result.push(ws);
+        if (ws.stateType === "searchBoxState") result.push(ws);
       }
       return result;
     };

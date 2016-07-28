@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['lodash'], function (_export, _context) {
-  var _, _createClass, DashboardManager;
+System.register(['lodash', 'aurelia-framework', 'aurelia-router', './../helpers/url-helper'], function (_export, _context) {
+  var _, inject, Router, UrlHelper, _dec, _class, DashboardManager;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -12,53 +12,44 @@ System.register(['lodash'], function (_export, _context) {
   return {
     setters: [function (_lodash) {
       _ = _lodash;
+    }, function (_aureliaFramework) {
+      inject = _aureliaFramework.inject;
+    }, function (_aureliaRouter) {
+      Router = _aureliaRouter.Router;
+    }, function (_helpersUrlHelper) {
+      UrlHelper = _helpersUrlHelper.UrlHelper;
     }],
     execute: function () {
-      _createClass = function () {
-        function defineProperties(target, props) {
-          for (var i = 0; i < props.length; i++) {
-            var descriptor = props[i];
-            descriptor.enumerable = descriptor.enumerable || false;
-            descriptor.configurable = true;
-            if ("value" in descriptor) descriptor.writable = true;
-            Object.defineProperty(target, descriptor.key, descriptor);
-          }
-        }
-
-        return function (Constructor, protoProps, staticProps) {
-          if (protoProps) defineProperties(Constructor.prototype, protoProps);
-          if (staticProps) defineProperties(Constructor, staticProps);
-          return Constructor;
-        };
-      }();
-
-      _export('DashboardManager', DashboardManager = function () {
-        function DashboardManager() {
+      _export('DashboardManager', DashboardManager = (_dec = inject(Router), _dec(_class = function () {
+        function DashboardManager(router) {
           _classCallCheck(this, DashboardManager);
 
-          this._dashboards = [];
+          this.dashboards = [];
+
+          this._router = router;
         }
 
+        DashboardManager.prototype.configure = function configure(configuration) {
+          this.dashboardRouteName = configuration.dashboardRouteName;
+        };
+
         DashboardManager.prototype.find = function find(dashboardName) {
-          return _.find(this._dashboards, { name: dashboardName });
+          return _.find(this.dashboards, { name: dashboardName });
         };
 
         DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
           var dashboard = new type();
           dashboard.configure(dashboardConfiguration);
-          this._dashboards.push(dashboard);
+          if (this.dashboardRouteName) {
+            dashboard.route = UrlHelper.getAbsoluteBaseUrl() + "/" + this._router.generate(this.dashboardRouteName, { dashboard: dashboard.name });
+          }
+
+          this.dashboards.push(dashboard);
           return dashboard;
         };
 
-        _createClass(DashboardManager, [{
-          key: 'dashboards',
-          get: function get() {
-            return this._dashboards;
-          }
-        }]);
-
         return DashboardManager;
-      }());
+      }()) || _class));
 
       _export('DashboardManager', DashboardManager);
     }

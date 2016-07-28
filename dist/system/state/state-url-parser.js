@@ -1,7 +1,7 @@
-"use strict";
+'use strict';
 
-System.register(["./../helpers/url-helper"], function (_export, _context) {
-  var UrlHelper, StateUrlParser;
+System.register(['./../helpers/url-helper', 'js-base64'], function (_export, _context) {
+  var UrlHelper, base64, StateUrlParser;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -12,9 +12,11 @@ System.register(["./../helpers/url-helper"], function (_export, _context) {
   return {
     setters: [function (_helpersUrlHelper) {
       UrlHelper = _helpersUrlHelper.UrlHelper;
+    }, function (_jsBase) {
+      base64 = _jsBase;
     }],
     execute: function () {
-      _export("StateUrlParser", StateUrlParser = function () {
+      _export('StateUrlParser', StateUrlParser = function () {
         function StateUrlParser() {
           _classCallCheck(this, StateUrlParser);
         }
@@ -35,16 +37,16 @@ System.register(["./../helpers/url-helper"], function (_export, _context) {
 
             var widgetState = _ref;
 
-            params.push({ "sk": widgetState.key, "sv": widgetState.value });
+            if (widgetState.value) params.push({ "sn": widgetState.name, "sv": widgetState.value });
           }
-          return params.length > 0 ? "?q=" + UrlHelper.objectToQuery(params) : "";
+          return params.length > 0 ? "?q=" + Base64.encode(UrlHelper.objectToQuery(params)) : "";
         };
 
         StateUrlParser.queryToState = function queryToState(url) {
           var result = [];
           var q = UrlHelper.getParameterByName("q", url);
           if (q) {
-            var widgetStates = UrlHelper.queryToObject(q);
+            var widgetStates = UrlHelper.queryToObject(Base64.decode(q));
             for (var _iterator2 = widgetStates, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
               var _ref2;
 
@@ -59,7 +61,7 @@ System.register(["./../helpers/url-helper"], function (_export, _context) {
 
               var ws = _ref2;
 
-              result.push({ "key": ws.sk, "value": ws.sv });
+              result.push({ "name": ws.sn, "value": ws.sv });
             }
           }
           return result;
@@ -68,7 +70,7 @@ System.register(["./../helpers/url-helper"], function (_export, _context) {
         return StateUrlParser;
       }());
 
-      _export("StateUrlParser", StateUrlParser);
+      _export('StateUrlParser', StateUrlParser);
     }
   };
 });

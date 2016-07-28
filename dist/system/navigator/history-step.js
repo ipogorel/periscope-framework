@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['aurelia-framework', 'lodash', './../infrastructure/dashboard-manager', './../state/user-state-storage', './navigation-history', './../state/state-discriminator', './../state/state-url-parser', './../helpers/string-helper'], function (_export, _context) {
-  var inject, _, DashboardManager, UserStateStorage, NavigationHistory, StateDiscriminator, StateUrlParser, StringHelper, _createClass, _dec, _class, HistoryStep;
+System.register(['aurelia-framework', 'lodash', './../infrastructure/dashboard-manager', './navigation-history', './../state/state-discriminator', './../state/state-url-parser', './../helpers/string-helper'], function (_export, _context) {
+  var inject, _, DashboardManager, NavigationHistory, StateDiscriminator, StateUrlParser, StringHelper, _createClass, _dec, _class, HistoryStep;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -16,8 +16,6 @@ System.register(['aurelia-framework', 'lodash', './../infrastructure/dashboard-m
       _ = _lodash;
     }, function (_infrastructureDashboardManager) {
       DashboardManager = _infrastructureDashboardManager.DashboardManager;
-    }, function (_stateUserStateStorage) {
-      UserStateStorage = _stateUserStateStorage.UserStateStorage;
     }, function (_navigationHistory) {
       NavigationHistory = _navigationHistory.NavigationHistory;
     }, function (_stateStateDiscriminator) {
@@ -46,12 +44,11 @@ System.register(['aurelia-framework', 'lodash', './../infrastructure/dashboard-m
         };
       }();
 
-      _export('HistoryStep', HistoryStep = (_dec = inject(UserStateStorage, NavigationHistory, DashboardManager), _dec(_class = function () {
-        function HistoryStep(userStateStorage, navigationHistory, dashboardManager) {
+      _export('HistoryStep', HistoryStep = (_dec = inject(NavigationHistory, DashboardManager), _dec(_class = function () {
+        function HistoryStep(navigationHistory, dashboardManager) {
           _classCallCheck(this, HistoryStep);
 
           this._navigationHistory = navigationHistory;
-          this._userStateStorage = userStateStorage;
           this._dashboardManager = dashboardManager;
         }
 
@@ -63,71 +60,45 @@ System.register(['aurelia-framework', 'lodash', './../infrastructure/dashboard-m
           })) {
             var dashboard = this._dashboardManager.find(routingContext.params.dashboard);
             if (dashboard) {
-              var routeWidgetsState;
-              var storageWidgetsState;
-
               (function () {
                 if (_this.currentRouteItem) {
                   (function () {
-                    var currentWidgetsState = StateDiscriminator.discriminate(_this._userStateStorage.getAll(_this.currentRouteItem.dashboardName));
-                    var url = "/" + _this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+                    var currentDashboard = _this._dashboardManager.find(_this.currentRouteItem.dashboardName);
+                    var currentWidgetsState = StateDiscriminator.discriminate(currentDashboard.getState());
+
+                    var url = currentDashboard.getRoute();
 
                     if (_.filter(_this._navigationHistory.items, function (i) {
                       return StringHelper.compare(i.url, url);
                     }).length === 0) {
-                      _this._navigationHistory.add(url, _this.currentRouteItem.title, _this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
+                      _this._navigationHistory.add(url, _this.currentRouteItem.title, currentDashboard.name, currentWidgetsState, new Date());
                     } else if (!StringHelper.compare(url, _this.currentRouteItem.route)) {
                       _this._navigationHistory.update(url, new Date());
                     }
                   })();
                 }
 
-                var fullUrl = routingContext.fragment + (routingContext.queryString ? "?" + routingContext.queryString : "");
+                var newUrl = window.location.href;
 
-                routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-                storageWidgetsState = StateDiscriminator.discriminate(_this._userStateStorage.getAll(dashboard.name));
+                var allWidgetsState = StateDiscriminator.discriminate(dashboard.getState());
+                var routeWidgetsState = StateUrlParser.queryToState(newUrl);
+                _.forEach(allWidgetsState, function (as) {
+                  var rs = _.find(routeWidgetsState, { "name": as.name });
+                  if (rs) as.value = rs.value;else as.value = null;
+                });
 
-                for (var _iterator = storageWidgetsState, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-                  var _ref;
+                dashboard.setState(allWidgetsState);
 
-                  if (_isArray) {
-                    if (_i >= _iterator.length) break;
-                    _ref = _iterator[_i++];
-                  } else {
-                    _i = _iterator.next();
-                    if (_i.done) break;
-                    _ref = _i.value;
-                  }
-
-                  var oldSt = _ref;
-
-                  _this._userStateStorage.remove(oldSt.key);
-                }for (var _iterator2 = routeWidgetsState, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-                  var _ref2;
-
-                  if (_isArray2) {
-                    if (_i2 >= _iterator2.length) break;
-                    _ref2 = _iterator2[_i2++];
-                  } else {
-                    _i2 = _iterator2.next();
-                    if (_i2.done) break;
-                    _ref2 = _i2.value;
-                  }
-
-                  var newSt = _ref2;
-
-                  _this._userStateStorage.set(newSt.key, newSt.value);
-                }
                 if (_.filter(_this._navigationHistory.items, function (i) {
-                  return StringHelper.compare(i.url, fullUrl);
+                  return StringHelper.compare(i.url, newUrl);
                 }).length === 0) {
-                  _this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, _this._userStateStorage.getAll(dashboard.name), new Date());
+                  _this._navigationHistory.add(newUrl, dashboard.title, dashboard.name, dashboard.getState(), new Date());
                 }
 
                 _this.currentRouteItem = {
                   dashboardName: dashboard.name,
                   title: dashboard.title,
-                  route: fullUrl
+                  route: newUrl
                 };
               })();
             }

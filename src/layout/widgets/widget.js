@@ -36,29 +36,7 @@ export class Widget {
   set minHeight(value){
     this.settings.minHeight = value;
   }
-
-  get state() {
-    if (this.stateStorage) {
-      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-      var s = this.stateStorage.get(key);
-      if (s)
-        return s.stateObject;
-    }
-    return undefined;
-  }
-
-  set state(value) {
-    if (this.stateStorage) {
-      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-      if (!value)
-        this.stateStorage.remove(key);
-      else
-      {
-        var s = {stateType: this.stateType, stateObject: value};
-        this.stateStorage.set(key, s);
-      }
-    }
-  }
+  
 
   get stateType() {
     return this._type;
@@ -121,6 +99,30 @@ export class Widget {
     this._dashboard = value;
   }
 
+  getStateKey() {
+    if (this.stateStorage)
+      return this.stateStorage.createKey(this.dashboard.name, this.name);
+    return "";
+  }
+
+  getState() {
+    if (this.stateStorage) {
+      var s = this.stateStorage.get(this.getStateKey());
+      if (s)
+        return s;
+    }
+    return undefined;
+  }
+
+  setState(value) {
+    if (this.stateStorage) {
+      if (!value)
+        this.stateStorage.remove(this.getStateKey());
+      else
+        this.stateStorage.set(this.getStateKey(), value);
+    }
+  }
+  
 
   attachBehavior(behavior){
     behavior.attachToWidget(this);
@@ -147,9 +149,7 @@ export class Widget {
   refresh(){
 
   }
-
-
-
+  
 
   dispose(){
     while(true) {
@@ -161,15 +161,6 @@ export class Widget {
   }
 
 
-
-  /*_calculateHeight(contentContainerElement){
-    if (!contentContainerElement)
-      return this.settings.minHeight;
-    var p = $(contentContainerElement).parents(".widget-container")
-    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
-    var parentHeight = p[0].offsetHeight - headerHeight;
-    return parentHeight > this.settings.minHeight? parentHeight : this.settings.minHeight;
-  }*/
 }
 
 

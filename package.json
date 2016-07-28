@@ -47,6 +47,7 @@
       "aurelia-route-recognizer": "^1.0.0-beta.1.2.0",
       "aurelia-router": "^1.0.0-beta.1.2.1",
       "aurelia-task-queue": "^1.0.0-beta.1.2.0",
+      "js-base64": "^2.1.9",
       "lodash": "^4.11.1",
       "moment": "^2.13.0",
       "numeral": "^1.5.3",

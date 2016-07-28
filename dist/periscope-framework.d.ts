@@ -1,6 +1,7 @@
 declare module 'periscope-framework' {
   import * as _ from 'lodash';
   import * as peg from 'pegjs';
+  import * as base64 from 'js-base64';
   import numeral from 'numeral';
   import moment from 'moment';
   import lodash from 'lodash';
@@ -18,6 +19,9 @@ declare module 'periscope-framework' {
   import {
     HttpClient
   } from 'aurelia-fetch-client';
+  import {
+    Router
+  } from 'aurelia-router';
   import Swagger from 'swagger-client';
   export class PermissionsCustomAttribute {
     constructor(element: any, permissionsManager: any);
@@ -151,6 +155,7 @@ declare module 'periscope-framework' {
     static getNextWord(str: any, position: any, separators: any): any;
   }
   export class UrlHelper {
+    static getAbsoluteBaseUrl(): any;
     static objectToQuery(ar: any): any;
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
@@ -159,8 +164,10 @@ declare module 'periscope-framework' {
     constructor();
   }
   export class DashboardManager {
-    constructor();
+    constructor(router: any);
+    dashboardRouteName: any;
     dashboards: any;
+    configure(configuration: any): any;
     find(dashboardName: any): any;
     createDashboard(type: any, dashboardConfiguration: any): any;
   }
@@ -180,7 +187,7 @@ declare module 'periscope-framework' {
     static broadcaster: any;
   }
   export class HistoryStep {
-    constructor(userStateStorage: any, navigationHistory: any, dashboardManager: any);
+    constructor(navigationHistory: any, dashboardManager: any);
     currentRouteItem: any;
     run(routingContext: any, next: any): any;
   }

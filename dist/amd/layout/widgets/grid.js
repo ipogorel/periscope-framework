@@ -79,11 +79,12 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
     }
 
     Grid.prototype.saveState = function saveState() {
-      this.state = { columns: this.columns };
+      this.setState({ columns: this.columns });
     };
 
     Grid.prototype.restoreState = function restoreState() {
-      if (this.state) this.columns = this.state.columns;
+      var s = this.getState();
+      if (s) this.columns = s.columns;
     };
 
     _createClass(Grid, [{

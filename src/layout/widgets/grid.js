@@ -79,11 +79,12 @@ export class Grid extends Widget {
   }
 
   saveState(){
-    this.state = {columns:this.columns};
+    this.setState({columns:this.columns});
   }
 
   restoreState(){
-    if (this.state)
-      this.columns = this.state.columns;
+    let s = this.getState();
+    if (s)
+      this.columns = s.columns;
   }
 }

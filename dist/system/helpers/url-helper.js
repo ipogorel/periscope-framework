@@ -17,12 +17,16 @@ System.register([], function (_export, _context) {
           _classCallCheck(this, UrlHelper);
         }
 
+        UrlHelper.getAbsoluteBaseUrl = function getAbsoluteBaseUrl() {
+          return window.location.protocol + "//" + window.location.hostname + (window.location.port ? ":" + window.location.port : "");
+        };
+
         UrlHelper.objectToQuery = function objectToQuery(ar) {
           return encodeURIComponent(JSON.stringify(ar));
         };
 
         UrlHelper.queryToObject = function queryToObject(queryParam) {
-          return JSON.parse(queryParam);
+          return JSON.parse(decodeURIComponent(queryParam));
         };
 
         UrlHelper.getParameterByName = function getParameterByName(name, url) {

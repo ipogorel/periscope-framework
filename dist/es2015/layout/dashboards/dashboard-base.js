@@ -31,11 +31,13 @@ function _applyDecoratedDescriptor(target, property, decorators, descriptor, con
 
 import { computedFrom } from 'aurelia-framework';
 import * as _ from 'lodash';
+import { StateDiscriminator } from './../../state/state-discriminator';
+import { StateUrlParser } from './../../state/state-url-parser';
 
 export let DashboardBase = class DashboardBase {
   constructor() {
-    this.layout = [];
     this.behaviors = [];
+    this.layout = [];
   }
 
   configure(dashboardConfiguration) {
@@ -136,6 +138,28 @@ export let DashboardBase = class DashboardBase {
     while (true) {
       if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
     }
+  }
+
+  getState() {
+    let result = [];
+    _.forEach(this.layout, lw => {
+      result.push({ name: lw.widget.name, value: lw.widget.getState(), stateType: lw.widget.stateType });
+    });
+    return result;
+  }
+
+  setState(state) {
+    for (let s of state) {
+      for (let lw of this.layout) {
+        if (lw.widget.name === s.name) {
+          lw.widget.setState(s.value);
+        }
+      }
+    }
+  }
+
+  getRoute() {
+    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
   }
 };
 

@@ -1,17 +1,22 @@
 import {computedFrom} from 'aurelia-framework';
 import * as _ from 'lodash';
-
+import {StateDiscriminator} from './../../state/state-discriminator';
+import {StateUrlParser} from './../../state/state-url-parser';
 
 export class DashboardBase
 {
   constructor() {
+
   }
+
+  route;
+  behaviors = [];
+  layout = [];
 
   name;
   resourceGroup;
   title;
-  layout = [];
-  behaviors = [];
+
 
   configure(dashboardConfiguration){
     this.name = dashboardConfiguration.name;
@@ -112,6 +117,30 @@ export class DashboardBase
       else
         break;
     }
+  }
+
+
+
+  getState(){
+    let result = [];
+    _.forEach(this.layout,lw=>{
+      result.push({name: lw.widget.name, value: lw.widget.getState(), stateType:lw.widget.stateType});
+    })
+    return result;
+  }
+
+  setState(state){
+    for (let s of state){
+      for (let lw of this.layout){
+        if (lw.widget.name===s.name){
+          lw.widget.setState(s.value);
+        }
+      }
+    }
+  }
+
+  getRoute(){
+    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
   }
 }
 

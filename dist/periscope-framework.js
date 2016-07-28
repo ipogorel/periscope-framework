@@ -1,10 +1,12 @@
 import * as _ from 'lodash';
 import * as peg from 'pegjs';
+import * as base64 from 'js-base64';
 import numeral from 'numeral';
 import moment from 'moment';
 import lodash from 'lodash';
 import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
+import {Router} from 'aurelia-router';
 
 @inject(Element, PermissionsManager)
 export class PermissionsCustomAttribute {
@@ -769,13 +771,16 @@ export class StringHelper {
 }
 
 export class UrlHelper {
+  static getAbsoluteBaseUrl(){
+    return window.location.protocol + "//" + window.location.hostname + (window.location.port? ":" + window.location.port : "")
+  }
 
   static objectToQuery(ar){
     return encodeURIComponent(JSON.stringify(ar));
   }
 
   static queryToObject(queryParam){
-    return JSON.parse(queryParam);
+    return JSON.parse(decodeURIComponent(queryParam));
   }
 
   static getParameterByName(name, url) {
@@ -804,23 +809,32 @@ export class DefaultHttpClient extends HttpClient {
   }
 }
 
+@inject(Router)
 export class DashboardManager {
-  constructor(){
-    this._dashboards = [];
+  constructor(router){
+    this._router = router;
   }
 
-  get dashboards(){
-    return this._dashboards;
+  dashboardRouteName;
+  dashboards = [];
+
+  configure(configuration){
+    this.dashboardRouteName = configuration.dashboardRouteName;
   }
 
   find(dashboardName){
-    return  _.find(this._dashboards, {name:dashboardName});
+    return  _.find(this.dashboards, {name:dashboardName});
   }
   
   createDashboard(type, dashboardConfiguration){
     var dashboard = new type();
     dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
+    if (this.dashboardRouteName){
+      //dashboard.route = this._router.generate(this.dashboardRouteName, {dashboard:dashboard.name}, { absolute: true });
+      dashboard.route = UrlHelper.getAbsoluteBaseUrl() + "/" + this._router.generate(this.dashboardRouteName, {dashboard:dashboard.name});
+    }
+
+    this.dashboards.push(dashboard);
     return dashboard;
   }
 }
@@ -872,11 +886,10 @@ export class BehaviorType {
   }
 }
 
-@inject(UserStateStorage, NavigationHistory, DashboardManager)
+@inject(NavigationHistory, DashboardManager)
 export class HistoryStep {
-  constructor(userStateStorage, navigationHistory, dashboardManager) {
+  constructor(navigationHistory, dashboardManager) {
     this._navigationHistory = navigationHistory;
-    this._userStateStorage = userStateStorage;
     this._dashboardManager = dashboardManager;
   }
 
@@ -887,44 +900,54 @@ export class HistoryStep {
     this._currentRoute = value;
   }
 
+  
+
   run(routingContext, next) {
     if (routingContext.getAllInstructions().some(i => i.config.name === "dashboard")){
       let dashboard = this._dashboardManager.find(routingContext.params.dashboard);
       if (dashboard){
-          // update the history with the current state which is probably has changed
-          if (this.currentRouteItem){
-            let currentWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(this.currentRouteItem.dashboardName));
-            let url = "/" + this.currentRouteItem.dashboardName + StateUrlParser.stateToQuery(currentWidgetsState);
+        // update the history with the current state which is probably has changed
+        if (this.currentRouteItem){
+          let currentDashboard = this._dashboardManager.find(this.currentRouteItem.dashboardName)
+          let currentWidgetsState = StateDiscriminator.discriminate(currentDashboard.getState());
+          //let url = "/" + currentDashboard.name + StateUrlParser.stateToQuery(currentWidgetsState);
+          let url = currentDashboard.getRoute();
 
-            if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
-              this._navigationHistory.add(url, this.currentRouteItem.title, this.currentRouteItem.dashboardName, currentWidgetsState, new Date());
-            }
-            else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
-              this._navigationHistory.update(url,new Date());
-            }
+          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, url)).length===0){
+            this._navigationHistory.add(url, this.currentRouteItem.title, currentDashboard.name, currentWidgetsState, new Date());
           }
-
-          let fullUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
-
-          // synchronize a stored state and a state from the route
-          var routeWidgetsState = StateUrlParser.queryToState(fullUrl);
-          var storageWidgetsState = StateDiscriminator.discriminate(this._userStateStorage.getAll(dashboard.name));
-          for (let oldSt of storageWidgetsState)
-            this._userStateStorage.remove(oldSt.key);
-          for (let newSt of routeWidgetsState)
-            this._userStateStorage.set(newSt.key,newSt.value);
-
-          // add the new route to the history
-          if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, fullUrl)).length===0){
-            this._navigationHistory.add(fullUrl, dashboard.title, dashboard.name, this._userStateStorage.getAll(dashboard.name), new Date());
+          else if (!StringHelper.compare(url,this.currentRouteItem.route)) { // state change but there already a route with the same state
+            this._navigationHistory.update(url,new Date());
           }
-
-          this.currentRouteItem = {
-            dashboardName: dashboard.name,
-            title: dashboard.title,
-            route:fullUrl
-          };
         }
+
+        //let newUrl = routingContext.fragment + (routingContext.queryString? "?" + routingContext.queryString : "");
+        let newUrl = window.location.href;
+
+        // synchronize a stored state and a state from the route
+        let allWidgetsState = StateDiscriminator.discriminate(dashboard.getState());
+        let routeWidgetsState = StateUrlParser.queryToState(newUrl);
+        _.forEach(allWidgetsState, as=>{
+          let rs = _.find(routeWidgetsState,{"name":as.name})
+          if (rs)
+            as.value = rs.value
+          else
+            as.value = null;
+        })
+
+        dashboard.setState(allWidgetsState);
+
+        // add the new route to the history
+        if (_.filter(this._navigationHistory.items,i=>StringHelper.compare(i.url, newUrl)).length===0){
+          this._navigationHistory.add(newUrl, dashboard.title, dashboard.name, dashboard.getState(), new Date());
+        }
+
+        this.currentRouteItem = {
+          dashboardName: dashboard.name,
+          title: dashboard.title,
+          route:newUrl
+        };
+      }
     }
     else
       this.currentRouteItem = null;
@@ -998,7 +1021,7 @@ export class StateDiscriminator{
   static discriminate(widgetStates){
     var result = []
     for (let ws of widgetStates){
-      if (ws.value.stateType==="searchBoxState")
+      if (ws.stateType==="searchBoxState")
         result.push(ws);
     }
     return result;
@@ -1009,19 +1032,20 @@ export class StateDiscriminator{
 export class StateUrlParser{
   static stateToQuery(widgetStates){
     var params = []
-    for (let widgetState of widgetStates)
-        params.push({"sk": widgetState.key, "sv":widgetState.value});
-    //.widgetName, "st":widgetState.value.stateType, "so":widgetState.value.stateObject
-    return ((params.length>0)? "?q=" + UrlHelper.objectToQuery(params) :"");
+    for (let widgetState of widgetStates) {
+      if (widgetState.value)
+        params.push({"sn": widgetState.name, "sv": widgetState.value});
+    }
+    return ((params.length>0)? "?q=" + Base64.encode(UrlHelper.objectToQuery(params)) :"");
   }
 
   static queryToState(url){
     var result = [];
     var q = UrlHelper.getParameterByName("q", url);
     if (q){
-      var widgetStates = UrlHelper.queryToObject(q);
+      var widgetStates = UrlHelper.queryToObject(Base64.decode(q));
       for (var ws of widgetStates){
-        result.push({"key":ws.sk, "value":ws.sv});
+        result.push({"name":ws.sn, "value":ws.sv});
       }
     }
     return result;
@@ -1697,13 +1721,17 @@ export class FormatValueConverter {
 export class DashboardBase
 {
   constructor() {
+
   }
+
+  route;
+  behaviors = [];
+  layout = [];
 
   name;
   resourceGroup;
   title;
-  layout = [];
-  behaviors = [];
+
 
   configure(dashboardConfiguration){
     this.name = dashboardConfiguration.name;
@@ -1804,6 +1832,30 @@ export class DashboardBase
       else
         break;
     }
+  }
+
+
+
+  getState(){
+    let result = [];
+    _.forEach(this.layout,lw=>{
+      result.push({name: lw.widget.name, value: lw.widget.getState(), stateType:lw.widget.stateType});
+    })
+    return result;
+  }
+
+  setState(state){
+    for (let s of state){
+      for (let lw of this.layout){
+        if (lw.widget.name===s.name){
+          lw.widget.setState(s.value);
+        }
+      }
+    }
+  }
+
+  getRoute(){
+    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
   }
 }
 
@@ -1986,12 +2038,13 @@ export class Grid extends Widget {
   }
 
   saveState(){
-    this.state = {columns:this.columns};
+    this.setState({columns:this.columns});
   }
 
   restoreState(){
-    if (this.state)
-      this.columns = this.state.columns;
+    let s = this.getState();
+    if (s)
+      this.columns = s.columns;
   }
 }
 
@@ -2020,12 +2073,13 @@ export class SearchBox extends Widget {
   }
 
   saveState(){
-    this.state = this.searchString;
+    this.setState(this.searchString);
   }
 
   restoreState(){
-    if (this.state)
-      this.searchString = this.state;
+    let s = this.getState();
+    if (s)
+      this.searchString = s;
     else
       this.searchString = "";
   }
@@ -2067,29 +2121,7 @@ export class Widget {
   set minHeight(value){
     this.settings.minHeight = value;
   }
-
-  get state() {
-    if (this.stateStorage) {
-      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-      var s = this.stateStorage.get(key);
-      if (s)
-        return s.stateObject;
-    }
-    return undefined;
-  }
-
-  set state(value) {
-    if (this.stateStorage) {
-      var key = this.stateStorage.createKey(this.dashboard.name, this.name);
-      if (!value)
-        this.stateStorage.remove(key);
-      else
-      {
-        var s = {stateType: this.stateType, stateObject: value};
-        this.stateStorage.set(key, s);
-      }
-    }
-  }
+  
 
   get stateType() {
     return this._type;
@@ -2152,6 +2184,30 @@ export class Widget {
     this._dashboard = value;
   }
 
+  getStateKey() {
+    if (this.stateStorage)
+      return this.stateStorage.createKey(this.dashboard.name, this.name);
+    return "";
+  }
+
+  getState() {
+    if (this.stateStorage) {
+      var s = this.stateStorage.get(this.getStateKey());
+      if (s)
+        return s;
+    }
+    return undefined;
+  }
+
+  setState(value) {
+    if (this.stateStorage) {
+      if (!value)
+        this.stateStorage.remove(this.getStateKey());
+      else
+        this.stateStorage.set(this.getStateKey(), value);
+    }
+  }
+  
 
   attachBehavior(behavior){
     behavior.attachToWidget(this);
@@ -2178,9 +2234,7 @@ export class Widget {
   refresh(){
 
   }
-
-
-
+  
 
   dispose(){
     while(true) {
@@ -2192,15 +2246,6 @@ export class Widget {
   }
 
 
-
-  /*_calculateHeight(contentContainerElement){
-    if (!contentContainerElement)
-      return this.settings.minHeight;
-    var p = $(contentContainerElement).parents(".widget-container")
-    var headerHeight = p.find(".portlet-header")[0].scrollHeight;
-    var parentHeight = p[0].offsetHeight - headerHeight;
-    return parentHeight > this.settings.minHeight? parentHeight : this.settings.minHeight;
-  }*/
 }
 
 

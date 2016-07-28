@@ -33,7 +33,7 @@ System.register([], function (_export, _context) {
 
             var ws = _ref;
 
-            if (ws.value.stateType === "searchBoxState") result.push(ws);
+            if (ws.stateType === "searchBoxState") result.push(ws);
           }
           return result;
         };

@@ -1,4 +1,4 @@
-define(['exports', 'lodash'], function (exports, _lodash) {
+define(['exports', 'lodash', 'aurelia-framework', 'aurelia-router', './../helpers/url-helper'], function (exports, _lodash, _aureliaFramework, _aureliaRouter, _urlHelper) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -31,49 +31,36 @@ define(['exports', 'lodash'], function (exports, _lodash) {
     }
   }
 
-  var _createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
+  var _dec, _class;
 
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-
-  var DashboardManager = exports.DashboardManager = function () {
-    function DashboardManager() {
+  var DashboardManager = exports.DashboardManager = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router), _dec(_class = function () {
+    function DashboardManager(router) {
       _classCallCheck(this, DashboardManager);
 
-      this._dashboards = [];
+      this.dashboards = [];
+
+      this._router = router;
     }
 
+    DashboardManager.prototype.configure = function configure(configuration) {
+      this.dashboardRouteName = configuration.dashboardRouteName;
+    };
+
     DashboardManager.prototype.find = function find(dashboardName) {
-      return _.find(this._dashboards, { name: dashboardName });
+      return _.find(this.dashboards, { name: dashboardName });
     };
 
     DashboardManager.prototype.createDashboard = function createDashboard(type, dashboardConfiguration) {
       var dashboard = new type();
       dashboard.configure(dashboardConfiguration);
-      this._dashboards.push(dashboard);
+      if (this.dashboardRouteName) {
+        dashboard.route = _urlHelper.UrlHelper.getAbsoluteBaseUrl() + "/" + this._router.generate(this.dashboardRouteName, { dashboard: dashboard.name });
+      }
+
+      this.dashboards.push(dashboard);
       return dashboard;
     };
 
-    _createClass(DashboardManager, [{
-      key: 'dashboards',
-      get: function get() {
-        return this._dashboards;
-      }
-    }]);
-
     return DashboardManager;
-  }();
+  }()) || _class);
 });

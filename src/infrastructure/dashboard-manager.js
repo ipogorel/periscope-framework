@@ -1,22 +1,34 @@
 import * as _ from 'lodash';
+import {inject} from 'aurelia-framework';
+import {Router} from 'aurelia-router';
+import {UrlHelper} from './../helpers/url-helper';
 
+@inject(Router)
 export class DashboardManager {
-  constructor(){
-    this._dashboards = [];
+  constructor(router){
+    this._router = router;
   }
 
-  get dashboards(){
-    return this._dashboards;
+  dashboardRouteName;
+  dashboards = [];
+
+  configure(configuration){
+    this.dashboardRouteName = configuration.dashboardRouteName;
   }
 
   find(dashboardName){
-    return  _.find(this._dashboards, {name:dashboardName});
+    return  _.find(this.dashboards, {name:dashboardName});
   }
   
   createDashboard(type, dashboardConfiguration){
     var dashboard = new type();
     dashboard.configure(dashboardConfiguration);
-    this._dashboards.push(dashboard);
+    if (this.dashboardRouteName){
+      //dashboard.route = this._router.generate(this.dashboardRouteName, {dashboard:dashboard.name}, { absolute: true });
+      dashboard.route = UrlHelper.getAbsoluteBaseUrl() + "/" + this._router.generate(this.dashboardRouteName, {dashboard:dashboard.name});
+    }
+
+    this.dashboards.push(dashboard);
     return dashboard;
   }
 }

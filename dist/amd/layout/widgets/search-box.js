@@ -70,11 +70,12 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
     }
 
     SearchBox.prototype.saveState = function saveState() {
-      this.state = this.searchString;
+      this.setState(this.searchString);
     };
 
     SearchBox.prototype.restoreState = function restoreState() {
-      if (this.state) this.searchString = this.state;else this.searchString = "";
+      var s = this.getState();
+      if (s) this.searchString = s;else this.searchString = "";
     };
 
     _createClass(SearchBox, [{
