@@ -3,7 +3,6 @@ import * as peg from 'pegjs';
 import * as base64 from 'js-base64';
 import numeral from 'numeral';
 import moment from 'moment';
-import lodash from 'lodash';
 import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 import {Router} from 'aurelia-router';
@@ -436,6 +435,21 @@ export class Query {
 }
 
 
+export class DefaultHttpClient extends HttpClient {
+  constructor() {
+    super();
+    this.configure(config => {
+      config
+        .useStandardConfiguration()
+        .withDefaults({
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+    });
+  }
+}
+
 export class IntellisenceManager {
   constructor(parser, dataSource, availableFields){
     this.dataSource = dataSource;
@@ -792,21 +806,6 @@ export class UrlHelper {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
   }
 
-}
-
-export class DefaultHttpClient extends HttpClient {
-  constructor() {
-    super();
-    this.configure(config => {
-      config
-        .useStandardConfiguration()
-        .withDefaults({
-          headers: {
-            'Accept': 'application/json'
-          }
-        })
-    });
-  }
 }
 
 @inject(Router)
@@ -1718,6 +1717,538 @@ export class FormatValueConverter {
   }
 }
 
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+
+  handlers = [];
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this.handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this.handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this.handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this.handlers.length; i++) {
+      this.handlers[i].apply(this, arguments);
+    }
+  }
+}
+
+export class ChangeRouteBehavior extends DashboardBehavior {
+  constructor(settings) {
+    super();
+    this._chanel = settings.chanel;
+    this._eventAggregator = settings.eventAggregator;
+    this._newRoute = settings.newRoute;
+    this._router = settings.router;
+    this._paramsMapper = settings.paramsMapper;
+  }
+
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      var params = me._paramsMapper ? me._paramsMapper(message) : "";
+      if ((params!=="")&&(params.indexOf("?")!=0))
+        params="?" + params;
+      me._router.navigate(me._newRoute + (params!==""? params : ""));
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class CreateWidgetBehavior extends DashboardBehavior {
+
+  constructor(settings) {
+    super();
+    this._chanel = settings.chanel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._widgetDimensions = settings.widgetDimensions;
+    this._eventAggregator = settings.eventAggregator;
+    this._filterMapper = settings.filterMapper;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+      //make sure the widget exists
+      var w = dashboard.getWidgetByName(me._widgetSettings.name);
+      if(!w){ //widget not exist.
+        var w = new me._widgetType(me._widgetSettings);
+        dashboard.addWidget(w, this._widgetDimensions);
+      }
+      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
+      w.refresh();
+
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+
+
+}
+
+export class DashboardBehavior {
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.dashboard.behaviors.length; i++) {
+      if(this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+}
+
+export class DrillDownHandleBehavior extends DashboardBehavior  {
+
+  constructor(settings) {
+    super();
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      // create widget
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      // replace widget
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      w.dataFilter = message.params.dataFilter;
+      w.dataSource.transport.readService.configure({url:message.params.dataServiceUrl});
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class ManageNavigationStackBehavior extends DashboardBehavior {
+  constructor(eventAggregator) {
+    super();
+    
+    this._eventAggregator = eventAggregator;
+  }
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+
+    //this._eventAggregator.subscribe(BackButtonEvent, event => {
+    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
+      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
+      if (originatorWidget) {
+        var previousWidget = message.params.navigationStack.pop();
+        dashboard.replaceWidget(originatorWidget,previousWidget);
+      }
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class ReplaceWidgetBehavior extends DashboardBehavior  {
+
+  constructor(settings) {
+    super();
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+    this._mapper = settings.mapper;
+    this._queryPattern = settings.queryPattern;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      w.dataFilter = me._mapper? me._mapper(message) : message.params.dataFilter;
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class BroadcasterBehavior extends WidgetBehavior {
+  constructor(){
+    super();
+    this.type = BehaviorType.broadcaster;
+  }
+
+  eventToAttach;
+
+  attachToWidget(widget) {
+    if (!widget[this.eventToAttach])
+      throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
+    super.attachToWidget(widget);
+  }
+}
+
+export class DataActivatedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataActivated";
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget[this.eventToAttach] =  function(currentRecord) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params = {activatedData: currentRecord};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataFieldSelectedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataFieldSelected";
+    this._eventAggregator = eventAggregator;
+  }
+  
+
+  attachToWidget(widget)   {
+
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget[this.eventToAttach] =  function(fieldName) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params = {fieldName: fieldName};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+
+export class DataFilterChangedBehavior extends BroadcasterBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataFilterChanged";
+    this._eventAggregator = eventAggregator;
+  }
+
+
+  attachToWidget(widget) {
+    super.attachToWidget(widget);
+    var me = this;
+    widget[this.eventToAttach] = function(filter)
+    {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params = {dataFilter: filter};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataFilterHandleBehavior extends ListenerBehavior
+{
+  constructor(channel, eventAggregator, filterMapper) {
+    super();
+    this.channel = channel;
+    this._eventAggregator = eventAggregator;
+    this._filterMapper = filterMapper;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      var filterToApply = me._filterMapper ? me._filterMapper(message.params) : message.params.dataFilter;
+      me.widget.dataFilter = filterToApply;
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class DataSelectedBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataSelected";
+    this._eventAggregator = eventAggregator;
+  }
+
+
+  attachToWidget(widget)   {
+
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget[this.eventToAttach] =  function(currentRecord) {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params ={selectedData: currentRecord};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataSourceChangedBehavior extends BroadcasterBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataSourceChanged";
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget) {
+    super.attachToWidget(widget);
+    var me = this;
+    widget[this.eventToAttach] = function(dataSource)
+    {
+      var message = new WidgetEventMessage(me.widget.name);
+      message.params = {dataSource: dataSource};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DataSourceHandleBehavior extends ListenerBehavior
+{
+  constructor(channel, eventAggregator) {
+    super();
+    this.channel = channel;
+
+    this._eventAggregator = eventAggregator;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      me.widget.dataSource = message.params.dataSource;
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class DrillDownBehavior extends BroadcasterBehavior {
+  constructor(channel, eventAggregator, dataSource) {
+    super();
+    this.channel = channel;
+    this.eventToAttach = "dataActivated";
+    this._eventAggregator = eventAggregator;
+    this._dataSource = dataSource;
+  }
+
+  queryPattern="";
+  dataServiceUrl="";
+  isConfigured = false;
+
+  configure(drillDownBehaviorConfiguration){
+    this.queryPattern = drillDownBehaviorConfiguration.queryPattern;
+    this.dataServiceUrl = drillDownBehaviorConfiguration.dataServiceUrl;
+    this.isConfigured = true;
+  }
+
+  attachToWidget(widget)   {
+    super.attachToWidget(widget);
+    var me = this;
+
+    widget[this.eventToAttach] =  function(currentRecord) {
+      if (!me.isConfigured)
+        return;
+      var message = new WidgetEventMessage(me.widget.name);
+      let query = me.queryPattern;
+      _.forOwn(currentRecord, (value, key)=>{
+        query = StringHelper.replaceAll(query,"@"+key,value);
+      })
+
+      message.params = {dataFilter: query, dataServiceUrl: me.dataServiceUrl};
+      me._eventAggregator.publish(me.channel, message);
+    };
+  }
+
+  detach(){
+    super.detach(dashboard);
+  }
+}
+
+export class DrillDownBehaviorConfiguration {
+  queryPattern;
+  dataServiceUrl;
+}
+
+
+export class ListenerBehavior extends WidgetBehavior {
+  constructor(){
+    super();
+    this.type = BehaviorType.listener;
+  }
+}
+
+export class SettingsHandleBehavior extends ListenerBehavior
+{
+  constructor(channel, eventAggregator, messageMapper) {
+    super();
+    this.channel = channel;
+    this._eventAggregator = eventAggregator;
+
+    this._messageMapper = messageMapper;
+  }
+
+  attachToWidget(widget){
+    super.attachToWidget(widget);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
+      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
+      _.forOwn(settingsToApply, (v, k)=>{
+        //me.widget.changeSettings(settingsToApply);
+        me.widget[k] = v;
+      });
+      //me.widget.changeSettings(settingsToApply);
+      me.widget.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class WidgetBehavior {
+
+  type;
+  widget;
+  channel;
+
+
+  attachToWidget(widget) {
+    this.widget = widget;
+    this.widget.behaviors.push(this);
+  }
+
+  detach(){
+    if (!this.widget)
+      return;
+    for (let i=0; i<this.widget.behaviors.length; i++) {
+      if(this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+}
+
 export class DashboardBase
 {
   constructor() {
@@ -2121,7 +2652,7 @@ export class Widget {
   set minHeight(value){
     this.settings.minHeight = value;
   }
-  
+
 
   get stateType() {
     return this._type;
@@ -2207,7 +2738,7 @@ export class Widget {
         this.stateStorage.set(this.getStateKey(), value);
     }
   }
-  
+
 
   attachBehavior(behavior){
     behavior.attachToWidget(this);
@@ -2234,7 +2765,7 @@ export class Widget {
   refresh(){
 
   }
-  
+
 
   dispose(){
     while(true) {
@@ -2251,537 +2782,7 @@ export class Widget {
 
 
 
-export class ChangeRouteBehavior extends DashboardBehavior {
-  constructor(settings) {
-    super();
-    this._chanel = settings.chanel;
-    this._eventAggregator = settings.eventAggregator;
-    this._newRoute = settings.newRoute;
-    this._router = settings.router;
-    this._paramsMapper = settings.paramsMapper;
-  }
 
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      var params = me._paramsMapper ? me._paramsMapper(message) : "";
-      if ((params!=="")&&(params.indexOf("?")!=0))
-        params="?" + params;
-      me._router.navigate(me._newRoute + (params!==""? params : ""));
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class CreateWidgetBehavior extends DashboardBehavior {
-
-  constructor(settings) {
-    super();
-    this._chanel = settings.chanel;
-    this._widgetType = settings.widgetType;
-    this._widgetSettings = settings.widgetSettings;
-    this._widgetDimensions = settings.widgetDimensions;
-    this._eventAggregator = settings.eventAggregator;
-    this._filterMapper = settings.filterMapper;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      //make sure the widget exists
-      var w = dashboard.getWidgetByName(me._widgetSettings.name);
-      if(!w){ //widget not exist.
-        var w = new me._widgetType(me._widgetSettings);
-        dashboard.addWidget(w, this._widgetDimensions);
-      }
-      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
-      w.refresh();
-
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-
-
-}
-
-export class DashboardBehavior {
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.dashboard.behaviors.length; i++) {
-      if(this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-}
-
-export class DrillDownHandleBehavior extends DashboardBehavior  {
-
-  constructor(settings) {
-    super();
-    this._channel = settings.channel;
-    this._widgetType = settings.widgetType;
-    this._widgetSettings = settings.widgetSettings;
-    this._eventAggregator = settings.eventAggregator;
-    this._widgetToReplaceName = settings.widgetToReplaceName;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      // create widget
-      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
-      // replace widget
-      var w = new me._widgetType(me._widgetSettings);
-      dashboard.replaceWidget(originatorWidget, w);
-      w.dataFilter = message.params.dataFilter;
-      w.dataSource.transport.readService.configure({url:message.params.dataServiceUrl});
-      w.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class ManageNavigationStackBehavior extends DashboardBehavior {
-  constructor(eventAggregator) {
-    super();
-    
-    this._eventAggregator = eventAggregator;
-  }
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-
-    //this._eventAggregator.subscribe(BackButtonEvent, event => {
-    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
-      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
-      if (originatorWidget) {
-        var previousWidget = message.params.navigationStack.pop();
-        dashboard.replaceWidget(originatorWidget,previousWidget);
-      }
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class ReplaceWidgetBehavior extends DashboardBehavior  {
-
-  constructor(settings) {
-    super();
-    this._channel = settings.channel;
-    this._widgetType = settings.widgetType;
-    this._widgetSettings = settings.widgetSettings;
-    this._eventAggregator = settings.eventAggregator;
-    this._widgetToReplaceName = settings.widgetToReplaceName;
-    this._mapper = settings.mapper;
-    this._queryPattern = settings.queryPattern;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
-      var w = new me._widgetType(me._widgetSettings);
-      dashboard.replaceWidget(originatorWidget, w);
-      w.dataFilter = me._mapper? me._mapper(message) : message.params.dataFilter;
-      w.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-}
-
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
-  }
-
-  handlers = [];
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this.handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this.handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this.handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this.handlers.length; i++) {
-      this.handlers[i].apply(this, arguments);
-    }
-  }
-}
-
-export class BroadcasterBehavior extends WidgetBehavior {
-  constructor(){
-    super();
-    this.type = BehaviorType.broadcaster;
-  }
-
-  eventToAttach;
-
-  attachToWidget(widget) {
-    if (!widget[this.eventToAttach])
-      throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
-    super.attachToWidget(widget);
-  }
-}
-
-export class DataActivatedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
-    this.eventToAttach = "dataActivated";
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget[this.eventToAttach] =  function(currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.params = {activatedData: currentRecord};
-      me._eventAggregator.publish(me.channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataFieldSelectedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
-    this.eventToAttach = "dataFieldSelected";
-    this._eventAggregator = eventAggregator;
-  }
-  
-
-  attachToWidget(widget)   {
-
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget[this.eventToAttach] =  function(fieldName) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.params = {fieldName: fieldName};
-      me._eventAggregator.publish(me.channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-
-export class DataFilterChangedBehavior extends BroadcasterBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
-    this.eventToAttach = "dataFilterChanged";
-    this._eventAggregator = eventAggregator;
-  }
-
-
-  attachToWidget(widget) {
-    super.attachToWidget(widget);
-    var me = this;
-    widget[this.eventToAttach] = function(filter)
-    {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.params = {dataFilter: filter};
-      me._eventAggregator.publish(me.channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataFilterHandleBehavior extends ListenerBehavior
-{
-  constructor(channel, eventAggregator, filterMapper) {
-    super();
-    this.channel = channel;
-    this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
-      var filterToApply = me._filterMapper ? me._filterMapper(message.params) : message.params.dataFilter;
-      me.widget.dataFilter = filterToApply;
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class DataSelectedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
-    this.eventToAttach = "dataSelected";
-    this._eventAggregator = eventAggregator;
-  }
-
-
-  attachToWidget(widget)   {
-
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget[this.eventToAttach] =  function(currentRecord) {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.params ={selectedData: currentRecord};
-      me._eventAggregator.publish(me.channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataSourceChangedBehavior extends BroadcasterBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
-    this.eventToAttach = "dataSourceChanged";
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget) {
-    super.attachToWidget(widget);
-    var me = this;
-    widget[this.eventToAttach] = function(dataSource)
-    {
-      var message = new WidgetEventMessage(me.widget.name);
-      message.params = {dataSource: dataSource};
-      me._eventAggregator.publish(me.channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DataSourceHandleBehavior extends ListenerBehavior
-{
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
-
-    this._eventAggregator = eventAggregator;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
-      me.widget.dataSource = message.params.dataSource;
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class DrillDownBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator, dataSource) {
-    super();
-    this.channel = channel;
-    this.eventToAttach = "dataActivated";
-    this._eventAggregator = eventAggregator;
-    this._dataSource = dataSource;
-  }
-
-  queryPattern="";
-  dataServiceUrl="";
-  isConfigured = false;
-
-  configure(drillDownBehaviorConfiguration){
-    this.queryPattern = drillDownBehaviorConfiguration.queryPattern;
-    this.dataServiceUrl = drillDownBehaviorConfiguration.dataServiceUrl;
-    this.isConfigured = true;
-  }
-
-  attachToWidget(widget)   {
-    super.attachToWidget(widget);
-    var me = this;
-
-    widget[this.eventToAttach] =  function(currentRecord) {
-      if (!me.isConfigured)
-        return;
-      var message = new WidgetEventMessage(me.widget.name);
-      let query = me.queryPattern;
-      _.forOwn(currentRecord, (value, key)=>{
-        query = StringHelper.replaceAll(query,"@"+key,value);
-      })
-
-      message.params = {dataFilter: query, dataServiceUrl: me.dataServiceUrl};
-      me._eventAggregator.publish(me.channel, message);
-    };
-  }
-
-  detach(){
-    super.detach(dashboard);
-  }
-}
-
-export class DrillDownBehaviorConfiguration {
-  queryPattern;
-  dataServiceUrl;
-}
-
-
-export class ListenerBehavior extends WidgetBehavior {
-  constructor(){
-    super();
-    this.type = BehaviorType.listener;
-  }
-}
-
-export class SettingsHandleBehavior extends ListenerBehavior
-{
-  constructor(channel, eventAggregator, messageMapper) {
-    super();
-    this.channel = channel;
-    this._eventAggregator = eventAggregator;
-
-    this._messageMapper = messageMapper;
-  }
-
-  attachToWidget(widget){
-    super.attachToWidget(widget);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this.channel, message => {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
-      _.forOwn(settingsToApply, (v, k)=>{
-        //me.widget.changeSettings(settingsToApply);
-        me.widget[k] = v;
-      });
-      //me.widget.changeSettings(settingsToApply);
-      me.widget.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class WidgetBehavior {
-
-  type;
-  widget;
-  channel;
-
-
-  attachToWidget(widget) {
-    this.widget = widget;
-    this.widget.behaviors.push(this);
-  }
-
-  detach(){
-    if (!this.widget)
-      return;
-    for (let i=0; i<this.widget.behaviors.length; i++) {
-      if(this.widget.behaviors[i] === this) {
-        this.widget.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-}
 
 export class AstParser{
   constructor(){

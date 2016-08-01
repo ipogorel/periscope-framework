@@ -1,7 +1,7 @@
 "use strict";
 
 System.register(["lodash"], function (_export, _context) {
-  var lodash, _createClass, Widget;
+  var _, _createClass, Widget;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -11,7 +11,7 @@ System.register(["lodash"], function (_export, _context) {
 
   return {
     setters: [function (_lodash) {
-      lodash = _lodash.default;
+      _ = _lodash;
     }],
     execute: function () {
       _createClass = function () {

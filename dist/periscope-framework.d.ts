@@ -4,7 +4,6 @@ declare module 'periscope-framework' {
   import * as base64 from 'js-base64';
   import numeral from 'numeral';
   import moment from 'moment';
-  import lodash from 'lodash';
   import {
     inject,
     bindable,
@@ -123,6 +122,9 @@ declare module 'periscope-framework' {
     filter: any;
     cacheKey(): any;
   }
+  export class DefaultHttpClient extends HttpClient {
+    constructor();
+  }
   export class IntellisenceManager {
     constructor(parser: any, dataSource: any, availableFields: any);
     populate(searchStr: any, lastWord: any): any;
@@ -159,9 +161,6 @@ declare module 'periscope-framework' {
     static objectToQuery(ar: any): any;
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
-  }
-  export class DefaultHttpClient extends HttpClient {
-    constructor();
   }
   export class DashboardManager {
     constructor(router: any);

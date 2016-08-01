@@ -1,4 +1,4 @@
-import lodash from 'lodash';
+import * as _ from 'lodash';
 
 export class Widget {
 
@@ -36,7 +36,7 @@ export class Widget {
   set minHeight(value){
     this.settings.minHeight = value;
   }
-  
+
 
   get stateType() {
     return this._type;
@@ -122,7 +122,7 @@ export class Widget {
         this.stateStorage.set(this.getStateKey(), value);
     }
   }
-  
+
 
   attachBehavior(behavior){
     behavior.attachToWidget(this);
@@ -149,7 +149,7 @@ export class Widget {
   refresh(){
 
   }
-  
+
 
   dispose(){
     while(true) {
@@ -162,6 +162,8 @@ export class Widget {
 
 
 }
+
+
 
 
 
