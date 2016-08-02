@@ -1,5 +1,6 @@
 import { Grammar } from './grammar';
 import { DataHelper } from './../../helpers/data-helper';
+import * as _ from 'lodash';
 
 const DSL_GRAMMAR_TREE = `
 {

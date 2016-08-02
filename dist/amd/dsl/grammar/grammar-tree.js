@@ -1,10 +1,29 @@
-define(['exports', './grammar', './../../helpers/data-helper'], function (exports, _grammar, _dataHelper) {
+define(['exports', './grammar', './../../helpers/data-helper', 'lodash'], function (exports, _grammar, _dataHelper, _lodash) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.GrammarTree = undefined;
+
+  var _ = _interopRequireWildcard(_lodash);
+
+  function _interopRequireWildcard(obj) {
+    if (obj && obj.__esModule) {
+      return obj;
+    } else {
+      var newObj = {};
+
+      if (obj != null) {
+        for (var key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        }
+      }
+
+      newObj.default = obj;
+      return newObj;
+    }
+  }
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {

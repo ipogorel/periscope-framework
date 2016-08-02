@@ -3,9 +3,9 @@ import * as peg from 'pegjs';
 import * as base64 from 'js-base64';
 import numeral from 'numeral';
 import moment from 'moment';
-import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
-import {HttpClient} from 'aurelia-fetch-client';
+import {inject,bindable,resolver,transient,customElement,useView,Decorators,noView,computedFrom} from 'aurelia-framework';
 import {Router} from 'aurelia-router';
+import {HttpClient} from 'aurelia-fetch-client';
 
 @inject(Element, PermissionsManager)
 export class PermissionsCustomAttribute {
@@ -117,81 +117,6 @@ export class PermissionsManager {
   }
 ]
 */
-
-export class CacheManager {
-  constructor(storage) {
-    this._cacheStorage = storage;
-    this._cleanInterval = 5000;
-  }
-
-  get cleanInterval() {return this._cleanInterval;}
-
-  startCleaner(){
-    if (!this.cleaner) {
-      let self = this;
-      this.cleaner = window.setInterval(()=> {
-        self._cacheStorage.removeExpired();
-      }, this._cleanInterval);
-    }
-  }
-
-  stopCleaner(){
-    if (this.cleaner)
-      window.clearInterval(this.cleaner);
-  }
-
-  getStorage(){
-    return this._cacheStorage;
-  }
-
-}
-
-
-export class CacheStorage{
-  setItem(key, value, expiration){}
-  getItem(key){}
-  removeItem(key){}
-  removeExpired(){}
-}
-
-export class MemoryCacheStorage extends CacheStorage{
-  constructor(){
-    super();
-    this._cache = {}
-  }
-  setItem(key, value, seconds){
-    var t = new Date();
-    t.setSeconds(t.getSeconds() + seconds);
-    var v = _.assign({},value);
-    this._cache[key] = {
-      value: v,
-      exp: t
-    };
-  }
-  getItem(key){
-    if (this._cache[key] && this._cache[key].exp >= Date.now())
-      return this._cache[key].value;
-    return null;
-  }
-  removeItem(key){
-    delete this._cache[key];
-  }
-  removeExpired(){
-    var self = this;
-    _.forOwn(self._cache, function(v, k) {
-      if (self._cache[k].exp < Date.now()){
-        self.removeItem(k);
-      }
-    });
-  }
-}
-
-export class DashboardConfiguration {
-  invoke(){
-
-  }
-}
-
 
 
 export class DataHolder {
@@ -434,21 +359,6 @@ export class Query {
   
 }
 
-
-export class DefaultHttpClient extends HttpClient {
-  constructor() {
-    super();
-    this.configure(config => {
-      config
-        .useStandardConfiguration()
-        .withDefaults({
-          headers: {
-            'Accept': 'application/json'
-          }
-        })
-    });
-  }
-}
 
 export class IntellisenceManager {
   constructor(parser, dataSource, availableFields){
@@ -808,6 +718,74 @@ export class UrlHelper {
 
 }
 
+export class CacheManager {
+  constructor(storage) {
+    this._cacheStorage = storage;
+    this._cleanInterval = 5000;
+  }
+
+  get cleanInterval() {return this._cleanInterval;}
+
+  startCleaner(){
+    if (!this.cleaner) {
+      let self = this;
+      this.cleaner = window.setInterval(()=> {
+        self._cacheStorage.removeExpired();
+      }, this._cleanInterval);
+    }
+  }
+
+  stopCleaner(){
+    if (this.cleaner)
+      window.clearInterval(this.cleaner);
+  }
+
+  getStorage(){
+    return this._cacheStorage;
+  }
+
+}
+
+
+export class CacheStorage{
+  setItem(key, value, expiration){}
+  getItem(key){}
+  removeItem(key){}
+  removeExpired(){}
+}
+
+export class MemoryCacheStorage extends CacheStorage{
+  constructor(){
+    super();
+    this._cache = {}
+  }
+  setItem(key, value, seconds){
+    var t = new Date();
+    t.setSeconds(t.getSeconds() + seconds);
+    var v = _.assign({},value);
+    this._cache[key] = {
+      value: v,
+      exp: t
+    };
+  }
+  getItem(key){
+    if (this._cache[key] && this._cache[key].exp >= Date.now())
+      return this._cache[key].value;
+    return null;
+  }
+  removeItem(key){
+    delete this._cache[key];
+  }
+  removeExpired(){
+    var self = this;
+    _.forOwn(self._cache, function(v, k) {
+      if (self._cache[k].exp < Date.now()){
+        self.removeItem(k);
+      }
+    });
+  }
+}
+
 @inject(Router)
 export class DashboardManager {
   constructor(router){
@@ -875,6 +853,28 @@ export class Factory{
     return new Factory(Type);
   }
 }
+
+export class DefaultHttpClient extends HttpClient {
+  constructor() {
+    super();
+    this.configure(config => {
+      config
+        .useStandardConfiguration()
+        .withDefaults({
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+    });
+  }
+}
+
+export class DashboardConfiguration {
+  invoke(){
+
+  }
+}
+
 
 export class BehaviorType {
   static get listener(){
@@ -1717,49 +1717,539 @@ export class FormatValueConverter {
   }
 }
 
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
+export class Chart extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.categoriesField = settings.categoriesField;
+    this.seriesDefaults = settings.seriesDefaults;
+    this.stateType = "chartState";
+    this.attachBehaviors();
   }
-  get originatorName()  {
-    return this._originatorName;
+
+  get categoriesField(){
+    return this._categoriesField;
+  }
+  set categoriesField(value){
+    this._categoriesField = value;
+  }
+
+  get seriesDefaults(){
+    return this._seriesDefaults;
+  }
+  set seriesDefaults(value){
+    this._seriesDefaults = value;
   }
 
 }
 
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
+export class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+    this.attachBehaviors();
   }
 
-  handlers = [];
 
-  get originatorName()  {
-    return this._originatorName;
+  get dataSourceToConfigurate(){
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
   }
 
-  attach(handler){
-    if(this.handlers.some(e=>e === handler)) {
-      return; //already attached
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+
+}
+
+export class DetailedView extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.fields = settings.fields;
+    this.stateType = "detailedViewState";
+    this.attachBehaviors();
+  }
+
+  get fields(){
+    return this._fields;
+  }
+  set fields(value) {
+    this._fields = value;
+  }
+}
+
+
+export class Grid extends Widget {
+  constructor(settings) {
+    super(settings);
+
+    this.columns = settings.columns? settings.columns : [];
+    this.navigatable = settings.navigatable;
+    this.autoGenerateColumns = settings.autoGenerateColumns;
+    this.pageSize = settings.pageSize;
+    this.group = settings.group;
+
+    this.stateType = "gridState";
+
+    this._dataSelected = new WidgetEvent();
+    this._dataActivated = new WidgetEvent();
+    this._dataFieldSelected = new WidgetEvent();
+
+    this.attachBehaviors();
+  }
+
+  get columns(){
+    return this._columns;
+  }
+  set columns(value) {
+    this._columns = value;
+  }
+
+  get navigatable(){
+    return this._navigatable;
+  }
+  set navigatable(value) {
+    this._navigatable = value;
+  }
+
+  get autoGenerateColumns(){
+    return this._autoGenerateColumns;
+  }
+  set autoGenerateColumns(value) {
+    this._autoGenerateColumns = value;
+  }
+
+  get pageSize(){
+    return this._pageSize;
+  }
+  set pageSize(value) {
+    this._pageSize = value;
+  }
+
+  get group(){
+    return this._group;
+  }
+  set group(value){
+    this._group = value;
+  }
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+  
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState(){
+    this.setState({columns:this.columns});
+  }
+
+  restoreState(){
+    let s = this.getState();
+    if (s)
+      this.columns = s.columns;
+  }
+}
+
+export class SearchBox extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.stateType = "searchBoxState";
+    this._dataFilterChanged = new WidgetEvent();
+    this._searchString = "";
+    this.attachBehaviors();
+  }
+
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+  get searchString(){
+    return this._searchString;
+  }
+  set searchString(value) {
+    this._searchString = value;
+  }
+
+  saveState(){
+    this.setState(this.searchString);
+  }
+
+  restoreState(){
+    let s = this.getState();
+    if (s)
+      this.searchString = s;
+    else
+      this.searchString = "";
+  }
+}
+
+export class Widget {
+
+  constructor(settings) {
+    // call method in child class
+    this._settings = settings;
+    this._behaviors = [];
+
+  }
+
+  get self() {
+    return this;
+  }
+
+  get settings(){
+    return this._settings;
+  }
+
+
+  get behaviors() {
+    return this._behaviors;
+  }
+
+  get name(){
+    return this.settings.name;
+  }
+
+  get resourceGroup() {
+    return this.settings.resourceGroup;
+  }
+
+  get minHeight(){
+    return this.settings.minHeight;
+  }
+  set minHeight(value){
+    this.settings.minHeight = value;
+  }
+
+
+  get stateType() {
+    return this._type;
+  }
+  set stateType(value) {
+    this._type = value;
+  }
+
+  get showHeader(){
+    return this.settings.showHeader;
+  }
+
+  set dataHolder(value){
+    this._dataHolder = value;
+  }
+  get dataHolder(){
+    return this._dataHolder;
+  }
+
+  get header() {
+    return this.settings.header;
+  }
+  set header(value) {
+    this.settings.header = value;
+  }
+
+
+  get stateStorage(){
+    return this.settings.stateStorage;
+  }
+
+
+  set dataSource(value) {
+    this.settings.dataSource = value;
+  }
+  get dataSource() {
+    return this.settings.dataSource;
+  }
+
+  get dataMapper() {
+    return this.settings.dataMapper;
+  }
+
+  get dataFilter() {
+    return this._dataFilter;
+  }
+
+  set dataFilter(value) {
+    this._dataFilter = value;
+  }
+
+  get type() {
+    return this._type;
+  }
+
+  get dashboard() {
+    return this._dashboard;
+  }
+  set dashboard(value) {
+    this._dashboard = value;
+  }
+
+  getStateKey() {
+    if (this.stateStorage)
+      return this.stateStorage.createKey(this.dashboard.name, this.name);
+    return "";
+  }
+
+  getState() {
+    if (this.stateStorage) {
+      var s = this.stateStorage.get(this.getStateKey());
+      if (s)
+        return s;
     }
-    this.handlers.push(handler);
+    return undefined;
   }
 
-  detach(handler) {
-    var idx = this.handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
+  setState(value) {
+    if (this.stateStorage) {
+      if (!value)
+        this.stateStorage.remove(this.getStateKey());
+      else
+        this.stateStorage.set(this.getStateKey(), value);
     }
-    this.handler.splice(idx,1);
   }
 
-  raise(){
-    for(var i = 0; i< this.handlers.length; i++) {
-      this.handlers[i].apply(this, arguments);
+
+  attachBehavior(behavior){
+    behavior.attachToWidget(this);
+  }
+
+  attachBehaviors(){
+    if (this.settings.behavior) {
+      for (let b of this.settings.behavior)
+        this.attachBehavior(b);
     }
   }
+
+  ///METHODS
+  changeSettings(newSettings){
+    if (newSettings) {
+      //merge settings
+      _.forOwn(newSettings, (v, k)=> {
+        this.settings[k] = v;
+      });
+      this.refresh();
+    }
+  }
+
+  refresh(){
+
+  }
+
+
+  dispose(){
+    while(true) {
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
+      else
+        break;
+    }
+  }
+
+
+}
+
+
+
+
+
+
+export class DashboardBase
+{
+  constructor() {
+
+  }
+
+  route;
+  behaviors = [];
+  layout = [];
+
+  name;
+  resourceGroup;
+  title;
+
+
+  configure(dashboardConfiguration){
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
+  }
+
+
+  getWidgetByName(widgetName) {
+    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
+    if (wl)
+      return wl.widget;
+  }
+
+  addWidget(widget, dimensions) {
+    let lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this.layout.push(lw);
+    widget.dashboard = this;
+  }
+
+  removeWidget(widget) {
+    _.remove(this.layout, w=>{
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  replaceWidget(oldWidget, newWidget) {
+    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
+    if (oldLw){
+      newWidget.dashboard = this;
+      let newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
+    }
+  }
+
+  restoreWidget(currentWidget){
+    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
+    let previousWidget = lw.navigationStack.pop();
+    if (previousWidget){
+      let previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
+    }
+  }
+
+
+  resizeWidget(widget, newSize){
+    var lw = _.find(this.layout, w=> {return w.widget === widget});
+    if (newSize) {
+      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
+      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
+      lw.resize(x, y);
+    }
+    else
+      lw.rollbackResize()
+  }
+
+
+  refreshWidget(widget){
+    widget.refresh();
+  }
+  
+  refresh() {
+    for (let i=0; i<this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
+    }
+  }
+
+  dispose(){
+    for (let i=0; i<this.layout.length; i++) {
+      this.layout[i].widget.dispose();
+    }
+    this.layout = [];
+
+    while(true) {
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
+      else
+        break;
+    }
+  }
+
+
+
+  getState(){
+    let result = [];
+    _.forEach(this.layout,lw=>{
+      result.push({name: lw.widget.name, value: lw.widget.getState(), stateType:lw.widget.stateType});
+    })
+    return result;
+  }
+
+  setState(state){
+    for (let s of state){
+      for (let lw of this.layout){
+        if (lw.widget.name===s.name){
+          lw.widget.setState(s.value);
+        }
+      }
+    }
+  }
+
+  getRoute(){
+    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
+  }
+}
+
+export class LayoutWidget{
+
+  widget;
+  navigationStack = [];
+  sizeX;
+  sizeY;
+  col;
+  row;
+  resized = false;
+
+  @computedFrom('navigationStack')
+  get hasNavStack() {
+    return this.navigationStack && this.navigationStack.length > 0;
+  }
+
+  resize(newSizeX, newSizeY){
+    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  }
+
+  rollbackResize(){
+    if (this._originalDimensions){
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  }
+
 }
 
 export class ChangeRouteBehavior extends DashboardBehavior {
@@ -2249,540 +2739,50 @@ export class WidgetBehavior {
 
 }
 
-export class DashboardBase
-{
-  constructor() {
+export class WidgetEventMessage {
 
+  constructor(widgetName) {
+    this._originatorName = widgetName;
   }
-
-  route;
-  behaviors = [];
-  layout = [];
-
-  name;
-  resourceGroup;
-  title;
-
-
-  configure(dashboardConfiguration){
-    this.name = dashboardConfiguration.name;
-    this.title = dashboardConfiguration.title;
-    this.resourceGroup = dashboardConfiguration.resourceGroup;
-  }
-
-
-  getWidgetByName(widgetName) {
-    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
-    if (wl)
-      return wl.widget;
-  }
-
-  addWidget(widget, dimensions) {
-    let lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this.layout.push(lw);
-    widget.dashboard = this;
-  }
-
-  removeWidget(widget) {
-    _.remove(this.layout, w=>{
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  }
-
-  replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
-    if (oldLw){
-      newWidget.dashboard = this;
-      let newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
-    }
-  }
-
-  restoreWidget(currentWidget){
-    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
-    let previousWidget = lw.navigationStack.pop();
-    if (previousWidget){
-      let previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
-    }
-  }
-
-
-  resizeWidget(widget, newSize){
-    var lw = _.find(this.layout, w=> {return w.widget === widget});
-    if (newSize) {
-      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
-      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
-      lw.resize(x, y);
-    }
-    else
-      lw.rollbackResize()
-  }
-
-
-  refreshWidget(widget){
-    widget.refresh();
-  }
-  
-  refresh() {
-    for (let i=0; i<this.layout.length; i++) {
-      this.refreshWidget(this.layout[i].widget);
-    }
-  }
-
-  dispose(){
-    for (let i=0; i<this.layout.length; i++) {
-      this.layout[i].widget.dispose();
-    }
-    this.layout = [];
-
-    while(true) {
-      if (this.behaviors.length>0)
-        this.behaviors[0].detach();
-      else
-        break;
-    }
-  }
-
-
-
-  getState(){
-    let result = [];
-    _.forEach(this.layout,lw=>{
-      result.push({name: lw.widget.name, value: lw.widget.getState(), stateType:lw.widget.stateType});
-    })
-    return result;
-  }
-
-  setState(state){
-    for (let s of state){
-      for (let lw of this.layout){
-        if (lw.widget.name===s.name){
-          lw.widget.setState(s.value);
-        }
-      }
-    }
-  }
-
-  getRoute(){
-    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
-  }
-}
-
-export class LayoutWidget{
-
-  widget;
-  navigationStack = [];
-  sizeX;
-  sizeY;
-  col;
-  row;
-  resized = false;
-
-  @computedFrom('navigationStack')
-  get hasNavStack() {
-    return this.navigationStack && this.navigationStack.length > 0;
-  }
-
-  resize(newSizeX, newSizeY){
-    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  }
-
-  rollbackResize(){
-    if (this._originalDimensions){
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
+  get originatorName()  {
+    return this._originatorName;
   }
 
 }
 
-export class Chart extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.categoriesField = settings.categoriesField;
-    this.seriesDefaults = settings.seriesDefaults;
-    this.stateType = "chartState";
-    this.attachBehaviors();
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
   }
 
-  get categoriesField(){
-    return this._categoriesField;
-  }
-  set categoriesField(value){
-    this._categoriesField = value;
+  handlers = [];
+
+  get originatorName()  {
+    return this._originatorName;
   }
 
-  get seriesDefaults(){
-    return this._seriesDefaults;
-  }
-  set seriesDefaults(value){
-    this._seriesDefaults = value;
-  }
-
-}
-
-export class DataSourceConfigurator extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    this.stateType = "dataSourceConfiguratorState";
-    this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-
-  get dataSourceToConfigurate(){
-    return this._dataSourceToConfigurate;
-  }
-  set dataSourceToConfigurate(value) {
-    this._dataSourceToConfigurate = value;
-  }
-
-
-  get dataSourceChanged() {
-    return this._dataSourceChanged;
-  }
-  set dataSourceChanged(handler) {
-    this._dataSourceChanged.attach(handler);
-  }
-
-
-}
-
-export class DetailedView extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.fields = settings.fields;
-    this.stateType = "detailedViewState";
-    this.attachBehaviors();
-  }
-
-  get fields(){
-    return this._fields;
-  }
-  set fields(value) {
-    this._fields = value;
-  }
-}
-
-
-export class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
-
-    this.columns = settings.columns? settings.columns : [];
-    this.navigatable = settings.navigatable;
-    this.autoGenerateColumns = settings.autoGenerateColumns;
-    this.pageSize = settings.pageSize;
-    this.group = settings.group;
-
-    this.stateType = "gridState";
-
-    this._dataSelected = new WidgetEvent();
-    this._dataActivated = new WidgetEvent();
-    this._dataFieldSelected = new WidgetEvent();
-
-    this.attachBehaviors();
-  }
-
-  get columns(){
-    return this._columns;
-  }
-  set columns(value) {
-    this._columns = value;
-  }
-
-  get navigatable(){
-    return this._navigatable;
-  }
-  set navigatable(value) {
-    this._navigatable = value;
-  }
-
-  get autoGenerateColumns(){
-    return this._autoGenerateColumns;
-  }
-  set autoGenerateColumns(value) {
-    this._autoGenerateColumns = value;
-  }
-
-  get pageSize(){
-    return this._pageSize;
-  }
-  set pageSize(value) {
-    this._pageSize = value;
-  }
-
-  get group(){
-    return this._group;
-  }
-  set group(value){
-    this._group = value;
-  }
-
-  get dataSelected() {
-    return this._dataSelected;
-  }
-  set dataSelected(handler) {
-    this._dataSelected.attach(handler);
-  }
-
-  get dataActivated() {
-    return this._dataActivated;
-  }
-  set dataActivated(handler) {
-    this._dataActivated.attach(handler);
-  }
-  
-
-  get dataFieldSelected() {
-    return this._dataFieldSelected;
-  }
-  set dataFieldSelected(handler) {
-    this._dataFieldSelected.attach(handler);
-  }
-
-  saveState(){
-    this.setState({columns:this.columns});
-  }
-
-  restoreState(){
-    let s = this.getState();
-    if (s)
-      this.columns = s.columns;
-  }
-}
-
-export class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "searchBoxState";
-    this._dataFilterChanged = new WidgetEvent();
-    this._searchString = "";
-    this.attachBehaviors();
-  }
-
-
-  get dataFilterChanged() {
-    return this._dataFilterChanged;
-  }
-  set dataFilterChanged(handler) {
-    this._dataFilterChanged.attach(handler);
-  }
-
-  get searchString(){
-    return this._searchString;
-  }
-  set searchString(value) {
-    this._searchString = value;
-  }
-
-  saveState(){
-    this.setState(this.searchString);
-  }
-
-  restoreState(){
-    let s = this.getState();
-    if (s)
-      this.searchString = s;
-    else
-      this.searchString = "";
-  }
-}
-
-export class Widget {
-
-  constructor(settings) {
-    // call method in child class
-    this._settings = settings;
-    this._behaviors = [];
-
-  }
-
-  get self() {
-    return this;
-  }
-
-  get settings(){
-    return this._settings;
-  }
-
-
-  get behaviors() {
-    return this._behaviors;
-  }
-
-  get name(){
-    return this.settings.name;
-  }
-
-  get resourceGroup() {
-    return this.settings.resourceGroup;
-  }
-
-  get minHeight(){
-    return this.settings.minHeight;
-  }
-  set minHeight(value){
-    this.settings.minHeight = value;
-  }
-
-
-  get stateType() {
-    return this._type;
-  }
-  set stateType(value) {
-    this._type = value;
-  }
-
-  get showHeader(){
-    return this.settings.showHeader;
-  }
-
-  set dataHolder(value){
-    this._dataHolder = value;
-  }
-  get dataHolder(){
-    return this._dataHolder;
-  }
-
-  get header() {
-    return this.settings.header;
-  }
-  set header(value) {
-    this.settings.header = value;
-  }
-
-
-  get stateStorage(){
-    return this.settings.stateStorage;
-  }
-
-
-  set dataSource(value) {
-    this.settings.dataSource = value;
-  }
-  get dataSource() {
-    return this.settings.dataSource;
-  }
-
-  get dataMapper() {
-    return this.settings.dataMapper;
-  }
-
-  get dataFilter() {
-    return this._dataFilter;
-  }
-
-  set dataFilter(value) {
-    this._dataFilter = value;
-  }
-
-  get type() {
-    return this._type;
-  }
-
-  get dashboard() {
-    return this._dashboard;
-  }
-  set dashboard(value) {
-    this._dashboard = value;
-  }
-
-  getStateKey() {
-    if (this.stateStorage)
-      return this.stateStorage.createKey(this.dashboard.name, this.name);
-    return "";
-  }
-
-  getState() {
-    if (this.stateStorage) {
-      var s = this.stateStorage.get(this.getStateKey());
-      if (s)
-        return s;
+  attach(handler){
+    if(this.handlers.some(e=>e === handler)) {
+      return; //already attached
     }
-    return undefined;
+    this.handlers.push(handler);
   }
 
-  setState(value) {
-    if (this.stateStorage) {
-      if (!value)
-        this.stateStorage.remove(this.getStateKey());
-      else
-        this.stateStorage.set(this.getStateKey(), value);
+  detach(handler) {
+    var idx = this.handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this.handlers.length; i++) {
+      this.handlers[i].apply(this, arguments);
     }
   }
-
-
-  attachBehavior(behavior){
-    behavior.attachToWidget(this);
-  }
-
-  attachBehaviors(){
-    if (this.settings.behavior) {
-      for (let b of this.settings.behavior)
-        this.attachBehavior(b);
-    }
-  }
-
-  ///METHODS
-  changeSettings(newSettings){
-    if (newSettings) {
-      //merge settings
-      _.forOwn(newSettings, (v, k)=> {
-        this.settings[k] = v;
-      });
-      this.refresh();
-    }
-  }
-
-  refresh(){
-
-  }
-
-
-  dispose(){
-    while(true) {
-      if (this.behaviors.length>0)
-        this.behaviors[0].detach();
-      else
-        break;
-    }
-  }
-
-
 }
-
-
-
-
-
 
 export class AstParser{
   constructor(){
