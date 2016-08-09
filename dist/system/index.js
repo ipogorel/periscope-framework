@@ -1,6 +1,6 @@
 'use strict';
 
-System.register(['./authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/dashboardbehavior/drill-down-handle-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './navigator/widgetbehavior/drill-down-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage'], function (_export, _context) {
+System.register(['./authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/dashboardbehavior/drill-down-handle-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './navigator/widgetbehavior/drill-down-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage', './serialization/dashboard-serializer', './serialization/periscope-object-configurator', './serialization/configurable'], function (_export, _context) {
   return {
     setters: [function (_authorizationPermissionsCustomAttribute) {
       var _exportObj = {};
@@ -530,6 +530,30 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
       }
 
       _export(_exportObj66);
+    }, function (_serializationDashboardSerializer) {
+      var _exportObj67 = {};
+
+      for (var _key67 in _serializationDashboardSerializer) {
+        if (_key67 !== "default") _exportObj67[_key67] = _serializationDashboardSerializer[_key67];
+      }
+
+      _export(_exportObj67);
+    }, function (_serializationPeriscopeObjectConfigurator) {
+      var _exportObj68 = {};
+
+      for (var _key68 in _serializationPeriscopeObjectConfigurator) {
+        if (_key68 !== "default") _exportObj68[_key68] = _serializationPeriscopeObjectConfigurator[_key68];
+      }
+
+      _export(_exportObj68);
+    }, function (_serializationConfigurable) {
+      var _exportObj69 = {};
+
+      for (var _key69 in _serializationConfigurable) {
+        if (_key69 !== "default") _exportObj69[_key69] = _serializationConfigurable[_key69];
+      }
+
+      _export(_exportObj69);
     }],
     execute: function () {
       function configure(aurelia) {

@@ -19,6 +19,8 @@ var _stateDiscriminator = require('./../../state/state-discriminator');
 
 var _stateUrlParser = require('./../../state/state-url-parser');
 
+var _configurable = require('./../../serialization/configurable');
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
@@ -52,12 +54,21 @@ function _applyDecoratedDescriptor(target, property, decorators, descriptor, con
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var DashboardBase = exports.DashboardBase = function () {
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var DashboardBase = exports.DashboardBase = function (_Configurable) {
+  _inherits(DashboardBase, _Configurable);
+
   function DashboardBase() {
     _classCallCheck(this, DashboardBase);
 
-    this.behaviors = [];
-    this.layout = [];
+    var _this = _possibleConstructorReturn(this, _Configurable.call(this));
+
+    _this.behaviors = [];
+    _this.layout = [];
+    return _this;
   }
 
   DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
@@ -208,15 +219,48 @@ var DashboardBase = exports.DashboardBase = function () {
     return this.route + _stateUrlParser.StateUrlParser.stateToQuery(_stateDiscriminator.StateDiscriminator.discriminate(this.getState()));
   };
 
-  return DashboardBase;
-}();
+  DashboardBase.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("resourceGroup", this.resourceGroup);
+    configurationInfo.addValue("title", this.title);
 
-var LayoutWidget = exports.LayoutWidget = (_dec = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class2 = function () {
+    configurationInfo.addValue("route", this.route);
+    configurationInfo.addValue("layout", this.layout);
+    configurationInfo.addValue("behaviors", this.behaviors);
+  };
+
+  DashboardBase.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    var _this2 = this;
+
+    this.name = configurationInfo.getValue("name");
+    this.resourceGroup = configurationInfo.getValue("resourceGroup");
+    this.title = configurationInfo.getValue("title");
+
+    this.route = configurationInfo.getValue("route");
+    this.layout = configurationInfo.getValue("layout");
+
+    var behaviors = configurationInfo.getValue("behaviors");
+    _.forEach(behaviors, function (b) {
+      b.attach(_this2);
+    });
+  };
+
+  return DashboardBase;
+}(_configurable.Configurable);
+
+var LayoutWidget = exports.LayoutWidget = (_dec = (0, _aureliaFramework.computedFrom)('navigationStack'), (_class2 = function (_Configurable2) {
+  _inherits(LayoutWidget, _Configurable2);
+
   function LayoutWidget() {
+    var _temp, _this3, _ret;
+
     _classCallCheck(this, LayoutWidget);
 
-    this.navigationStack = [];
-    this.resized = false;
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return _ret = (_temp = (_this3 = _possibleConstructorReturn(this, _Configurable2.call.apply(_Configurable2, [this].concat(args))), _this3), _this3.navigationStack = [], _this3.resized = false, _temp), _possibleConstructorReturn(_this3, _ret);
   }
 
   LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
@@ -234,6 +278,22 @@ var LayoutWidget = exports.LayoutWidget = (_dec = (0, _aureliaFramework.computed
     this.resized = false;
   };
 
+  LayoutWidget.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("sizeX", this.sizeX);
+    configurationInfo.addValue("sizeY", this.sizeY);
+    configurationInfo.addValue("col", this.col);
+    configurationInfo.addValue("row", this.row);
+    configurationInfo.addValue("widget", this.widget);
+  };
+
+  LayoutWidget.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    this.sizeX = configurationInfo.getInt("sizeX");
+    this.sizeY = configurationInfo.getInt("sizeY");
+    this.col = configurationInfo.getInt("col");
+    this.row = configurationInfo.getInt("row");
+    this.widget = configurationInfo.getValue("widget");
+  };
+
   _createClass(LayoutWidget, [{
     key: 'hasNavStack',
     get: function get() {
@@ -242,4 +302,4 @@ var LayoutWidget = exports.LayoutWidget = (_dec = (0, _aureliaFramework.computed
   }]);
 
   return LayoutWidget;
-}(), (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2));
+}(_configurable.Configurable), (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2));

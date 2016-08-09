@@ -2,11 +2,12 @@ import {computedFrom} from 'aurelia-framework';
 import * as _ from 'lodash';
 import {StateDiscriminator} from './../../state/state-discriminator';
 import {StateUrlParser} from './../../state/state-url-parser';
+import {Configurable} from './../../serialization/configurable';
 
-export class DashboardBase
+export class DashboardBase extends Configurable
 {
   constructor() {
-
+    super();
   }
 
   route;
@@ -16,6 +17,7 @@ export class DashboardBase
   name;
   resourceGroup;
   title;
+
 
 
   configure(dashboardConfiguration){
@@ -142,9 +144,35 @@ export class DashboardBase
   getRoute(){
     return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
   }
+
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("resourceGroup", this.resourceGroup);
+    configurationInfo.addValue("title", this.title);
+
+    configurationInfo.addValue("route", this.route);
+    configurationInfo.addValue("layout", this.layout);
+    configurationInfo.addValue("behaviors", this.behaviors);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.name = configurationInfo.getValue("name");
+    this.resourceGroup = configurationInfo.getValue("resourceGroup");
+    this.title = configurationInfo.getValue("title");
+
+    this.route = configurationInfo.getValue("route");
+    this.layout = configurationInfo.getValue("layout");
+
+
+    //this.behaviors = configurationInfo.getValue("behaviors");
+    let behaviors = configurationInfo.getValue("behaviors");
+    _.forEach(behaviors, b=>{
+      b.attach(this);
+    })
+  };
 }
 
-export class LayoutWidget{
+export class LayoutWidget extends Configurable {
 
   widget;
   navigationStack = [];
@@ -174,4 +202,19 @@ export class LayoutWidget{
     this.resized = false;
   }
 
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("sizeX", this.sizeX);
+    configurationInfo.addValue("sizeY", this.sizeY);
+    configurationInfo.addValue("col", this.col);
+    configurationInfo.addValue("row", this.row);
+    configurationInfo.addValue("widget", this.widget);
+  }
+
+  restoreConfigurationFrom(configurationInfo){
+    this.sizeX = configurationInfo.getInt("sizeX");
+    this.sizeY = configurationInfo.getInt("sizeY");
+    this.col = configurationInfo.getInt("col");
+    this.row = configurationInfo.getInt("row");
+    this.widget = configurationInfo.getValue("widget");
+  }
 }

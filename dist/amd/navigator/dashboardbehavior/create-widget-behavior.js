@@ -44,12 +44,13 @@ define(["exports", "./dashboard-behavior"], function (exports, _dashboardBehavio
 
       var _this = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-      _this._chanel = settings.chanel;
-      _this._widgetType = settings.widgetType;
-      _this._widgetSettings = settings.widgetSettings;
-      _this._widgetDimensions = settings.widgetDimensions;
-      _this._eventAggregator = settings.eventAggregator;
-      _this._filterMapper = settings.filterMapper;
+      _this.eventAggregator = settings.eventAggregator;
+
+      _this.chanel = settings.chanel;
+      _this.widgetType = settings.widgetType;
+      _this.widgetSettings = settings.widgetSettings;
+      _this.widgetDimensions = settings.widgetDimensions;
+      _this.filterMapper = settings.filterMapper;
       return _this;
     }
 
@@ -58,13 +59,13 @@ define(["exports", "./dashboard-behavior"], function (exports, _dashboardBehavio
 
       _DashboardBehavior.prototype.attach.call(this, dashboard);
       var me = this;
-      this.subscription = this._eventAggregator.subscribe(this._chanel, function (message) {
-        var w = dashboard.getWidgetByName(me._widgetSettings.name);
+      this.subscription = this.eventAggregator.subscribe(this.chanel, function (message) {
+        var w = dashboard.getWidgetByName(me.widgetSettings.name);
         if (!w) {
-          var w = new me._widgetType(me._widgetSettings);
-          dashboard.addWidget(w, _this2._widgetDimensions);
+          var w = new me.widgetType(me.widgetSettings);
+          dashboard.addWidget(w, _this2.widgetDimensions);
         }
-        w.dataFilter = me._filterMapper ? me._filterMapper(message) : "";
+        w.dataFilter = me.filterMapper ? me.filterMapper(message) : "";
         w.refresh();
       });
     };

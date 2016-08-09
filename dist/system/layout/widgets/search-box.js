@@ -69,9 +69,9 @@ System.register(['aurelia-framework', './widget', './../../navigator/events/widg
 
           var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
 
-          _this.stateType = "searchBoxState";
           _this._dataFilterChanged = new WidgetEvent();
-          _this._searchString = "";
+
+          _this.stateType = "searchBoxState";
           _this.attachBehaviors();
           return _this;
         }
@@ -92,14 +92,6 @@ System.register(['aurelia-framework', './widget', './../../navigator/events/widg
           },
           set: function set(handler) {
             this._dataFilterChanged.attach(handler);
-          }
-        }, {
-          key: 'searchString',
-          get: function get() {
-            return this._searchString;
-          },
-          set: function set(value) {
-            this._searchString = value;
           }
         }]);
 

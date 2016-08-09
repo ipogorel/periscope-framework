@@ -5,9 +5,8 @@ import { WidgetEvent } from './../../navigator/events/widget-event';
 export let SearchBox = class SearchBox extends Widget {
   constructor(settings) {
     super(settings);
-    this.stateType = "searchBoxState";
     this._dataFilterChanged = new WidgetEvent();
-    this._searchString = "";
+    this.stateType = "searchBoxState";
     this.attachBehaviors();
   }
 
@@ -16,13 +15,6 @@ export let SearchBox = class SearchBox extends Widget {
   }
   set dataFilterChanged(handler) {
     this._dataFilterChanged.attach(handler);
-  }
-
-  get searchString() {
-    return this._searchString;
-  }
-  set searchString(value) {
-    this._searchString = value;
   }
 
   saveState() {

@@ -62,9 +62,9 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
 
       var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
 
-      _this.stateType = "searchBoxState";
       _this._dataFilterChanged = new _widgetEvent.WidgetEvent();
-      _this._searchString = "";
+
+      _this.stateType = "searchBoxState";
       _this.attachBehaviors();
       return _this;
     }
@@ -85,14 +85,6 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
       },
       set: function set(handler) {
         this._dataFilterChanged.attach(handler);
-      }
-    }, {
-      key: 'searchString',
-      get: function get() {
-        return this._searchString;
-      },
-      set: function set(value) {
-        this._searchString = value;
       }
     }]);
 

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -7,20 +7,36 @@ exports.Widget = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _lodash = require("lodash");
+var _lodash = require('lodash');
 
 var _ = _interopRequireWildcard(_lodash);
+
+var _configurable = require('./../../serialization/configurable');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Widget = exports.Widget = function () {
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Widget = exports.Widget = function (_Configurable) {
+  _inherits(Widget, _Configurable);
+
   function Widget(settings) {
     _classCallCheck(this, Widget);
 
-    this._settings = settings;
-    this._behaviors = [];
+    var _this = _possibleConstructorReturn(this, _Configurable.call(this));
+
+    _this.behavior = [];
+
+    _.forOwn(settings, function (v, k) {
+      if (k == "behavior") {
+        _this._unattachedBehaviors = v;
+      } else _this[k] = v;
+    });
+    return _this;
   }
 
   Widget.prototype.getStateKey = function getStateKey() {
@@ -42,13 +58,13 @@ var Widget = exports.Widget = function () {
     }
   };
 
-  Widget.prototype.attachBehavior = function attachBehavior(behavior) {
-    behavior.attachToWidget(this);
+  Widget.prototype.attachBehavior = function attachBehavior(b) {
+    b.attachToWidget(this);
   };
 
   Widget.prototype.attachBehaviors = function attachBehaviors() {
-    if (this.settings.behavior) {
-      for (var _iterator = this.settings.behavior, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+    if (this._unattachedBehaviors) {
+      for (var _iterator = this._unattachedBehaviors, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
         var _ref;
 
         if (_isArray) {
@@ -68,11 +84,11 @@ var Widget = exports.Widget = function () {
   };
 
   Widget.prototype.changeSettings = function changeSettings(newSettings) {
-    var _this = this;
+    var _this2 = this;
 
     if (newSettings) {
       _.forOwn(newSettings, function (v, k) {
-        _this.settings[k] = v;
+        _this2[k] = v;
       });
       this.refresh();
     }
@@ -82,112 +98,48 @@ var Widget = exports.Widget = function () {
 
   Widget.prototype.dispose = function dispose() {
     while (true) {
-      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+      if (this.behavior.length > 0) this.behavior[0].detach();else break;
     }
   };
 
+  Widget.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("resourceGroup", this.resourceGroup);
+    configurationInfo.addValue("header", this.header);
+    configurationInfo.addValue("minHeight", this.minHeight);
+    configurationInfo.addValue("stateType", this.stateType);
+    configurationInfo.addValue("showHeader", this.showHeader);
+    configurationInfo.addValue("dataHolder", this.dataHolder);
+    configurationInfo.addValue("dataSource", this.dataSource);
+    configurationInfo.addValue("dataFilter", this.dataFilter);
+    configurationInfo.addScript("dataMapper", this.dataMapper);
+
+    configurationInfo.addValue("stateStorage", this.stateStorage);
+  };
+
+  Widget.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    this.name = configurationInfo.getValue("name");
+    this.resourceGroup = configurationInfo.getValue("resourceGroup");
+    this.header = configurationInfo.getValue("header");
+    this.minHeight = configurationInfo.getInt("minHeight");
+    this.stateType = configurationInfo.getValue("stateType");
+    this.showHeader = configurationInfo.getBool("showHeader");
+
+    this.dataHolder = configurationInfo.getValue("dataHolder");
+    this.dataSource = configurationInfo.getValue("dataSource");
+    this.dataFilter = configurationInfo.getValue("dataFilter");
+    this.dataMapper = configurationInfo.getScript("dataMapper");
+
+    this.stateStorage = configurationInfo.getValue("stateStorage");
+  };
+
   _createClass(Widget, [{
-    key: "self",
+    key: 'self',
     get: function get() {
       return this;
-    }
-  }, {
-    key: "settings",
-    get: function get() {
-      return this._settings;
-    }
-  }, {
-    key: "behaviors",
-    get: function get() {
-      return this._behaviors;
-    }
-  }, {
-    key: "name",
-    get: function get() {
-      return this.settings.name;
-    }
-  }, {
-    key: "resourceGroup",
-    get: function get() {
-      return this.settings.resourceGroup;
-    }
-  }, {
-    key: "minHeight",
-    get: function get() {
-      return this.settings.minHeight;
-    },
-    set: function set(value) {
-      this.settings.minHeight = value;
-    }
-  }, {
-    key: "stateType",
-    get: function get() {
-      return this._type;
-    },
-    set: function set(value) {
-      this._type = value;
-    }
-  }, {
-    key: "showHeader",
-    get: function get() {
-      return this.settings.showHeader;
-    }
-  }, {
-    key: "dataHolder",
-    set: function set(value) {
-      this._dataHolder = value;
-    },
-    get: function get() {
-      return this._dataHolder;
-    }
-  }, {
-    key: "header",
-    get: function get() {
-      return this.settings.header;
-    },
-    set: function set(value) {
-      this.settings.header = value;
-    }
-  }, {
-    key: "stateStorage",
-    get: function get() {
-      return this.settings.stateStorage;
-    }
-  }, {
-    key: "dataSource",
-    set: function set(value) {
-      this.settings.dataSource = value;
-    },
-    get: function get() {
-      return this.settings.dataSource;
-    }
-  }, {
-    key: "dataMapper",
-    get: function get() {
-      return this.settings.dataMapper;
-    }
-  }, {
-    key: "dataFilter",
-    get: function get() {
-      return this._dataFilter;
-    },
-    set: function set(value) {
-      this._dataFilter = value;
-    }
-  }, {
-    key: "type",
-    get: function get() {
-      return this._type;
-    }
-  }, {
-    key: "dashboard",
-    get: function get() {
-      return this._dashboard;
-    },
-    set: function set(value) {
-      this._dashboard = value;
     }
   }]);
 
   return Widget;
-}();
+}(_configurable.Configurable);

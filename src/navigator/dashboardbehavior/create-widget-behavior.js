@@ -4,25 +4,34 @@ export class CreateWidgetBehavior extends DashboardBehavior {
 
   constructor(settings) {
     super();
-    this._chanel = settings.chanel;
-    this._widgetType = settings.widgetType;
-    this._widgetSettings = settings.widgetSettings;
-    this._widgetDimensions = settings.widgetDimensions;
-    this._eventAggregator = settings.eventAggregator;
-    this._filterMapper = settings.filterMapper;
+    this.eventAggregator = settings.eventAggregator;
+
+    this.chanel = settings.chanel;
+    this.widgetType = settings.widgetType;
+    this.widgetSettings = settings.widgetSettings;
+    this.widgetDimensions = settings.widgetDimensions;
+    this.filterMapper = settings.filterMapper;
   }
+
+  eventAggregator
+
+  chanel;
+  widgetType;
+  widgetSettings;
+  widgetDimensions;
+  filterMapper;
 
   attach(dashboard){
     super.attach(dashboard);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
+    this.subscription = this.eventAggregator.subscribe(this.chanel, message => {
       //make sure the widget exists
-      var w = dashboard.getWidgetByName(me._widgetSettings.name);
+      var w = dashboard.getWidgetByName(me.widgetSettings.name);
       if(!w){ //widget not exist.
-        var w = new me._widgetType(me._widgetSettings);
-        dashboard.addWidget(w, this._widgetDimensions);
+        var w = new me.widgetType(me.widgetSettings);
+        dashboard.addWidget(w, this.widgetDimensions);
       }
-      w.dataFilter =  me._filterMapper ? me._filterMapper(message) : "";
+      w.dataFilter =  me.filterMapper ? me.filterMapper(message) : "";
       w.refresh();
 
     });

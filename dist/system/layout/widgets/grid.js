@@ -73,18 +73,11 @@ System.register(['aurelia-framework', './widget', './../../navigator/events/widg
 
           var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
 
-          _this.columns = settings.columns ? settings.columns : [];
-          _this.navigatable = settings.navigatable;
-          _this.autoGenerateColumns = settings.autoGenerateColumns;
-          _this.pageSize = settings.pageSize;
-          _this.group = settings.group;
-
-          _this.stateType = "gridState";
-
           _this._dataSelected = new WidgetEvent();
           _this._dataActivated = new WidgetEvent();
           _this._dataFieldSelected = new WidgetEvent();
 
+          _this.stateType = "gridState";
           _this.attachBehaviors();
           return _this;
         }
@@ -99,46 +92,6 @@ System.register(['aurelia-framework', './widget', './../../navigator/events/widg
         };
 
         _createClass(Grid, [{
-          key: 'columns',
-          get: function get() {
-            return this._columns;
-          },
-          set: function set(value) {
-            this._columns = value;
-          }
-        }, {
-          key: 'navigatable',
-          get: function get() {
-            return this._navigatable;
-          },
-          set: function set(value) {
-            this._navigatable = value;
-          }
-        }, {
-          key: 'autoGenerateColumns',
-          get: function get() {
-            return this._autoGenerateColumns;
-          },
-          set: function set(value) {
-            this._autoGenerateColumns = value;
-          }
-        }, {
-          key: 'pageSize',
-          get: function get() {
-            return this._pageSize;
-          },
-          set: function set(value) {
-            this._pageSize = value;
-          }
-        }, {
-          key: 'group',
-          get: function get() {
-            return this._group;
-          },
-          set: function set(value) {
-            this._group = value;
-          }
-        }, {
           key: 'dataSelected',
           get: function get() {
             return this._dataSelected;

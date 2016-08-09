@@ -795,6 +795,42 @@ Object.keys(_userStateStorage).forEach(function (key) {
     }
   });
 });
+
+var _dashboardSerializer = require('./serialization/dashboard-serializer');
+
+Object.keys(_dashboardSerializer).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _dashboardSerializer[key];
+    }
+  });
+});
+
+var _periscopeObjectConfigurator = require('./serialization/periscope-object-configurator');
+
+Object.keys(_periscopeObjectConfigurator).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _periscopeObjectConfigurator[key];
+    }
+  });
+});
+
+var _configurable = require('./serialization/configurable');
+
+Object.keys(_configurable).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _configurable[key];
+    }
+  });
+});
 exports.configure = configure;
 function configure(aurelia) {
   aurelia.globalResources("./helpers/converters/value-format", "./authorization/permissions-custom-attribute");

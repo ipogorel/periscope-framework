@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Chart = undefined;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _aureliaFramework = require('aurelia-framework');
 
 var _widget = require('./widget');
@@ -25,30 +23,10 @@ var Chart = exports.Chart = function (_Widget) {
 
     var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
 
-    _this.categoriesField = settings.categoriesField;
-    _this.seriesDefaults = settings.seriesDefaults;
     _this.stateType = "chartState";
     _this.attachBehaviors();
     return _this;
   }
-
-  _createClass(Chart, [{
-    key: 'categoriesField',
-    get: function get() {
-      return this._categoriesField;
-    },
-    set: function set(value) {
-      this._categoriesField = value;
-    }
-  }, {
-    key: 'seriesDefaults',
-    get: function get() {
-      return this._seriesDefaults;
-    },
-    set: function set(value) {
-      this._seriesDefaults = value;
-    }
-  }]);
 
   return Chart;
 }(_widget.Widget);

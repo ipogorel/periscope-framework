@@ -19,14 +19,14 @@ System.register([], function (_export, _context) {
 
         WidgetBehavior.prototype.attachToWidget = function attachToWidget(widget) {
           this.widget = widget;
-          this.widget.behaviors.push(this);
+          this.widget.behavior.push(this);
         };
 
         WidgetBehavior.prototype.detach = function detach() {
           if (!this.widget) return;
-          for (var i = 0; i < this.widget.behaviors.length; i++) {
-            if (this.widget.behaviors[i] === this) {
-              this.widget.behaviors.splice(i, 1);
+          for (var i = 0; i < this.widget.behavior.length; i++) {
+            if (this.widget.behavior[i] === this) {
+              this.widget.behavior.splice(i, 1);
               break;
             }
           }

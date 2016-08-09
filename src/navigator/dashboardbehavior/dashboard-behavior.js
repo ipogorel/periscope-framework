@@ -1,4 +1,6 @@
-export class DashboardBehavior {
+import {Configurable} from './../../serialization/configurable';
+
+export class DashboardBehavior extends Configurable{
 
   get dashboard() {
     return this._dashboard;
@@ -16,5 +18,11 @@ export class DashboardBehavior {
         break;
       }
     }
+  }
+
+  persistConfigurationTo(configurationInfo){
+  }
+
+  restoreConfigurationFrom(configurationInfo){
   }
 }

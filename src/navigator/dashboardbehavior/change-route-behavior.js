@@ -4,21 +4,27 @@ import {DashboardBehavior} from './dashboard-behavior';
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
     super();
-    this._chanel = settings.chanel;
-    this._eventAggregator = settings.eventAggregator;
-    this._newRoute = settings.newRoute;
-    this._router = settings.router;
-    this._paramsMapper = settings.paramsMapper;
+    this.chanel = settings.chanel;
+    this.eventAggregator = settings.eventAggregator;
+    this.newRoute = settings.newRoute;
+    this.router = settings.router;
+    this.paramsMapper = settings.paramsMapper;
   }
+
+  chanel;
+  eventAggregator;
+  newRoute;
+  router;
+  paramsMapper;
 
   attach(dashboard) {
     super.attach(dashboard);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, message => {
-      var params = me._paramsMapper ? me._paramsMapper(message) : "";
+    this.subscription = this.eventAggregator.subscribe(this.chanel, message => {
+      var params = me.paramsMapper ? me.paramsMapper(message) : "";
       if ((params!=="")&&(params.indexOf("?")!=0))
         params="?" + params;
-      me._router.navigate(me._newRoute + (params!==""? params : ""));
+      me.router.navigate(me.newRoute + (params!==""? params : ""));
     });
   }
 
@@ -27,5 +33,16 @@ export class ChangeRouteBehavior extends DashboardBehavior {
     if (this.subscription)
       this.subscription.dispose();
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("chanel", this.chanel);
+    configurationInfo.addValue("newRoute", this.newRoute);
+    configurationInfo.addScript("paramsMapper", this.paramsMapper);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.chanel = configurationInfo.getValue("chanel");
+    this.newRoute = configurationInfo.getValue("newRoute");
+    this.paramsMapper = configurationInfo.addScript("paramsMapper");
+  };
 }
 

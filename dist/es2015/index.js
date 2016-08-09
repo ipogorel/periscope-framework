@@ -80,6 +80,10 @@ export * from './state/state-url-parser';
 export * from './state/storage';
 export * from './state/user-state-storage';
 
+export * from './serialization/dashboard-serializer';
+export * from './serialization/periscope-object-configurator';
+export * from './serialization/configurable';
+
 export function configure(aurelia) {
   aurelia.globalResources("./helpers/converters/value-format", "./authorization/permissions-custom-attribute");
 }

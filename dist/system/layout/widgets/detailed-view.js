@@ -1,7 +1,7 @@
 'use strict';
 
 System.register(['aurelia-framework', './widget'], function (_export, _context) {
-  var customElement, inject, useView, Widget, _createClass, DetailedView;
+  var customElement, inject, useView, Widget, DetailedView;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -42,24 +42,6 @@ System.register(['aurelia-framework', './widget'], function (_export, _context) 
       Widget = _widget.Widget;
     }],
     execute: function () {
-      _createClass = function () {
-        function defineProperties(target, props) {
-          for (var i = 0; i < props.length; i++) {
-            var descriptor = props[i];
-            descriptor.enumerable = descriptor.enumerable || false;
-            descriptor.configurable = true;
-            if ("value" in descriptor) descriptor.writable = true;
-            Object.defineProperty(target, descriptor.key, descriptor);
-          }
-        }
-
-        return function (Constructor, protoProps, staticProps) {
-          if (protoProps) defineProperties(Constructor.prototype, protoProps);
-          if (staticProps) defineProperties(Constructor, staticProps);
-          return Constructor;
-        };
-      }();
-
       _export('DetailedView', DetailedView = function (_Widget) {
         _inherits(DetailedView, _Widget);
 
@@ -68,21 +50,10 @@ System.register(['aurelia-framework', './widget'], function (_export, _context) 
 
           var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
 
-          _this.fields = settings.fields;
           _this.stateType = "detailedViewState";
           _this.attachBehaviors();
           return _this;
         }
-
-        _createClass(DetailedView, [{
-          key: 'fields',
-          get: function get() {
-            return this._fields;
-          },
-          set: function set(value) {
-            this._fields = value;
-          }
-        }]);
 
         return DetailedView;
       }(Widget));

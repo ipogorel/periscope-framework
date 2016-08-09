@@ -21,27 +21,39 @@ var ChangeRouteBehavior = exports.ChangeRouteBehavior = function (_DashboardBeha
 
     var _this = _possibleConstructorReturn(this, _DashboardBehavior.call(this));
 
-    _this._chanel = settings.chanel;
-    _this._eventAggregator = settings.eventAggregator;
-    _this._newRoute = settings.newRoute;
-    _this._router = settings.router;
-    _this._paramsMapper = settings.paramsMapper;
+    _this.chanel = settings.chanel;
+    _this.eventAggregator = settings.eventAggregator;
+    _this.newRoute = settings.newRoute;
+    _this.router = settings.router;
+    _this.paramsMapper = settings.paramsMapper;
     return _this;
   }
 
   ChangeRouteBehavior.prototype.attach = function attach(dashboard) {
     _DashboardBehavior.prototype.attach.call(this, dashboard);
     var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._chanel, function (message) {
-      var params = me._paramsMapper ? me._paramsMapper(message) : "";
+    this.subscription = this.eventAggregator.subscribe(this.chanel, function (message) {
+      var params = me.paramsMapper ? me.paramsMapper(message) : "";
       if (params !== "" && params.indexOf("?") != 0) params = "?" + params;
-      me._router.navigate(me._newRoute + (params !== "" ? params : ""));
+      me.router.navigate(me.newRoute + (params !== "" ? params : ""));
     });
   };
 
   ChangeRouteBehavior.prototype.detach = function detach() {
     _DashboardBehavior.prototype.detach.call(this, dashboard);
     if (this.subscription) this.subscription.dispose();
+  };
+
+  ChangeRouteBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("chanel", this.chanel);
+    configurationInfo.addValue("newRoute", this.newRoute);
+    configurationInfo.addScript("paramsMapper", this.paramsMapper);
+  };
+
+  ChangeRouteBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    this.chanel = configurationInfo.getValue("chanel");
+    this.newRoute = configurationInfo.getValue("newRoute");
+    this.paramsMapper = configurationInfo.addScript("paramsMapper");
   };
 
   return ChangeRouteBehavior;

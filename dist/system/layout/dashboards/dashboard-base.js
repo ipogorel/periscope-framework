@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['aurelia-framework', 'lodash', './../../state/state-discriminator', './../../state/state-url-parser'], function (_export, _context) {
-  var computedFrom, _, StateDiscriminator, StateUrlParser, _createClass, _dec, _desc, _value, _class2, DashboardBase, LayoutWidget;
+System.register(['aurelia-framework', 'lodash', './../../state/state-discriminator', './../../state/state-url-parser', './../../serialization/configurable'], function (_export, _context) {
+  var computedFrom, _, StateDiscriminator, StateUrlParser, Configurable, _createClass, _dec, _desc, _value, _class2, DashboardBase, LayoutWidget;
 
   function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
     var desc = {};
@@ -38,6 +38,30 @@ System.register(['aurelia-framework', 'lodash', './../../state/state-discriminat
     }
   }
 
+  function _possibleConstructorReturn(self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  }
+
   return {
     setters: [function (_aureliaFramework) {
       computedFrom = _aureliaFramework.computedFrom;
@@ -47,6 +71,8 @@ System.register(['aurelia-framework', 'lodash', './../../state/state-discriminat
       StateDiscriminator = _stateStateDiscriminator.StateDiscriminator;
     }, function (_stateStateUrlParser) {
       StateUrlParser = _stateStateUrlParser.StateUrlParser;
+    }, function (_serializationConfigurable) {
+      Configurable = _serializationConfigurable.Configurable;
     }],
     execute: function () {
       _createClass = function () {
@@ -67,12 +93,17 @@ System.register(['aurelia-framework', 'lodash', './../../state/state-discriminat
         };
       }();
 
-      _export('DashboardBase', DashboardBase = function () {
+      _export('DashboardBase', DashboardBase = function (_Configurable) {
+        _inherits(DashboardBase, _Configurable);
+
         function DashboardBase() {
           _classCallCheck(this, DashboardBase);
 
-          this.behaviors = [];
-          this.layout = [];
+          var _this = _possibleConstructorReturn(this, _Configurable.call(this));
+
+          _this.behaviors = [];
+          _this.layout = [];
+          return _this;
         }
 
         DashboardBase.prototype.configure = function configure(dashboardConfiguration) {
@@ -223,17 +254,50 @@ System.register(['aurelia-framework', 'lodash', './../../state/state-discriminat
           return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
         };
 
+        DashboardBase.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          configurationInfo.addValue("name", this.name);
+          configurationInfo.addValue("resourceGroup", this.resourceGroup);
+          configurationInfo.addValue("title", this.title);
+
+          configurationInfo.addValue("route", this.route);
+          configurationInfo.addValue("layout", this.layout);
+          configurationInfo.addValue("behaviors", this.behaviors);
+        };
+
+        DashboardBase.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          var _this2 = this;
+
+          this.name = configurationInfo.getValue("name");
+          this.resourceGroup = configurationInfo.getValue("resourceGroup");
+          this.title = configurationInfo.getValue("title");
+
+          this.route = configurationInfo.getValue("route");
+          this.layout = configurationInfo.getValue("layout");
+
+          var behaviors = configurationInfo.getValue("behaviors");
+          _.forEach(behaviors, function (b) {
+            b.attach(_this2);
+          });
+        };
+
         return DashboardBase;
-      }());
+      }(Configurable));
 
       _export('DashboardBase', DashboardBase);
 
-      _export('LayoutWidget', LayoutWidget = (_dec = computedFrom('navigationStack'), (_class2 = function () {
+      _export('LayoutWidget', LayoutWidget = (_dec = computedFrom('navigationStack'), (_class2 = function (_Configurable2) {
+        _inherits(LayoutWidget, _Configurable2);
+
         function LayoutWidget() {
+          var _temp, _this3, _ret;
+
           _classCallCheck(this, LayoutWidget);
 
-          this.navigationStack = [];
-          this.resized = false;
+          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          return _ret = (_temp = (_this3 = _possibleConstructorReturn(this, _Configurable2.call.apply(_Configurable2, [this].concat(args))), _this3), _this3.navigationStack = [], _this3.resized = false, _temp), _possibleConstructorReturn(_this3, _ret);
         }
 
         LayoutWidget.prototype.resize = function resize(newSizeX, newSizeY) {
@@ -251,6 +315,22 @@ System.register(['aurelia-framework', 'lodash', './../../state/state-discriminat
           this.resized = false;
         };
 
+        LayoutWidget.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          configurationInfo.addValue("sizeX", this.sizeX);
+          configurationInfo.addValue("sizeY", this.sizeY);
+          configurationInfo.addValue("col", this.col);
+          configurationInfo.addValue("row", this.row);
+          configurationInfo.addValue("widget", this.widget);
+        };
+
+        LayoutWidget.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          this.sizeX = configurationInfo.getInt("sizeX");
+          this.sizeY = configurationInfo.getInt("sizeY");
+          this.col = configurationInfo.getInt("col");
+          this.row = configurationInfo.getInt("row");
+          this.widget = configurationInfo.getValue("widget");
+        };
+
         _createClass(LayoutWidget, [{
           key: 'hasNavStack',
           get: function get() {
@@ -259,7 +339,7 @@ System.register(['aurelia-framework', 'lodash', './../../state/state-discriminat
         }]);
 
         return LayoutWidget;
-      }(), (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2)));
+      }(Configurable), (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2)));
 
       _export('LayoutWidget', LayoutWidget);
     }

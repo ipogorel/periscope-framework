@@ -1,96 +1,21 @@
 import * as _ from 'lodash';
+import { Configurable } from './../../serialization/configurable';
 
-export let Widget = class Widget {
+export let Widget = class Widget extends Configurable {
 
   constructor(settings) {
-    this._settings = settings;
-    this._behaviors = [];
+    super();
+    this.behavior = [];
+
+    _.forOwn(settings, (v, k) => {
+      if (k == "behavior") {
+        this._unattachedBehaviors = v;
+      } else this[k] = v;
+    });
   }
 
   get self() {
     return this;
-  }
-
-  get settings() {
-    return this._settings;
-  }
-
-  get behaviors() {
-    return this._behaviors;
-  }
-
-  get name() {
-    return this.settings.name;
-  }
-
-  get resourceGroup() {
-    return this.settings.resourceGroup;
-  }
-
-  get minHeight() {
-    return this.settings.minHeight;
-  }
-  set minHeight(value) {
-    this.settings.minHeight = value;
-  }
-
-  get stateType() {
-    return this._type;
-  }
-  set stateType(value) {
-    this._type = value;
-  }
-
-  get showHeader() {
-    return this.settings.showHeader;
-  }
-
-  set dataHolder(value) {
-    this._dataHolder = value;
-  }
-  get dataHolder() {
-    return this._dataHolder;
-  }
-
-  get header() {
-    return this.settings.header;
-  }
-  set header(value) {
-    this.settings.header = value;
-  }
-
-  get stateStorage() {
-    return this.settings.stateStorage;
-  }
-
-  set dataSource(value) {
-    this.settings.dataSource = value;
-  }
-  get dataSource() {
-    return this.settings.dataSource;
-  }
-
-  get dataMapper() {
-    return this.settings.dataMapper;
-  }
-
-  get dataFilter() {
-    return this._dataFilter;
-  }
-
-  set dataFilter(value) {
-    this._dataFilter = value;
-  }
-
-  get type() {
-    return this._type;
-  }
-
-  get dashboard() {
-    return this._dashboard;
-  }
-  set dashboard(value) {
-    this._dashboard = value;
   }
 
   getStateKey() {
@@ -112,20 +37,20 @@ export let Widget = class Widget {
     }
   }
 
-  attachBehavior(behavior) {
-    behavior.attachToWidget(this);
+  attachBehavior(b) {
+    b.attachToWidget(this);
   }
 
   attachBehaviors() {
-    if (this.settings.behavior) {
-      for (let b of this.settings.behavior) this.attachBehavior(b);
+    if (this._unattachedBehaviors) {
+      for (let b of this._unattachedBehaviors) this.attachBehavior(b);
     }
   }
 
   changeSettings(newSettings) {
     if (newSettings) {
       _.forOwn(newSettings, (v, k) => {
-        this.settings[k] = v;
+        this[k] = v;
       });
       this.refresh();
     }
@@ -135,8 +60,38 @@ export let Widget = class Widget {
 
   dispose() {
     while (true) {
-      if (this.behaviors.length > 0) this.behaviors[0].detach();else break;
+      if (this.behavior.length > 0) this.behavior[0].detach();else break;
     }
   }
 
+  persistConfigurationTo(configurationInfo) {
+
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("resourceGroup", this.resourceGroup);
+    configurationInfo.addValue("header", this.header);
+    configurationInfo.addValue("minHeight", this.minHeight);
+    configurationInfo.addValue("stateType", this.stateType);
+    configurationInfo.addValue("showHeader", this.showHeader);
+    configurationInfo.addValue("dataHolder", this.dataHolder);
+    configurationInfo.addValue("dataSource", this.dataSource);
+    configurationInfo.addValue("dataFilter", this.dataFilter);
+    configurationInfo.addScript("dataMapper", this.dataMapper);
+
+    configurationInfo.addValue("stateStorage", this.stateStorage);
+  }
+  restoreConfigurationFrom(configurationInfo) {
+    this.name = configurationInfo.getValue("name");
+    this.resourceGroup = configurationInfo.getValue("resourceGroup");
+    this.header = configurationInfo.getValue("header");
+    this.minHeight = configurationInfo.getInt("minHeight");
+    this.stateType = configurationInfo.getValue("stateType");
+    this.showHeader = configurationInfo.getBool("showHeader");
+
+    this.dataHolder = configurationInfo.getValue("dataHolder");
+    this.dataSource = configurationInfo.getValue("dataSource");
+    this.dataFilter = configurationInfo.getValue("dataFilter");
+    this.dataMapper = configurationInfo.getScript("dataMapper");
+
+    this.stateStorage = configurationInfo.getValue("stateStorage");
+  }
 };

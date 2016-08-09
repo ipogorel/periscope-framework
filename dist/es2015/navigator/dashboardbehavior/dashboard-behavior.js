@@ -1,4 +1,6 @@
-export let DashboardBehavior = class DashboardBehavior {
+import { Configurable } from './../../serialization/configurable';
+
+export let DashboardBehavior = class DashboardBehavior extends Configurable {
 
   get dashboard() {
     return this._dashboard;
@@ -17,4 +19,8 @@ export let DashboardBehavior = class DashboardBehavior {
       }
     }
   }
+
+  persistConfigurationTo(configurationInfo) {}
+
+  restoreConfigurationFrom(configurationInfo) {}
 };
