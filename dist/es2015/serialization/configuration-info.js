@@ -15,12 +15,10 @@ export let ConfigurationInfo = class ConfigurationInfo {
       if (_.isArray(value)) {
         let aVal = [];
         _.forEach(value, v => {
-          if (this.configurator.isConfigurable(v)) aVal.push(this.configurator.getConfiguration(v));else aVal.push(v);
+          aVal.push(this._getConfig(v));
         });
         this.config[key] = aVal;
-      } else {
-        if (this.configurator.isConfigurable(value)) this.config[key] = this.configurator.getConfiguration(value);else this.config[key] = value;
-      }
+      } else this.config[key] = this._getConfig(value);
     }
   }
 
@@ -30,18 +28,22 @@ export let ConfigurationInfo = class ConfigurationInfo {
 
   getValue(key) {
     if (this.config[key]) {
-      let result;
-      if (this.config[key].type) {
-        return this.configurator.getObject(this.config[key]);
+      if (_.isArray(this.config[key])) {
+        let aVal = [];
+        _.forEach(this.config[key], v => {
+          aVal.push(this._getObject(v));
+        });
+        return aVal;
+      } else {
+        return this._getObject(this.config[key]);
       }
-      return this.config[key];
     }
     return null;
   }
 
   getScript(key) {
     if (this.config[key]) {
-      return this.config[key];
+      return eval("(" + this.config[key] + ")");
     }
     return null;
   }
@@ -58,5 +60,15 @@ export let ConfigurationInfo = class ConfigurationInfo {
       return this.config[key] === "true";
     }
     return null;
+  }
+
+  _getConfig(object) {
+    if (this.configurator.isConfigurable(object)) return this.configurator.getConfiguration(object);else return object;
+  }
+  _getObject(config) {
+    if (config.type && config.config) {
+      return this.configurator.getObject(config);
+    }
+    return config;
   }
 };

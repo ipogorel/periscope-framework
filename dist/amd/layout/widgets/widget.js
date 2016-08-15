@@ -76,18 +76,12 @@ define(['exports', 'lodash', './../../serialization/configurable'], function (ex
   var Widget = exports.Widget = function (_Configurable) {
     _inherits(Widget, _Configurable);
 
-    function Widget(settings) {
+    function Widget() {
       _classCallCheck(this, Widget);
 
       var _this = _possibleConstructorReturn(this, _Configurable.call(this));
 
-      _this.behavior = [];
-
-      _.forOwn(settings, function (v, k) {
-        if (k == "behavior") {
-          _this._unattachedBehaviors = v;
-        } else _this[k] = v;
-      });
+      _this.behaviors = [];
       return _this;
     }
 
@@ -166,11 +160,14 @@ define(['exports', 'lodash', './../../serialization/configurable'], function (ex
       configurationInfo.addValue("dataSource", this.dataSource);
       configurationInfo.addValue("dataFilter", this.dataFilter);
       configurationInfo.addScript("dataMapper", this.dataMapper);
+      configurationInfo.addValue("behaviors", this.behaviors);
 
       configurationInfo.addValue("stateStorage", this.stateStorage);
     };
 
     Widget.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      var _this3 = this;
+
       this.name = configurationInfo.getValue("name");
       this.resourceGroup = configurationInfo.getValue("resourceGroup");
       this.header = configurationInfo.getValue("header");
@@ -182,6 +179,11 @@ define(['exports', 'lodash', './../../serialization/configurable'], function (ex
       this.dataSource = configurationInfo.getValue("dataSource");
       this.dataFilter = configurationInfo.getValue("dataFilter");
       this.dataMapper = configurationInfo.getScript("dataMapper");
+
+      var behaviors = configurationInfo.getValue("behaviors");
+      _.forEach(behaviors, function (b) {
+        b.attachToWidget(_this3);
+      });
 
       this.stateStorage = configurationInfo.getValue("stateStorage");
     };

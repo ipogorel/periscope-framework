@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['./listner-behavior'], function (_export, _context) {
-  var ListenerBehavior, DataSourceHandleBehavior;
+System.register(['./listner-behavior', 'aurelia-event-aggregator', 'aurelia-framework'], function (_export, _context) {
+  var ListenerBehavior, EventAggregator, inject, _dec, _class, DataSourceHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -36,17 +36,19 @@ System.register(['./listner-behavior'], function (_export, _context) {
   return {
     setters: [function (_listnerBehavior) {
       ListenerBehavior = _listnerBehavior.ListenerBehavior;
+    }, function (_aureliaEventAggregator) {
+      EventAggregator = _aureliaEventAggregator.EventAggregator;
+    }, function (_aureliaFramework) {
+      inject = _aureliaFramework.inject;
     }],
     execute: function () {
-      _export('DataSourceHandleBehavior', DataSourceHandleBehavior = function (_ListenerBehavior) {
+      _export('DataSourceHandleBehavior', DataSourceHandleBehavior = (_dec = inject(EventAggregator), _dec(_class = function (_ListenerBehavior) {
         _inherits(DataSourceHandleBehavior, _ListenerBehavior);
 
-        function DataSourceHandleBehavior(channel, eventAggregator) {
+        function DataSourceHandleBehavior(eventAggregator) {
           _classCallCheck(this, DataSourceHandleBehavior);
 
           var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
-
-          _this.channel = channel;
 
           _this._eventAggregator = eventAggregator;
           return _this;
@@ -66,8 +68,16 @@ System.register(['./listner-behavior'], function (_export, _context) {
           if (this.subscription) this.subscription.dispose();
         };
 
+        DataSourceHandleBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          _ListenerBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        DataSourceHandleBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          _ListenerBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
+
         return DataSourceHandleBehavior;
-      }(ListenerBehavior));
+      }(ListenerBehavior)) || _class));
 
       _export('DataSourceHandleBehavior', DataSourceHandleBehavior);
     }

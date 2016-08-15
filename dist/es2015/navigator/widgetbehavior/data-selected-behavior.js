@@ -1,10 +1,13 @@
+var _dec, _class;
+
 import { BroadcasterBehavior } from './broadcaster-behavior';
 import { WidgetEventMessage } from '../events/widget-event-message';
+import { EventAggregator } from 'aurelia-event-aggregator';
+import { inject } from 'aurelia-framework';
 
-export let DataSelectedBehavior = class DataSelectedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
+export let DataSelectedBehavior = (_dec = inject(EventAggregator), _dec(_class = class DataSelectedBehavior extends BroadcasterBehavior {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataSelected";
     this._eventAggregator = eventAggregator;
   }
@@ -24,4 +27,11 @@ export let DataSelectedBehavior = class DataSelectedBehavior extends Broadcaster
   detach() {
     super.detach(dashboard);
   }
-};
+
+  persistConfigurationTo(configurationInfo) {
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo) {
+    super.restoreConfigurationFrom(configurationInfo);
+  }
+}) || _class);

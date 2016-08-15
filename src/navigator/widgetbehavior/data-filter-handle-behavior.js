@@ -1,13 +1,16 @@
 import {ListenerBehavior} from './listner-behavior';
+import {EventAggregator} from 'aurelia-event-aggregator';
+import {inject} from 'aurelia-framework';
 
+@inject(EventAggregator)
 export class DataFilterHandleBehavior extends ListenerBehavior
 {
-  constructor(channel, eventAggregator, filterMapper) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
   }
+
+  filterMapper;
 
   attachToWidget(widget){
     super.attachToWidget(widget);
@@ -23,5 +26,14 @@ export class DataFilterHandleBehavior extends ListenerBehavior
     super.detach(dashboard);
     if (this.subscription)
       this.subscription.dispose();
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addScript("filterMapper", this.filterMapper);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.filterMapper =configurationInfo.getScript("filterMapper");
+    super.restoreConfigurationFrom(configurationInfo);
   }
 }

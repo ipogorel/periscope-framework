@@ -1,5 +1,5 @@
-define(['exports', './schema-provider'], function (exports, _schemaProvider) {
-  'use strict';
+define(["exports", "./schema-provider"], function (exports, _schemaProvider) {
+  "use strict";
 
   Object.defineProperty(exports, "__esModule", {
     value: true
@@ -39,21 +39,28 @@ define(['exports', './schema-provider'], function (exports, _schemaProvider) {
   var StaticSchemaProvider = exports.StaticSchemaProvider = function (_SchemaProvider) {
     _inherits(StaticSchemaProvider, _SchemaProvider);
 
-    function StaticSchemaProvider(schema) {
+    function StaticSchemaProvider() {
       _classCallCheck(this, StaticSchemaProvider);
 
-      var _this = _possibleConstructorReturn(this, _SchemaProvider.call(this));
-
-      _this._schema = schema;
-      return _this;
+      return _possibleConstructorReturn(this, _SchemaProvider.call(this));
     }
 
     StaticSchemaProvider.prototype.getSchema = function getSchema() {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
-        resolve(_this2._schema);
+        resolve(_this2.schema);
       });
+    };
+
+    StaticSchemaProvider.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      configurationInfo.addValue("schema", this.schema);
+      _SchemaProvider.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    StaticSchemaProvider.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      this.schema = configurationInfo.getValue("schema");
+      _SchemaProvider.prototype.restoreConfigurationFrom.call(this, configurationInfo);
     };
 
     return StaticSchemaProvider;

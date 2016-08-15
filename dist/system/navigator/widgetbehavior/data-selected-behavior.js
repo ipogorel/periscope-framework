@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['./broadcaster-behavior', '../events/widget-event-message'], function (_export, _context) {
-  var BroadcasterBehavior, WidgetEventMessage, DataSelectedBehavior;
+System.register(['./broadcaster-behavior', '../events/widget-event-message', 'aurelia-event-aggregator', 'aurelia-framework'], function (_export, _context) {
+  var BroadcasterBehavior, WidgetEventMessage, EventAggregator, inject, _dec, _class, DataSelectedBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -38,17 +38,20 @@ System.register(['./broadcaster-behavior', '../events/widget-event-message'], fu
       BroadcasterBehavior = _broadcasterBehavior.BroadcasterBehavior;
     }, function (_eventsWidgetEventMessage) {
       WidgetEventMessage = _eventsWidgetEventMessage.WidgetEventMessage;
+    }, function (_aureliaEventAggregator) {
+      EventAggregator = _aureliaEventAggregator.EventAggregator;
+    }, function (_aureliaFramework) {
+      inject = _aureliaFramework.inject;
     }],
     execute: function () {
-      _export('DataSelectedBehavior', DataSelectedBehavior = function (_BroadcasterBehavior) {
+      _export('DataSelectedBehavior', DataSelectedBehavior = (_dec = inject(EventAggregator), _dec(_class = function (_BroadcasterBehavior) {
         _inherits(DataSelectedBehavior, _BroadcasterBehavior);
 
-        function DataSelectedBehavior(channel, eventAggregator) {
+        function DataSelectedBehavior(eventAggregator) {
           _classCallCheck(this, DataSelectedBehavior);
 
           var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-          _this.channel = channel;
           _this.eventToAttach = "dataSelected";
           _this._eventAggregator = eventAggregator;
           return _this;
@@ -70,8 +73,16 @@ System.register(['./broadcaster-behavior', '../events/widget-event-message'], fu
           _BroadcasterBehavior.prototype.detach.call(this, dashboard);
         };
 
+        DataSelectedBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          _BroadcasterBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        DataSelectedBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          _BroadcasterBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
+
         return DataSelectedBehavior;
-      }(BroadcasterBehavior));
+      }(BroadcasterBehavior)) || _class));
 
       _export('DataSelectedBehavior', DataSelectedBehavior);
     }

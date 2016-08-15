@@ -1,4 +1,4 @@
-define(['exports', './listner-behavior'], function (exports, _listnerBehavior) {
+define(['exports', './listner-behavior', 'aurelia-event-aggregator', 'aurelia-framework'], function (exports, _listnerBehavior, _aureliaEventAggregator, _aureliaFramework) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -36,15 +36,15 @@ define(['exports', './listner-behavior'], function (exports, _listnerBehavior) {
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = function (_ListenerBehavior) {
+  var _dec, _class;
+
+  var DataSourceHandleBehavior = exports.DataSourceHandleBehavior = (_dec = (0, _aureliaFramework.inject)(_aureliaEventAggregator.EventAggregator), _dec(_class = function (_ListenerBehavior) {
     _inherits(DataSourceHandleBehavior, _ListenerBehavior);
 
-    function DataSourceHandleBehavior(channel, eventAggregator) {
+    function DataSourceHandleBehavior(eventAggregator) {
       _classCallCheck(this, DataSourceHandleBehavior);
 
       var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
-
-      _this.channel = channel;
 
       _this._eventAggregator = eventAggregator;
       return _this;
@@ -64,6 +64,14 @@ define(['exports', './listner-behavior'], function (exports, _listnerBehavior) {
       if (this.subscription) this.subscription.dispose();
     };
 
+    DataSourceHandleBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      _ListenerBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    DataSourceHandleBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      _ListenerBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+    };
+
     return DataSourceHandleBehavior;
-  }(_listnerBehavior.ListenerBehavior);
+  }(_listnerBehavior.ListenerBehavior)) || _class);
 });

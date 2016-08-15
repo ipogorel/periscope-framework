@@ -69,6 +69,14 @@ var DrillDownBehavior = exports.DrillDownBehavior = function (_BroadcasterBehavi
     _BroadcasterBehavior.prototype.detach.call(this, dashboard);
   };
 
+  DrillDownBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    _BroadcasterBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+  };
+
+  DrillDownBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    _BroadcasterBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+  };
+
   return DrillDownBehavior;
 }(_broadcasterBehavior.BroadcasterBehavior);
 

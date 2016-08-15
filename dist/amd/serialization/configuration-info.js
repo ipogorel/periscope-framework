@@ -25,6 +25,12 @@ define(["exports", "lodash"], function (exports, _lodash) {
     }
   }
 
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
+
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -52,13 +58,11 @@ define(["exports", "lodash"], function (exports, _lodash) {
           (function () {
             var aVal = [];
             _.forEach(value, function (v) {
-              if (_this.configurator.isConfigurable(v)) aVal.push(_this.configurator.getConfiguration(v));else aVal.push(v);
+              aVal.push(_this._getConfig(v));
             });
             _this.config[key] = aVal;
           })();
-        } else {
-          if (this.configurator.isConfigurable(value)) this.config[key] = this.configurator.getConfiguration(value);else this.config[key] = value;
-        }
+        } else this.config[key] = this._getConfig(value);
       }
     };
 
@@ -67,19 +71,31 @@ define(["exports", "lodash"], function (exports, _lodash) {
     };
 
     ConfigurationInfo.prototype.getValue = function getValue(key) {
+      var _this2 = this;
+
       if (this.config[key]) {
-        var result = void 0;
-        if (this.config[key].type) {
-          return this.configurator.getObject(this.config[key]);
+        if (_.isArray(this.config[key])) {
+          var _ret2 = function () {
+            var aVal = [];
+            _.forEach(_this2.config[key], function (v) {
+              aVal.push(_this2._getObject(v));
+            });
+            return {
+              v: aVal
+            };
+          }();
+
+          if ((typeof _ret2 === "undefined" ? "undefined" : _typeof(_ret2)) === "object") return _ret2.v;
+        } else {
+          return this._getObject(this.config[key]);
         }
-        return this.config[key];
       }
       return null;
     };
 
     ConfigurationInfo.prototype.getScript = function getScript(key) {
       if (this.config[key]) {
-        return this.config[key];
+        return eval("(" + this.config[key] + ")");
       }
       return null;
     };
@@ -96,6 +112,17 @@ define(["exports", "lodash"], function (exports, _lodash) {
         return this.config[key] === "true";
       }
       return null;
+    };
+
+    ConfigurationInfo.prototype._getConfig = function _getConfig(object) {
+      if (this.configurator.isConfigurable(object)) return this.configurator.getConfiguration(object);else return object;
+    };
+
+    ConfigurationInfo.prototype._getObject = function _getObject(config) {
+      if (config.type && config.config) {
+        return this.configurator.getObject(config);
+      }
+      return config;
     };
 
     return ConfigurationInfo;

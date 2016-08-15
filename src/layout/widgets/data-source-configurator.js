@@ -7,7 +7,6 @@ export class DataSourceConfigurator extends Widget {
     this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
     this.stateType = "dataSourceConfiguratorState";
     this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
   }
 
 

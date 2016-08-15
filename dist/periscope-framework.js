@@ -6,6 +6,8 @@ import moment from 'moment';
 import {inject,bindable,resolver,transient,computedFrom,customElement,useView,Decorators,noView} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-fetch-client';
 import {Router} from 'aurelia-router';
+import {Container,NewInstance} from 'aurelia-dependency-injection';
+import {EventAggregator} from 'aurelia-event-aggregator';
 
 @inject(Element, PermissionsManager)
 export class PermissionsCustomAttribute {
@@ -193,6 +195,164 @@ export class DashboardConfiguration {
 }
 
 
+export class IntellisenceManager {
+  constructor(parser, dataSource, availableFields){
+    this.dataSource = dataSource;
+    this.fields = availableFields;
+    this.parser = parser;
+  }
+
+  populate(searchStr, lastWord){
+    let parserError = this._getParserError(searchStr);
+    return this._getIntellisenseData(searchStr, lastWord, parserError);
+  }
+
+
+  _getParserError(searchStr) {
+    let result = null;
+    if (searchStr!="") {
+      try {
+        this.parser.parse(searchStr);
+        try{
+          this.parser.parse(searchStr + "^");
+        }
+        catch(ex2){
+          result = ex2;
+        }
+      }
+      catch (ex) {
+        result = ex;
+      }
+    }
+    return result;
+  }
+
+
+
+  _getLastFieldName(searchStr, fieldsArray, index) {
+    var tmpArr = searchStr.substr(0, index).split(" ");
+    for (let i=(tmpArr.length-1); i>=0; i--)  {
+      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
+      if (j>=0)
+        return fieldsArray[j];
+      //return tmpArr[i].trim();
+    }
+    return "";
+  }
+
+  _interpreteParserError(ex){
+    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
+      for (let desc of ex.expected) {
+        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
+          return desc.description;
+        }
+      }
+    }
+    return "";
+  }
+
+  _getIntellisenseData (searchStr, lastWord, pegException) {
+    let type='';
+    let result = [];
+    let lastFldName = '';
+
+    if (!pegException)
+      return new Promise((resolve, reject)=>{ resolve([])});
+
+    let tokenName = this._interpreteParserError(pegException);
+    return new Promise((resolve, reject)=>{
+      switch (tokenName) {
+        case "STRING_FIELD_NAME":
+        case "NUMERIC_FIELD_NAME":
+        case "DATE_FIELD_NAME":
+          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
+          resolve(this._normalizeData("field", filteredFields.sort()));
+          break;
+        case "STRING_OPERATOR_EQUAL":
+        case "STRING_OPERATOR_IN":
+          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
+          break;
+        case "STRING_VALUE":
+        case "STRING_PATTERN":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("string", data))
+          });
+          break;
+        case "STRING_VALUES_ARRAY":
+          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
+          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
+            resolve(this._normalizeData("array_string", data))
+          });
+          break;
+          resolve(this._normalizeData("array_string", []));
+          break;
+        case "OPERATOR":
+          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
+          break;
+        case "LOGIC_OPERATOR":
+        case "end of input":
+          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
+          break;
+        default:
+          resolve([]);
+          break;
+      }
+    });
+  }
+
+
+  _getFieldValuesArray(fieldName, lastWord) {
+    let query = new Query();
+    query.take = 100;
+    query.skip = 0;
+    if (lastWord)
+      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
+    query.fields = [fieldName];
+    return this.dataSource.getData(query).then(dH=>{
+      var result = _.map(dH.data,fieldName);
+      return _.uniq(result).sort();
+    })
+  }
+
+  _getStringComparisonOperatorsArray() {
+    return (["=", "in"]);
+  }
+
+  _getLogicalOperatorsArray() {
+    return (["and", "or"]);
+  }
+
+  _getComparisonOperatorsArray() {
+    return (["!=", "=", ">", "<", ">=", "<="])
+  }
+
+  _normalizeData(type, dataArray) {
+    return _.map(dataArray,d=>{ return { type: type, value: d }});
+  }
+}
+
+export class ExpressionParser {
+
+  constructor(grammarText) {
+    this.parser =  peg.buildParser(grammarText);
+  }
+
+  parse(searchString) {
+    return this.parser.parse(searchString);
+  }
+
+  validate(searchString) {
+    try{
+      this.parser.parse(searchString);
+      return true;
+    }
+    catch(ex) {
+      return false;
+    }
+  }
+}
+
 
 export class DataHolder {
   constructor(){
@@ -202,27 +362,28 @@ export class DataHolder {
   query;
 }
 
-export class Datasource {
+export class Datasource extends Configurable{
     
-    constructor(datasourceConfiguration) {
-        this.name = datasourceConfiguration.name;
-        this.transport = datasourceConfiguration.transport;
-        this.cache = datasourceConfiguration.cache;
+    constructor() {
+        super();
     }
 
     name;
-    transport;
-    cacheManager;
+    readService;
+    updateService;
+    createService;
+    deleteService;
+    cache;
 
     _liveRequest = {};
 
 
 
     getData(query) {
-      if ((!this.transport)&&(!this.transport.readService))
+      if (!this.readService)
         throw "readService is not configured";
 
-      let cacheKey = this.transport.readService.url + query.cacheKey();
+      let cacheKey = this.readService.url + query.cacheKey();
 
       if (!this.cache){
         return this._doWebRequest(cacheKey, query);
@@ -245,25 +406,25 @@ export class Datasource {
     }
 
     create(entity){
-      if ((!this.transport)&&(!this.transport.createService))
+      if (!this.createService)
         throw "createService is not configured";
-      return this.transport.createService.create(entity);
+      return this.createService.create(entity);
     }
 
     update(id, entity){
-      if ((!this.transport)&&(!this.transport.updateService))
+      if (!this.updateService)
         throw "updateService is not configured";
-      return this.transport.updateService.update(id, entity);
+      return this.updateService.update(id, entity);
     }
 
     delete(id, entity){
-      if ((!this.transport)&&(!this.transport.deleteService))
+      if (!this.deleteService)
         throw "deleteService is not configured";
-      return this.transport.updateService.delete(entity);
+      return this.deleteService.delete(entity);
     }
 
     _doWebRequest(cacheKey, query){
-      return this.transport.readService.read(
+      return this.readService.read(
         {
           fields: query.fields,
           filter: query.filter,
@@ -302,12 +463,32 @@ export class Datasource {
       }
     }
 
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("readService", this.readService);
+    configurationInfo.addValue("updateService", this.updateService);
+    configurationInfo.addValue("createService", this.createService);
+    configurationInfo.addValue("deleteService", this.deleteService);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.name = configurationInfo.getValue("name");
+    this.readService = configurationInfo.getValue("readService");
+    this.updateService = configurationInfo.getValue("updateService");
+    this.createService = configurationInfo.getValue("createService");
+    this.deleteService = configurationInfo.getValue("deleteService");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+
 }
 
 export class DataSourceConfiguration {
   cache;
-  transport;
   name;
+  readService;
+  updateService;
+  createService;
+  deleteService;
 }
 
 
@@ -566,164 +747,6 @@ export class UrlHelper {
 
 }
 
-export class IntellisenceManager {
-  constructor(parser, dataSource, availableFields){
-    this.dataSource = dataSource;
-    this.fields = availableFields;
-    this.parser = parser;
-  }
-
-  populate(searchStr, lastWord){
-    let parserError = this._getParserError(searchStr);
-    return this._getIntellisenseData(searchStr, lastWord, parserError);
-  }
-
-
-  _getParserError(searchStr) {
-    let result = null;
-    if (searchStr!="") {
-      try {
-        this.parser.parse(searchStr);
-        try{
-          this.parser.parse(searchStr + "^");
-        }
-        catch(ex2){
-          result = ex2;
-        }
-      }
-      catch (ex) {
-        result = ex;
-      }
-    }
-    return result;
-  }
-
-
-
-  _getLastFieldName(searchStr, fieldsArray, index) {
-    var tmpArr = searchStr.substr(0, index).split(" ");
-    for (let i=(tmpArr.length-1); i>=0; i--)  {
-      let j = fieldsArray.findIndex(x=>x.toLowerCase() == tmpArr[i].trim().toLowerCase());
-      if (j>=0)
-        return fieldsArray[j];
-      //return tmpArr[i].trim();
-    }
-    return "";
-  }
-
-  _interpreteParserError(ex){
-    if (Object.prototype.toString.call(ex.expected) == "[object Array]") {
-      for (let desc of ex.expected) {
-        if ((desc.type == "other")||(desc.type == "end")) {//"FIELD_NAME" "OPERATOR" "FIELD_VALUE", "LOGIC_OPERATOR"
-          return desc.description;
-        }
-      }
-    }
-    return "";
-  }
-
-  _getIntellisenseData (searchStr, lastWord, pegException) {
-    let type='';
-    let result = [];
-    let lastFldName = '';
-
-    if (!pegException)
-      return new Promise((resolve, reject)=>{ resolve([])});
-
-    let tokenName = this._interpreteParserError(pegException);
-    return new Promise((resolve, reject)=>{
-      switch (tokenName) {
-        case "STRING_FIELD_NAME":
-        case "NUMERIC_FIELD_NAME":
-        case "DATE_FIELD_NAME":
-          var filteredFields = lastWord? _.filter(this.fields,f=>{return f.toLowerCase().startsWith(lastWord.toLowerCase())}) : this.fields;
-          resolve(this._normalizeData("field", filteredFields.sort()));
-          break;
-        case "STRING_OPERATOR_EQUAL":
-        case "STRING_OPERATOR_IN":
-          resolve(this._normalizeData("operator", this._getStringComparisonOperatorsArray()));
-          break;
-        case "STRING_VALUE":
-        case "STRING_PATTERN":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("string", data))
-          });
-          break;
-        case "STRING_VALUES_ARRAY":
-          lastFldName = this._getLastFieldName(searchStr, this.fields, pegException.column);
-          this._getFieldValuesArray(lastFldName, lastWord).then(data=>{
-            resolve(this._normalizeData("array_string", data))
-          });
-          break;
-          resolve(this._normalizeData("array_string", []));
-          break;
-        case "OPERATOR":
-          resolve(this._normalizeData("operator", this._getComparisonOperatorsArray()));
-          break;
-        case "LOGIC_OPERATOR":
-        case "end of input":
-          resolve(this._normalizeData("operator", this._getLogicalOperatorsArray()));
-          break;
-        default:
-          resolve([]);
-          break;
-      }
-    });
-  }
-
-
-  _getFieldValuesArray(fieldName, lastWord) {
-    let query = new Query();
-    query.take = 100;
-    query.skip = 0;
-    if (lastWord)
-      query.filter = this.parser.parse(fieldName + " = '" + lastWord + "%'");
-    query.fields = [fieldName];
-    return this.dataSource.getData(query).then(dH=>{
-      var result = _.map(dH.data,fieldName);
-      return _.uniq(result).sort();
-    })
-  }
-
-  _getStringComparisonOperatorsArray() {
-    return (["=", "in"]);
-  }
-
-  _getLogicalOperatorsArray() {
-    return (["and", "or"]);
-  }
-
-  _getComparisonOperatorsArray() {
-    return (["!=", "=", ">", "<", ">=", "<="])
-  }
-
-  _normalizeData(type, dataArray) {
-    return _.map(dataArray,d=>{ return { type: type, value: d }});
-  }
-}
-
-export class ExpressionParser {
-
-  constructor(grammarText) {
-    this.parser =  peg.buildParser(grammarText);
-  }
-
-  parse(searchString) {
-    return this.parser.parse(searchString);
-  }
-
-  validate(searchString) {
-    try{
-      this.parser.parse(searchString);
-      return true;
-    }
-    catch(ex) {
-      return false;
-    }
-  }
-}
-
 export class DefaultHttpClient extends HttpClient {
   constructor() {
     super();
@@ -805,6 +828,25 @@ export class Factory{
   static of(Type){
     return new Factory(Type);
   }
+}
+
+export class PeriscopeFactory{
+  constructor(){
+    this.references = [];
+    this.container = Container.instance.createChild();
+  }
+  addReference(type){
+    this.references.push(type);
+  }
+  createObject(typeName){
+    let t = _.find(this.references, r=>{
+      return r.name === typeName;
+    })
+    if (t)
+      return this.container.get(t);
+    throw "reference to object " + typeName + " not found"
+  }
+
 }
 
 export class BehaviorType {
@@ -973,19 +1015,12 @@ export class ConfigurationInfo {
       if (_.isArray(value)){
         let aVal = [];
         _.forEach(value,v=>{
-          if (this.configurator.isConfigurable(v))
-            aVal.push(this.configurator.getConfiguration(v));
-          else
-            aVal.push(v);
+          aVal.push(this._getConfig(v))
         })
         this.config[key] = aVal;
       }
-      else {
-        if (this.configurator.isConfigurable(value))
-          this.config[key] = this.configurator.getConfiguration(value);
-        else
-          this.config[key] = value;
-      }
+      else
+        this.config[key] = this._getConfig(value);
     }
   }
 
@@ -996,18 +1031,23 @@ export class ConfigurationInfo {
 
   getValue(key){
     if (this.config[key]){
-      let result;
-      if (this.config[key].type) {//serializable
-        return this.configurator.getObject(this.config[key]);
+      if (_.isArray(this.config[key])) {
+        let aVal = [];
+        _.forEach(this.config[key],v=>{
+            aVal.push(this._getObject(v));
+        });
+        return aVal;
       }
-      return this.config[key];
+      else {
+        return this._getObject(this.config[key])
+      }
     }
     return null;
   }
 
   getScript(key){
     if (this.config[key]){
-      return this.config[key];
+      return eval("(" + this.config[key] + ")");
     }
     return null;
   }
@@ -1024,6 +1064,20 @@ export class ConfigurationInfo {
       return (this.config[key] === "true");
     }
     return null;
+  }
+
+
+  _getConfig(object){
+    if (this.configurator.isConfigurable(object))
+      return this.configurator.getConfiguration(object);
+    else
+      return object;
+  }
+  _getObject(config){
+    if (config.type && config.config) {//serializable
+      return this.configurator.getObject(config);
+    }
+    return config;
   }
 }
 
@@ -1218,206 +1272,6 @@ export class UserStateStorage{
       return obj;
     }
 
-}
-
-export class Schema {
-  constructor(){
-    this.fields = [];
-    this.parameters = [];
-  }
-}
-
-export class DataService{
-  url = "";
-  schemaProvider = new EmptySchemaProvider();
-  filterParser;
-  totalMapper;
-  dataMapper;
-  httpClient;
-
-  configure(configuration){
-    this.url = configuration.url?configuration.url:this.url;
-    this.schemaProvider = configuration.schemaProvider?configuration.schemaProvider:this.schemaProvider;
-    this.filterParser = configuration.filterParser?configuration.filterParser:this.filterParser;
-    this.totalMapper = configuration.totalMapper?configuration.totalMapper:this.totalMapper;
-    this.dataMapper = configuration.dataMapper?configuration.dataMapper:this.dataMapper;
-    this.httpClient = configuration.httpClient?configuration.httpClient:this.httpClient;
-  }
-
-  getSchema(){
-    return this.schemaProvider.getSchema();
-  }
-  read(options) {}
-  create(entity) {}
-  update(id, entity) {}
-  delete(id) {}
-  
-}
-
-export class DataServiceConfiguration {
-
-  constructor(configuration){
-    if (configuration) {
-      this._url = configuration.url;
-      this._schemaProvider = configuration.schemaProvider;
-      this._totalMapper = configuration.totalMapper;
-      this._filterParser = configuration.filterParser;
-      this._dataMapper = configuration.dataMapper;
-      this._httpClient = configuration.httpClient
-    }
-  }
-
-  get url() {
-    return this._url;
-  }
-
-  get httpClient() {
-    return this._httpClient;
-  }
-
-  get schemaProvider(){
-    return this._schemaProvider
-  }
-
-  get totalMapper(){
-    return this._totalMapper;
-  }
-
-  get filterParser(){
-    return this._filterParser;
-  }
-
-  get dataMapper(){
-    return this._dataMapper;
-  }
-
-}
-
-@transient()
-export class JsonDataService extends DataService {
-    _cache = {};
-    _liveRequest;
-
-    constructor() {
-      super();
-    }
-
-
-    read(options) { //options: fields,filter, take, skip, sort
-      let url = this.url
-      if (options.filter)
-        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : options.filter);
-      return this.httpClient
-        .fetch(url)
-        .then(response => {return response.json(); })
-        .then(jsonData => {
-          return {
-            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-          }
-        });
-    }
-
-  /*read(options) { //options: fields,filter, take, skip, sort
-    let url = this.url
-    if (options.filter)
-      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
-
-    if (this._liveRequest) {
-      this._liveRequest = this._liveRequest
-        .then(l=>this._fromCache(url))
-        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
-      return this._liveRequest;
-    }
-    try{
-      let data = this._fromCache(url);
-      return Promise.resolve(data).then(d => this._processData(url, d));
-    }
-    catch (ex){}
-    this._liveRequest = this._doWebRequest(url);
-    return this._liveRequest;
-  }
-
-    _doWebRequest(url){
-      return this.httpClient
-        .fetch(url)
-        .then(response => {return response.json(); })
-        .then(jsonData => {
-          return this._processData(url,jsonData)
-        });
-    }
-
-    _processData(url, jsonData){
-      this._liveRequest = null;
-      this._cache[url] = jsonData;
-      return {
-        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-      };
-    }
-
-
-    _fromCache(url){
-      if ((url in this._cache)&&(this._cache[url]))
-        return  this._cache[url];
-      throw "data not found: " + url;
-    }*/
-
-}
-
-@transient()
-export class StaticJsonDataService extends DataService {
-  constructor() {
-    super();
-  }
-  
-
-  read(options) {
-    return this.httpClient
-      .fetch(this.url)
-      .then(response => {
-        return response.json();
-      })
-      .then(jsonData => {
-        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
-        if (options.filter){
-          let f = options.filter;
-          if (this.filterParser && this.filterParser.type === "clientSide")
-            f = this.filterParser.getFilter(options.filter);
-          let evaluator = new QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, f);
-        }
-        let total = d.length;
-        // sort
-        if (options.sort)
-          d = _.orderBy(d,[options.sort],[options.sortDir]);
-        var l = options.skip + options.take;
-        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
-        if (options.fields && options.fields.length>0)
-          d = _.map(d, item =>{
-            return _.pick(item, options.fields);
-          });
-        return {
-          data: DataHelper.deserializeDates(d),
-          total: (this.totalMapper? this.totalMapper(jsonData) : total)
-        }
-      });
-  }
-
-}
-
-export class FormatValueConverter {
-  static format(value, format){
-    if (DataHelper.isDate(value))
-      return moment(value).format(format);
-    if (DataHelper.isNumber(value))
-      return numeral(value).format(format);
-    return value;
-  }
-
-  toView(value, format) {
-    return FormatValueConverter.format(value, format);
-  }
 }
 
 const DSL_GRAMMAR_EXPRESSION = `
@@ -1783,50 +1637,733 @@ export class Grammar{
   
 }
 
-export class WidgetEventMessage {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
+export class Schema {
+  constructor(){
+    this.fields = [];
+    this.parameters = [];
   }
-  get originatorName()  {
-    return this._originatorName;
+}
+
+export class DataService extends Configurable {
+  constructor(){
+    super();
+    this.url = "";
+    this.schemaProvider = new EmptySchemaProvider();
+  }
+
+  url;
+  schemaProvider;
+  filterParser;
+  totalMapper;
+  dataMapper;
+  httpClient;
+
+
+
+  getSchema(){
+    return this.schemaProvider.getSchema();
+  }
+  read(options) {}
+  create(entity) {}
+  update(id, entity) {}
+  delete(id) {}
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("url", this.url);
+    configurationInfo.addValue("schemaProvider", this.schemaProvider);
+    configurationInfo.addValue("filterParser", this.filterParser);
+    configurationInfo.addScript("totalMapper", this.totalMapper);
+    configurationInfo.addScript("dataMapper", this.dataMapper);
+
+    configurationInfo.addValue("httpClient", this.httpClient); // ????????????
+
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.url = configurationInfo.getValue("url");
+    this.schemaProvider = configurationInfo.getValue("schemaProvider");
+    this.filterParser = configurationInfo.getValue("filterParser");
+    this.totalMapper = configurationInfo.getScript("totalMapper");
+    this.dataMapper = configurationInfo.getScript("dataMapper");
+
+    this.httpClient = configurationInfo.getValue("httpClient"); // ????????????
+
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+  
+}
+
+
+@transient()
+export class JsonDataService extends DataService {
+    _cache = {};
+    _liveRequest;
+
+    constructor() {
+      super();
+    }
+
+
+    read(options) { //options: fields,filter, take, skip, sort
+      let url = this.url
+      if (options.filter)
+        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : options.filter);
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return {
+            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+          }
+        });
+    }
+
+  /*read(options) { //options: fields,filter, take, skip, sort
+    let url = this.url
+    if (options.filter)
+      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest
+        .then(l=>this._fromCache(url))
+        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
+      return this._liveRequest;
+    }
+    try{
+      let data = this._fromCache(url);
+      return Promise.resolve(data).then(d => this._processData(url, d));
+    }
+    catch (ex){}
+    this._liveRequest = this._doWebRequest(url);
+    return this._liveRequest;
+  }
+
+    _doWebRequest(url){
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return this._processData(url,jsonData)
+        });
+    }
+
+    _processData(url, jsonData){
+      this._liveRequest = null;
+      this._cache[url] = jsonData;
+      return {
+        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+      };
+    }
+
+
+    _fromCache(url){
+      if ((url in this._cache)&&(this._cache[url]))
+        return  this._cache[url];
+      throw "data not found: " + url;
+    }*/
+
+}
+
+@transient()
+export class StaticJsonDataService extends DataService {
+  constructor() {
+    super();
+  }
+  
+
+  read(options) {
+    return this.httpClient
+      .fetch(this.url)
+      .then(response => {
+        return response.json();
+      })
+      .then(jsonData => {
+        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
+        if (options.filter){
+          let f = options.filter;
+          if (this.filterParser && this.filterParser.type === "clientSide")
+            f = this.filterParser.getFilter(options.filter);
+          let evaluator = new QueryExpressionEvaluator();
+          d = evaluator.evaluate(d, f);
+        }
+        let total = d.length;
+        // sort
+        if (options.sort)
+          d = _.orderBy(d,[options.sort],[options.sortDir]);
+        var l = options.skip + options.take;
+        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
+        if (options.fields && options.fields.length>0)
+          d = _.map(d, item =>{
+            return _.pick(item, options.fields);
+          });
+        return {
+          data: DataHelper.deserializeDates(d),
+          total: (this.totalMapper? this.totalMapper(jsonData) : total)
+        }
+      });
   }
 
 }
 
-export class WidgetEvent {
-
-  constructor(widgetName) {
-    this._originatorName = widgetName;
+export class FormatValueConverter {
+  static format(value, format){
+    if (DataHelper.isDate(value))
+      return moment(value).format(format);
+    if (DataHelper.isNumber(value))
+      return numeral(value).format(format);
+    return value;
   }
 
-  handlers = [];
-
-  get originatorName()  {
-    return this._originatorName;
-  }
-
-  attach(handler){
-    if(this.handlers.some(e=>e === handler)) {
-      return; //already attached
-    }
-    this.handlers.push(handler);
-  }
-
-  detach(handler) {
-    var idx = this.handlers.indexOf(handler);
-    if(idx < 0){
-      return; //not attached, do nothing
-    }
-    this.handler.splice(idx,1);
-  }
-
-  raise(){
-    for(var i = 0; i< this.handlers.length; i++) {
-      this.handlers[i].apply(this, arguments);
-    }
+  toView(value, format) {
+    return FormatValueConverter.format(value, format);
   }
 }
+
+export class DashboardBase extends Configurable
+{
+  constructor() {
+    super();
+  }
+
+  route;
+  behaviors = [];
+  layout = [];
+
+  name;
+  resourceGroup;
+  title;
+
+
+
+  configure(dashboardConfiguration){
+    this.name = dashboardConfiguration.name;
+    this.title = dashboardConfiguration.title;
+    this.resourceGroup = dashboardConfiguration.resourceGroup;
+  }
+
+
+  getWidgetByName(widgetName) {
+    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
+    if (wl)
+      return wl.widget;
+  }
+
+  addWidget(widget, dimensions) {
+    let lw = new LayoutWidget();
+    lw.widget = widget;
+    lw.sizeX = dimensions.sizeX;
+    lw.sizeY = dimensions.sizeY;
+    lw.col = dimensions.col;
+    lw.row = dimensions.row;
+    this.layout.push(lw);
+    widget.dashboard = this;
+  }
+
+  removeWidget(widget) {
+    _.remove(this.layout, w=>{
+      if (w.widget === widget) {
+        widget.dispose();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  replaceWidget(oldWidget, newWidget) {
+    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
+    if (oldLw){
+      newWidget.dashboard = this;
+      let newLw = new LayoutWidget();
+      newLw.widget = newWidget;
+      newLw.sizeX = oldLw.sizeX;
+      newLw.sizeY = oldLw.sizeY;
+      newLw.col = oldLw.col;
+      newLw.row = oldLw.row;
+
+      newLw.navigationStack.push(oldWidget);
+      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
+    }
+  }
+
+  restoreWidget(currentWidget){
+    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
+    let previousWidget = lw.navigationStack.pop();
+    if (previousWidget){
+      let previousLw = new LayoutWidget();
+      previousLw.widget = previousWidget;
+      previousLw.sizeX = lw.sizeX;
+      previousLw.sizeY = lw.sizeY;
+      previousLw.col = lw.col;
+      previousLw.row = lw.row;
+      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
+    }
+  }
+
+
+  resizeWidget(widget, newSize){
+    var lw = _.find(this.layout, w=> {return w.widget === widget});
+    if (newSize) {
+      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
+      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
+      lw.resize(x, y);
+    }
+    else
+      lw.rollbackResize()
+  }
+
+
+  refreshWidget(widget){
+    widget.refresh();
+  }
+  
+  refresh() {
+    for (let i=0; i<this.layout.length; i++) {
+      this.refreshWidget(this.layout[i].widget);
+    }
+  }
+
+  dispose(){
+    for (let i=0; i<this.layout.length; i++) {
+      this.layout[i].widget.dispose();
+    }
+    this.layout = [];
+
+    while(true) {
+      if (this.behaviors.length>0)
+        this.behaviors[0].detach();
+      else
+        break;
+    }
+  }
+
+
+
+  getState(){
+    let result = [];
+    _.forEach(this.layout,lw=>{
+      result.push({name: lw.widget.name, value: lw.widget.getState(), stateType:lw.widget.stateType});
+    })
+    return result;
+  }
+
+  setState(state){
+    for (let s of state){
+      for (let lw of this.layout){
+        if (lw.widget.name===s.name){
+          lw.widget.setState(s.value);
+        }
+      }
+    }
+  }
+
+  getRoute(){
+    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
+  }
+
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("resourceGroup", this.resourceGroup);
+    configurationInfo.addValue("title", this.title);
+
+    configurationInfo.addValue("route", this.route);
+    configurationInfo.addValue("layout", this.layout);
+    configurationInfo.addValue("behaviors", this.behaviors);
+  }
+
+  restoreConfigurationFrom(configurationInfo){
+    this.name = configurationInfo.getValue("name");
+    this.resourceGroup = configurationInfo.getValue("resourceGroup");
+    this.title = configurationInfo.getValue("title");
+    this.route = configurationInfo.getValue("route");
+
+    let layout = configurationInfo.getValue("layout");
+    _.forEach(layout, lw=>{
+      this.addWidget(lw.widget,{
+          sizeX:lw.sizeX,
+          sizeY:lw.sizeY,
+          col:lw.col,
+          row:lw.row
+        })
+    })
+
+    //this.behaviors = configurationInfo.getValue("behaviors");
+    let behaviors = configurationInfo.getValue("behaviors");
+    _.forEach(behaviors, b=>{
+      b.attach(this);
+    })
+  };
+}
+
+export class LayoutWidget extends Configurable {
+
+  widget;
+  navigationStack = [];
+  sizeX;
+  sizeY;
+  col;
+  row;
+  resized = false;
+
+  @computedFrom('navigationStack')
+  get hasNavStack() {
+    return this.navigationStack && this.navigationStack.length > 0;
+  }
+
+  resize(newSizeX, newSizeY){
+    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
+    this.sizeX = newSizeX;
+    this.sizeY = newSizeY;
+    this.resized = true;
+  }
+
+  rollbackResize(){
+    if (this._originalDimensions){
+      this.sizeX = this._originalDimensions.sizeX;
+      this.sizeY = this._originalDimensions.sizeY;
+    }
+    this.resized = false;
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("sizeX", this.sizeX);
+    configurationInfo.addValue("sizeY", this.sizeY);
+    configurationInfo.addValue("col", this.col);
+    configurationInfo.addValue("row", this.row);
+    configurationInfo.addValue("widget", this.widget);
+  }
+
+  restoreConfigurationFrom(configurationInfo){
+    this.sizeX = configurationInfo.getValue("sizeX");
+    this.sizeY = configurationInfo.getValue("sizeY");
+    this.col = configurationInfo.getValue("col");
+    this.row = configurationInfo.getValue("row");
+    this.widget = configurationInfo.getValue("widget");
+  }
+}
+
+export class Chart extends Widget {
+  constructor() {
+    super();
+    this.stateType = "chartState";
+    this.attachBehaviors();
+  }
+
+  categoriesField;
+  seriesDefaults;
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("categoriesField", this.categoriesField);
+    configurationInfo.addValue("seriesDefaults", this.seriesDefaults);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.categoriesField = configurationInfo.getValue("categoriesField");
+    this.seriesDefaults = configurationInfo.getValue("seriesDefaults");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+}
+
+export class DataSourceConfigurator extends Widget {
+  constructor(settings) {
+    super(settings);
+    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
+    this.stateType = "dataSourceConfiguratorState";
+    this._dataSourceChanged = new WidgetEvent();
+  }
+
+
+  get dataSourceToConfigurate(){
+    return this._dataSourceToConfigurate;
+  }
+  set dataSourceToConfigurate(value) {
+    this._dataSourceToConfigurate = value;
+  }
+
+
+  get dataSourceChanged() {
+    return this._dataSourceChanged;
+  }
+  set dataSourceChanged(handler) {
+    this._dataSourceChanged.attach(handler);
+  }
+
+
+}
+
+export class DetailedView extends Widget {
+  constructor() {
+    super();
+    this.stateType = "detailedViewState";
+  }
+  fields;
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("fields", this.fields);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.fields = configurationInfo.getValue("fields");
+    super.restoreConfigurationFrom(configurationInfo);
+  }
+}
+
+
+export class Grid extends Widget {
+  constructor() {
+    super();
+    this.stateType = "gridState";
+  }
+
+  _dataSelected = new WidgetEvent();
+  _dataActivated = new WidgetEvent();
+  _dataFieldSelected = new WidgetEvent();
+
+  columns;
+  navigatable;
+  autoGenerateColumns;
+  pageSize;
+  group;
+
+
+  get dataSelected() {
+    return this._dataSelected;
+  }
+  set dataSelected(handler) {
+    this._dataSelected.attach(handler);
+  }
+
+  get dataActivated() {
+    return this._dataActivated;
+  }
+  set dataActivated(handler) {
+    this._dataActivated.attach(handler);
+  }
+  
+
+  get dataFieldSelected() {
+    return this._dataFieldSelected;
+  }
+  set dataFieldSelected(handler) {
+    this._dataFieldSelected.attach(handler);
+  }
+
+  saveState(){
+    this.setState({columns:this.columns});
+  }
+
+  restoreState(){
+    let s = this.getState();
+    if (s)
+      this.columns = s.columns;
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("columns", this.columns);
+    configurationInfo.addValue("navigatable", this.navigatable);
+    configurationInfo.addValue("autoGenerateColumns", this.autoGenerateColumns);
+    configurationInfo.addValue("pageSize", this.pageSize);
+    configurationInfo.addValue("group", this.group);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.columns = configurationInfo.getValue("columns");
+    this.navigatable = configurationInfo.getBool("navigatable");
+    this.autoGenerateColumns = configurationInfo.getBool("autoGenerateColumns");
+    this.pageSize = configurationInfo.getInt("pageSize");
+    this.group = configurationInfo.getValue("group");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+}
+
+export class SearchBox extends Widget {
+  constructor() {
+    super();
+    this.stateType = "searchBoxState";
+  }
+
+  _dataFilterChanged = new WidgetEvent();
+
+  searchString;
+
+  get dataFilterChanged() {
+    return this._dataFilterChanged;
+  }
+  set dataFilterChanged(handler) {
+    this._dataFilterChanged.attach(handler);
+  }
+
+
+  saveState(){
+    this.setState(this.searchString);
+  }
+
+  restoreState(){
+    let s = this.getState();
+    if (s)
+      this.searchString = s;
+    else
+      this.searchString = "";
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("searchString", this.searchString);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.searchString = configurationInfo.getValue("searchString");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+}
+
+export class Widget extends Configurable{
+
+  constructor() {
+    super();
+    // call method in child class
+    //this._settings = settings;
+    //this._behaviors = [];
+    /*_.forOwn(settings, (v, k)=> {
+      if (k=="behaviors"){
+        this._unattachedBehaviors = v;
+      }
+      else
+        this[k] = v;
+    });*/
+  }
+
+  type;
+  name;
+  dashboard;
+  header;
+  minHeight;
+  resourceGroup;
+  behaviors = [];
+  stateType;
+  showHeader;
+  dataHolder;
+  stateStorage;
+  dataSource;
+  dataFilter;
+  dataMapper;
+
+
+  get self() {
+    return this;
+  }
+
+  getStateKey() {
+    if (this.stateStorage)
+      return this.stateStorage.createKey(this.dashboard.name, this.name);
+    return "";
+  }
+
+  getState() {
+    if (this.stateStorage) {
+      var s = this.stateStorage.get(this.getStateKey());
+      if (s)
+        return s;
+    }
+    return undefined;
+  }
+
+  setState(value) {
+    if (this.stateStorage) {
+      if (!value)
+        this.stateStorage.remove(this.getStateKey());
+      else
+        this.stateStorage.set(this.getStateKey(), value);
+    }
+  }
+
+
+  attachBehavior(b){
+    b.attachToWidget(this);
+  }
+
+  attachBehaviors(){
+    if (this._unattachedBehaviors) {
+      for (let b of this._unattachedBehaviors)
+        this.attachBehavior(b);
+    }
+  }
+
+  ///METHODS
+  changeSettings(newSettings){
+    if (newSettings) {
+      //merge settings
+      _.forOwn(newSettings, (v, k)=> {
+        this[k] = v;
+      });
+      this.refresh();
+    }
+  }
+
+  refresh(){
+
+  }
+
+
+  dispose(){
+    while(true) {
+      if (this.behavior.length>0)
+        this.behavior[0].detach();
+      else
+        break;
+    }
+  }
+
+  persistConfigurationTo(configurationInfo){
+    /*dashboard;
+    behavior = [];*/
+
+
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("resourceGroup", this.resourceGroup);
+    configurationInfo.addValue("header", this.header);
+    configurationInfo.addValue("minHeight", this.minHeight);
+    configurationInfo.addValue("stateType", this.stateType);
+    configurationInfo.addValue("showHeader", this.showHeader);
+    configurationInfo.addValue("dataHolder", this.dataHolder);
+    configurationInfo.addValue("dataSource", this.dataSource);
+    configurationInfo.addValue("dataFilter", this.dataFilter);
+    configurationInfo.addScript("dataMapper", this.dataMapper);
+    configurationInfo.addValue("behaviors", this.behaviors);
+
+
+    configurationInfo.addValue("stateStorage", this.stateStorage); // move to constructor
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.name = configurationInfo.getValue("name");
+    this.resourceGroup = configurationInfo.getValue("resourceGroup");
+    this.header = configurationInfo.getValue("header");
+    this.minHeight = configurationInfo.getInt("minHeight");
+    this.stateType = configurationInfo.getValue("stateType");
+    this.showHeader = configurationInfo.getBool("showHeader");
+
+    this.dataHolder = configurationInfo.getValue("dataHolder");
+    this.dataSource = configurationInfo.getValue("dataSource");
+    this.dataFilter = configurationInfo.getValue("dataFilter");
+    this.dataMapper = configurationInfo.getScript("dataMapper");
+
+    let behaviors = configurationInfo.getValue("behaviors");
+    _.forEach(behaviors, b=>{
+      b.attachToWidget(this);
+    })
+
+    this.stateStorage = configurationInfo.getValue("stateStorage"); // move to constructor
+  };
+
+}
+
+
+
+
+
+
+
+
 
 export class ChangeRouteBehavior extends DashboardBehavior {
   constructor(settings) {
@@ -2040,10 +2577,55 @@ export class ReplaceWidgetBehavior extends DashboardBehavior  {
   }
 }
 
+export class WidgetEventMessage {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+}
+
+export class WidgetEvent {
+
+  constructor(widgetName) {
+    this._originatorName = widgetName;
+  }
+
+  handlers = [];
+
+  get originatorName()  {
+    return this._originatorName;
+  }
+
+  attach(handler){
+    if(this.handlers.some(e=>e === handler)) {
+      return; //already attached
+    }
+    this.handlers.push(handler);
+  }
+
+  detach(handler) {
+    var idx = this.handlers.indexOf(handler);
+    if(idx < 0){
+      return; //not attached, do nothing
+    }
+    this.handler.splice(idx,1);
+  }
+
+  raise(){
+    for(var i = 0; i< this.handlers.length; i++) {
+      this.handlers[i].apply(this, arguments);
+    }
+  }
+}
+
 export class BroadcasterBehavior extends WidgetBehavior {
   constructor(){
     super();
-    this.type = BehaviorType.broadcaster;
+    this.behaviortype = BehaviorType.broadcaster;
   }
 
   eventToAttach;
@@ -2053,13 +2635,21 @@ export class BroadcasterBehavior extends WidgetBehavior {
       throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
     super.attachToWidget(widget);
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("channel", this.channel);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.channel = configurationInfo.getValue("channel");
+  }
 }
 
+@inject(EventAggregator)
 export class DataActivatedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataActivated";
+
     this._eventAggregator = eventAggregator;
   }
 
@@ -2077,12 +2667,19 @@ export class DataActivatedBehavior extends BroadcasterBehavior {
   detach(){
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
+@inject(EventAggregator)
 export class DataFieldSelectedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataFieldSelected";
     this._eventAggregator = eventAggregator;
   }
@@ -2103,14 +2700,21 @@ export class DataFieldSelectedBehavior extends BroadcasterBehavior {
   detach(){
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
 
+@inject(EventAggregator)
 export class DataFilterChangedBehavior extends BroadcasterBehavior
 {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataFilterChanged";
     this._eventAggregator = eventAggregator;
   }
@@ -2130,16 +2734,24 @@ export class DataFilterChangedBehavior extends BroadcasterBehavior
   detach(){
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
+@inject(EventAggregator)
 export class DataFilterHandleBehavior extends ListenerBehavior
 {
-  constructor(channel, eventAggregator, filterMapper) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this._eventAggregator = eventAggregator;
-    this._filterMapper = filterMapper;
   }
+
+  filterMapper;
 
   attachToWidget(widget){
     super.attachToWidget(widget);
@@ -2156,16 +2768,24 @@ export class DataFilterHandleBehavior extends ListenerBehavior
     if (this.subscription)
       this.subscription.dispose();
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addScript("filterMapper", this.filterMapper);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.filterMapper =configurationInfo.getScript("filterMapper");
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
+@inject(EventAggregator)
 export class DataSelectedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataSelected";
     this._eventAggregator = eventAggregator;
   }
-
 
   attachToWidget(widget)   {
 
@@ -2182,13 +2802,20 @@ export class DataSelectedBehavior extends BroadcasterBehavior {
   detach(){
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
+@inject(EventAggregator)
 export class DataSourceChangedBehavior extends BroadcasterBehavior
 {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataSourceChanged";
     this._eventAggregator = eventAggregator;
   }
@@ -2207,14 +2834,20 @@ export class DataSourceChangedBehavior extends BroadcasterBehavior
   detach(){
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
+@inject(EventAggregator)
 export class DataSourceHandleBehavior extends ListenerBehavior
 {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
-
     this._eventAggregator = eventAggregator;
   }
 
@@ -2231,6 +2864,13 @@ export class DataSourceHandleBehavior extends ListenerBehavior
     super.detach(dashboard);
     if (this.subscription)
       this.subscription.dispose();
+  }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
   }
 }
 
@@ -2275,6 +2915,13 @@ export class DrillDownBehavior extends BroadcasterBehavior {
   detach(){
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
 export class DrillDownBehaviorConfiguration {
@@ -2286,19 +2933,27 @@ export class DrillDownBehaviorConfiguration {
 export class ListenerBehavior extends WidgetBehavior {
   constructor(){
     super();
-    this.type = BehaviorType.listener;
+    this.behaviortype = BehaviorType.listener;
+  }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
   }
 }
 
+@inject(EventAggregator)
 export class SettingsHandleBehavior extends ListenerBehavior
 {
-  constructor(channel, eventAggregator, messageMapper) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this._eventAggregator = eventAggregator;
 
-    this._messageMapper = messageMapper;
   }
+
+  messageMapper;
 
   attachToWidget(widget){
     super.attachToWidget(widget);
@@ -2319,527 +2974,49 @@ export class SettingsHandleBehavior extends ListenerBehavior
     if (this.subscription)
       this.subscription.dispose();
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addScript("messageMapper", this.messageMapper);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.messageMapper = configurationInfo.getScript("messageMapper");
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 }
 
-
-export class WidgetBehavior {
-
-  type;
+export class WidgetBehavior extends Configurable {
+    
+  behaviortype;
   widget;
+  
   channel;
 
 
   attachToWidget(widget) {
     this.widget = widget;
-    this.widget.behavior.push(this);
+    this.widget.behaviors.push(this);
   }
 
   detach(){
     if (!this.widget)
       return;
-    for (let i=0; i<this.widget.behavior.length; i++) {
-      if(this.widget.behavior[i] === this) {
-        this.widget.behavior.splice(i, 1);
+    for (let i=0; i<this.widget.behaviors.length; i++) {
+      if(this.widget.behaviors[i] === this) {
+        this.widget.behaviors.splice(i, 1);
         break;
       }
     }
   }
-
-}
-
-export class DashboardBase extends Configurable
-{
-  constructor() {
-    super();
-  }
-
-  route;
-  behaviors = [];
-  layout = [];
-
-  name;
-  resourceGroup;
-  title;
-
-
-
-  configure(dashboardConfiguration){
-    this.name = dashboardConfiguration.name;
-    this.title = dashboardConfiguration.title;
-    this.resourceGroup = dashboardConfiguration.resourceGroup;
-  }
-
-
-  getWidgetByName(widgetName) {
-    var wl = _.find(this.layout, w=> { return w.widget.name === widgetName });
-    if (wl)
-      return wl.widget;
-  }
-
-  addWidget(widget, dimensions) {
-    let lw = new LayoutWidget();
-    lw.widget = widget;
-    lw.sizeX = dimensions.sizeX;
-    lw.sizeY = dimensions.sizeY;
-    lw.col = dimensions.col;
-    lw.row = dimensions.row;
-    this.layout.push(lw);
-    widget.dashboard = this;
-  }
-
-  removeWidget(widget) {
-    _.remove(this.layout, w=>{
-      if (w.widget === widget) {
-        widget.dispose();
-        return true;
-      }
-      return false;
-    });
-  }
-
-  replaceWidget(oldWidget, newWidget) {
-    let oldLw = _.find(this.layout, w=> {return w.widget === oldWidget});
-    if (oldLw){
-      newWidget.dashboard = this;
-      let newLw = new LayoutWidget();
-      newLw.widget = newWidget;
-      newLw.sizeX = oldLw.sizeX;
-      newLw.sizeY = oldLw.sizeY;
-      newLw.col = oldLw.col;
-      newLw.row = oldLw.row;
-
-      newLw.navigationStack.push(oldWidget);
-      this.layout.splice(_.indexOf(this.layout,oldLw), 1, newLw);
-    }
-  }
-
-  restoreWidget(currentWidget){
-    let lw = _.find(this.layout, w=> {return w.widget === currentWidget});
-    let previousWidget = lw.navigationStack.pop();
-    if (previousWidget){
-      let previousLw = new LayoutWidget();
-      previousLw.widget = previousWidget;
-      previousLw.sizeX = lw.sizeX;
-      previousLw.sizeY = lw.sizeY;
-      previousLw.col = lw.col;
-      previousLw.row = lw.row;
-      this.layout.splice(_.indexOf(this.layout,lw), 1, previousLw);
-    }
-  }
-
-
-  resizeWidget(widget, newSize){
-    var lw = _.find(this.layout, w=> {return w.widget === widget});
-    if (newSize) {
-      let x = newSize.sizeX?newSize.sizeX:lw.sizeX;
-      let y = newSize.sizeY?newSize.sizeY:lw.sizeY;
-      lw.resize(x, y);
-    }
-    else
-      lw.rollbackResize()
-  }
-
-
-  refreshWidget(widget){
-    widget.refresh();
-  }
-  
-  refresh() {
-    for (let i=0; i<this.layout.length; i++) {
-      this.refreshWidget(this.layout[i].widget);
-    }
-  }
-
-  dispose(){
-    for (let i=0; i<this.layout.length; i++) {
-      this.layout[i].widget.dispose();
-    }
-    this.layout = [];
-
-    while(true) {
-      if (this.behaviors.length>0)
-        this.behaviors[0].detach();
-      else
-        break;
-    }
-  }
-
-
-
-  getState(){
-    let result = [];
-    _.forEach(this.layout,lw=>{
-      result.push({name: lw.widget.name, value: lw.widget.getState(), stateType:lw.widget.stateType});
-    })
-    return result;
-  }
-
-  setState(state){
-    for (let s of state){
-      for (let lw of this.layout){
-        if (lw.widget.name===s.name){
-          lw.widget.setState(s.value);
-        }
-      }
-    }
-  }
-
-  getRoute(){
-    return this.route + StateUrlParser.stateToQuery(StateDiscriminator.discriminate(this.getState()));
-  }
-
-
   persistConfigurationTo(configurationInfo){
-    configurationInfo.addValue("name", this.name);
-    configurationInfo.addValue("resourceGroup", this.resourceGroup);
-    configurationInfo.addValue("title", this.title);
-
-    configurationInfo.addValue("route", this.route);
-    configurationInfo.addValue("layout", this.layout);
-    configurationInfo.addValue("behaviors", this.behaviors);
+    configurationInfo.addValue("channel", this.channel);
   }
   restoreConfigurationFrom(configurationInfo){
-    this.name = configurationInfo.getValue("name");
-    this.resourceGroup = configurationInfo.getValue("resourceGroup");
-    this.title = configurationInfo.getValue("title");
-
-    this.route = configurationInfo.getValue("route");
-    this.layout = configurationInfo.getValue("layout");
-
-
-    //this.behaviors = configurationInfo.getValue("behaviors");
-    let behaviors = configurationInfo.getValue("behaviors");
-    _.forEach(behaviors, b=>{
-      b.attach(this);
-    })
-  };
-}
-
-export class LayoutWidget extends Configurable {
-
-  widget;
-  navigationStack = [];
-  sizeX;
-  sizeY;
-  col;
-  row;
-  resized = false;
-
-  @computedFrom('navigationStack')
-  get hasNavStack() {
-    return this.navigationStack && this.navigationStack.length > 0;
-  }
-
-  resize(newSizeX, newSizeY){
-    this._originalDimensions = {sizeX:this.sizeX, sizeY:this.sizeY};
-    this.sizeX = newSizeX;
-    this.sizeY = newSizeY;
-    this.resized = true;
-  }
-
-  rollbackResize(){
-    if (this._originalDimensions){
-      this.sizeX = this._originalDimensions.sizeX;
-      this.sizeY = this._originalDimensions.sizeY;
-    }
-    this.resized = false;
-  }
-
-  persistConfigurationTo(configurationInfo){
-    configurationInfo.addValue("sizeX", this.sizeX);
-    configurationInfo.addValue("sizeY", this.sizeY);
-    configurationInfo.addValue("col", this.col);
-    configurationInfo.addValue("row", this.row);
-    configurationInfo.addValue("widget", this.widget);
-  }
-
-  restoreConfigurationFrom(configurationInfo){
-    this.sizeX = configurationInfo.getInt("sizeX");
-    this.sizeY = configurationInfo.getInt("sizeY");
-    this.col = configurationInfo.getInt("col");
-    this.row = configurationInfo.getInt("row");
-    this.widget = configurationInfo.getValue("widget");
+    this.channel = configurationInfo.getValue("channel");
   }
 }
 
-export class Chart extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "chartState";
-    this.attachBehaviors();
-  }
-
-  categoriesField;
-  seriesDefaults;
-
-
-}
-
-export class DataSourceConfigurator extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
-    this.stateType = "dataSourceConfiguratorState";
-    this._dataSourceChanged = new WidgetEvent();
-    this.attachBehaviors();
-  }
-
-
-  get dataSourceToConfigurate(){
-    return this._dataSourceToConfigurate;
-  }
-  set dataSourceToConfigurate(value) {
-    this._dataSourceToConfigurate = value;
-  }
-
-
-  get dataSourceChanged() {
-    return this._dataSourceChanged;
-  }
-  set dataSourceChanged(handler) {
-    this._dataSourceChanged.attach(handler);
-  }
-
-
-}
-
-export class DetailedView extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "detailedViewState";
-    this.attachBehaviors();
-  }
-  fields;
-}
-
-
-export class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "gridState";
-    this.attachBehaviors();
-  }
-
-  _dataSelected = new WidgetEvent();
-  _dataActivated = new WidgetEvent();
-  _dataFieldSelected = new WidgetEvent();
-
-  columns;
-  navigatable;
-  autoGenerateColumns;
-  pageSize;
-  group;
-
-
-  get dataSelected() {
-    return this._dataSelected;
-  }
-  set dataSelected(handler) {
-    this._dataSelected.attach(handler);
-  }
-
-  get dataActivated() {
-    return this._dataActivated;
-  }
-  set dataActivated(handler) {
-    this._dataActivated.attach(handler);
-  }
-  
-
-  get dataFieldSelected() {
-    return this._dataFieldSelected;
-  }
-  set dataFieldSelected(handler) {
-    this._dataFieldSelected.attach(handler);
-  }
-
-  saveState(){
-    this.setState({columns:this.columns});
-  }
-
-  restoreState(){
-    let s = this.getState();
-    if (s)
-      this.columns = s.columns;
-  }
-}
-
-export class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
-    this.stateType = "searchBoxState";
-    this.attachBehaviors();
-  }
-
-  _dataFilterChanged = new WidgetEvent();
-
-  searchString;
-
-  get dataFilterChanged() {
-    return this._dataFilterChanged;
-  }
-  set dataFilterChanged(handler) {
-    this._dataFilterChanged.attach(handler);
-  }
-
-
-  saveState(){
-    this.setState(this.searchString);
-  }
-
-  restoreState(){
-    let s = this.getState();
-    if (s)
-      this.searchString = s;
-    else
-      this.searchString = "";
-  }
-}
-
-export class Widget extends Configurable{
-
-  constructor(settings) {
-    super();
-    // call method in child class
-    //this._settings = settings;
-    //this._behaviors = [];
-    _.forOwn(settings, (v, k)=> {
-      if (k=="behavior"){
-        this._unattachedBehaviors = v;
-      }
-      else
-        this[k] = v;
-    });
-  }
-
-  type;
-  name;
-  dashboard;
-  header;
-  minHeight;
-  resourceGroup;
-  behavior = [];
-  stateType;
-  showHeader;
-  dataHolder;
-  stateStorage;
-  dataSource;
-  dataFilter;
-  dataMapper;
-
-
-  get self() {
-    return this;
-  }
-
-  getStateKey() {
-    if (this.stateStorage)
-      return this.stateStorage.createKey(this.dashboard.name, this.name);
-    return "";
-  }
-
-  getState() {
-    if (this.stateStorage) {
-      var s = this.stateStorage.get(this.getStateKey());
-      if (s)
-        return s;
-    }
-    return undefined;
-  }
-
-  setState(value) {
-    if (this.stateStorage) {
-      if (!value)
-        this.stateStorage.remove(this.getStateKey());
-      else
-        this.stateStorage.set(this.getStateKey(), value);
-    }
-  }
-
-
-  attachBehavior(b){
-    b.attachToWidget(this);
-  }
-
-  attachBehaviors(){
-    if (this._unattachedBehaviors) {
-      for (let b of this._unattachedBehaviors)
-        this.attachBehavior(b);
-    }
-  }
-
-  ///METHODS
-  changeSettings(newSettings){
-    if (newSettings) {
-      //merge settings
-      _.forOwn(newSettings, (v, k)=> {
-        this[k] = v;
-      });
-      this.refresh();
-    }
-  }
-
-  refresh(){
-
-  }
-
-
-  dispose(){
-    while(true) {
-      if (this.behavior.length>0)
-        this.behavior[0].detach();
-      else
-        break;
-    }
-  }
-
-  persistConfigurationTo(configurationInfo){
-    /*dashboard;
-    behavior = [];*/
-
-
-    configurationInfo.addValue("name", this.name);
-    configurationInfo.addValue("resourceGroup", this.resourceGroup);
-    configurationInfo.addValue("header", this.header);
-    configurationInfo.addValue("minHeight", this.minHeight);
-    configurationInfo.addValue("stateType", this.stateType);
-    configurationInfo.addValue("showHeader", this.showHeader);
-    configurationInfo.addValue("dataHolder", this.dataHolder);
-    configurationInfo.addValue("dataSource", this.dataSource);
-    configurationInfo.addValue("dataFilter", this.dataFilter);
-    configurationInfo.addScript("dataMapper", this.dataMapper);
-
-
-
-    configurationInfo.addValue("stateStorage", this.stateStorage); // move to constructor
-  }
-  restoreConfigurationFrom(configurationInfo){
-    this.name = configurationInfo.getValue("name");
-    this.resourceGroup = configurationInfo.getValue("resourceGroup");
-    this.header = configurationInfo.getValue("header");
-    this.minHeight = configurationInfo.getInt("minHeight");
-    this.stateType = configurationInfo.getValue("stateType");
-    this.showHeader = configurationInfo.getBool("showHeader");
-
-    this.dataHolder = configurationInfo.getValue("dataHolder");
-    this.dataSource = configurationInfo.getValue("dataSource");
-    this.dataFilter = configurationInfo.getValue("dataFilter");
-    this.dataMapper = configurationInfo.getScript("dataMapper");
-
-    this.stateStorage = configurationInfo.getValue("stateStorage"); // move to constructor
-  };
-
-}
-
-
-
-
-
-
-
-
-
-export class AstParser{
+export class AstParser {
   constructor(){
     this._clientSide = "clientSide";
     this._serverSide = "serverSide";
@@ -2848,6 +3025,8 @@ export class AstParser{
   getFilter(astTree){
     return {};
   }
+  persistConfigurationTo(configurationInfo){}
+  restoreConfigurationFrom(configurationInfo){}
 }
 
 
@@ -2965,6 +3144,13 @@ export class AstToJavascriptParser extends AstParser{
     return result;
   }
 
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
+
 }
 
 export class EmptySchemaProvider extends SchemaProvider{
@@ -2978,48 +3164,83 @@ export class EmptySchemaProvider extends SchemaProvider{
   }
 }
 
-export class SchemaProvider{
+export class SchemaProvider extends Configurable{
+  constructor(){
+    super();
+  }
   getSchema(){}
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+
 }
 
 
 export class StaticSchemaProvider extends SchemaProvider{
-  constructor(schema){
+  constructor(){
     super();
-    this._schema = schema;
   }
+
+  schema;
+
   getSchema(){
     return new Promise((resolve, reject)=>{
-      resolve(this._schema);
+      resolve(this.schema);
     });
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("schema", this.schema);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.schema = configurationInfo.getValue("schema");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
 }
 
 
 import Swagger from "swagger-client";
 export class SwaggerSchemaProvider extends SchemaProvider{
-  constructor(definitionUrl, apiName, methodName, modelName){
+  constructor(){
     super();
-    this._modelName = modelName;
-    this._methodName = methodName;
-    this._apiName = apiName;
-    this._definitionUrl = definitionUrl;
   }
-  getSchema(){
+
+  modelName;
+  methodName;
+  apiName;
+  definitionUrl;
+
+  getSchema() {
     var self = this;
     return new Swagger({
       url: this._definitionUrl,
-      usePromise: true}).then(client => {
-        let result = new Schema();
-        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, p=>{
-          result.parameters.push(p);
+      usePromise: true
+    }).then(client => {
+      let result = new Schema();
+      _.forEach(client.apis[self.apiName].apis[self.methodName].parameters, p=> {
+        result.parameters.push(p);
+      });
+      if (client.definitions[self.modelName]) {
+        _.forOwn(client.definitions[self.modelName].properties, (value, key)=> {
+          result.fields.push({field: key, type: value.type});
         });
-        if (client.definitions[self._modelName]) {
-          _.forOwn(client.definitions[self._modelName].properties, (value, key)=> {
-            result.fields.push({field: key, type: value.type});
-          });
-        }
-        return result;
+      }
+      return result;
     });
   }
+  persistConfigurationTo(configurationInfo){
+      configurationInfo.addValue("schema", this.schema);
+      super.persistConfigurationTo(configurationInfo);
+  }
+    
+  restoreConfigurationFrom(configurationInfo){
+      this.schema = configurationInfo.getValue("schema");
+      super.restoreConfigurationFrom(configurationInfo);
+  };
+
 }

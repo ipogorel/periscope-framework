@@ -1,3 +1,5 @@
+import { Configurable } from './../../../serialization/configurable';
+
 export let AstParser = class AstParser {
   constructor() {
     this._clientSide = "clientSide";
@@ -7,4 +9,6 @@ export let AstParser = class AstParser {
   getFilter(astTree) {
     return {};
   }
+  persistConfigurationTo(configurationInfo) {}
+  restoreConfigurationFrom(configurationInfo) {}
 };

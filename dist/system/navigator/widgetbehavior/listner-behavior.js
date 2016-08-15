@@ -48,9 +48,17 @@ System.register(['./widget-behavior', './../behavior-type'], function (_export, 
 
           var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-          _this.type = BehaviorType.listener;
+          _this.behaviortype = BehaviorType.listener;
           return _this;
         }
+
+        ListenerBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          _WidgetBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        ListenerBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          _WidgetBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
 
         return ListenerBehavior;
       }(WidgetBehavior));

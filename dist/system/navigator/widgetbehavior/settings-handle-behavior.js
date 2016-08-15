@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['./listner-behavior', 'lodash'], function (_export, _context) {
-  var ListenerBehavior, _, SettingsHandleBehavior;
+System.register(['./listner-behavior', 'lodash', 'aurelia-event-aggregator', 'aurelia-framework'], function (_export, _context) {
+  var ListenerBehavior, _, EventAggregator, inject, _dec, _class, SettingsHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -38,20 +38,22 @@ System.register(['./listner-behavior', 'lodash'], function (_export, _context) {
       ListenerBehavior = _listnerBehavior.ListenerBehavior;
     }, function (_lodash) {
       _ = _lodash;
+    }, function (_aureliaEventAggregator) {
+      EventAggregator = _aureliaEventAggregator.EventAggregator;
+    }, function (_aureliaFramework) {
+      inject = _aureliaFramework.inject;
     }],
     execute: function () {
-      _export('SettingsHandleBehavior', SettingsHandleBehavior = function (_ListenerBehavior) {
+      _export('SettingsHandleBehavior', SettingsHandleBehavior = (_dec = inject(EventAggregator), _dec(_class = function (_ListenerBehavior) {
         _inherits(SettingsHandleBehavior, _ListenerBehavior);
 
-        function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
+        function SettingsHandleBehavior(eventAggregator) {
           _classCallCheck(this, SettingsHandleBehavior);
 
           var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-          _this.channel = channel;
           _this._eventAggregator = eventAggregator;
 
-          _this._messageMapper = messageMapper;
           return _this;
         }
 
@@ -73,8 +75,18 @@ System.register(['./listner-behavior', 'lodash'], function (_export, _context) {
           if (this.subscription) this.subscription.dispose();
         };
 
+        SettingsHandleBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          configurationInfo.addScript("messageMapper", this.messageMapper);
+          _ListenerBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        SettingsHandleBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          this.messageMapper = configurationInfo.getScript("messageMapper");
+          _ListenerBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
+
         return SettingsHandleBehavior;
-      }(ListenerBehavior));
+      }(ListenerBehavior)) || _class));
 
       _export('SettingsHandleBehavior', SettingsHandleBehavior);
     }

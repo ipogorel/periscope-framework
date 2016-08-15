@@ -23,9 +23,17 @@ var ListenerBehavior = exports.ListenerBehavior = function (_WidgetBehavior) {
 
     var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-    _this.type = _behaviorType.BehaviorType.listener;
+    _this.behaviortype = _behaviorType.BehaviorType.listener;
     return _this;
   }
+
+  ListenerBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    _WidgetBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+  };
+
+  ListenerBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    _WidgetBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+  };
 
   return ListenerBehavior;
 }(_widgetBehavior.WidgetBehavior);

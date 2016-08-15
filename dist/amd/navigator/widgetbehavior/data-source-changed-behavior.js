@@ -1,4 +1,4 @@
-define(['exports', './broadcaster-behavior', '../events/widget-event-message'], function (exports, _broadcasterBehavior, _widgetEventMessage) {
+define(['exports', './broadcaster-behavior', '../events/widget-event-message', 'aurelia-event-aggregator', 'aurelia-framework'], function (exports, _broadcasterBehavior, _widgetEventMessage, _aureliaEventAggregator, _aureliaFramework) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -36,15 +36,16 @@ define(['exports', './broadcaster-behavior', '../events/widget-event-message'], 
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = function (_BroadcasterBehavior) {
+  var _dec, _class;
+
+  var DataSourceChangedBehavior = exports.DataSourceChangedBehavior = (_dec = (0, _aureliaFramework.inject)(_aureliaEventAggregator.EventAggregator), _dec(_class = function (_BroadcasterBehavior) {
     _inherits(DataSourceChangedBehavior, _BroadcasterBehavior);
 
-    function DataSourceChangedBehavior(channel, eventAggregator) {
+    function DataSourceChangedBehavior(eventAggregator) {
       _classCallCheck(this, DataSourceChangedBehavior);
 
       var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-      _this.channel = channel;
       _this.eventToAttach = "dataSourceChanged";
       _this._eventAggregator = eventAggregator;
       return _this;
@@ -64,6 +65,14 @@ define(['exports', './broadcaster-behavior', '../events/widget-event-message'], 
       _BroadcasterBehavior.prototype.detach.call(this, dashboard);
     };
 
+    DataSourceChangedBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      _BroadcasterBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    DataSourceChangedBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      _BroadcasterBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+    };
+
     return DataSourceChangedBehavior;
-  }(_broadcasterBehavior.BroadcasterBehavior);
+  }(_broadcasterBehavior.BroadcasterBehavior)) || _class);
 });

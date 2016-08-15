@@ -1,6 +1,7 @@
 'use strict';
 
-System.register(['./authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/dashboardbehavior/drill-down-handle-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './navigator/widgetbehavior/drill-down-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage', './serialization/dashboard-serializer', './serialization/periscope-object-configurator', './serialization/configurable'], function (_export, _context) {
+System.register(['./authorization/permissions-custom-attribute', './authorization/permissions-manager', './cache/cache-manager', './cache/cache-storage', './cache/memory-cache-storage', './config/dashboard-configuration', './data/data-holder', './data/data-source', './data/query', './data/query-expression-evaluator', './data/ast/parsers/ast-parser', './data/ast/parsers/ast-to-javascript-parser', './data/schema/schema-object', './data/schema/providers/schema-provider', './data/schema/providers/static-schema-provider', './data/schema/providers/swagger-schema-provider', './data/service/data-service', './data/service/json-data-service', './data/service/static-json-data-service', './dsl/grammar/grammar-expression', './dsl/grammar/grammar-tree', './dsl/grammar/grammar', './dsl/intellisence-manager', './dsl/parser', './helpers/converters/value-format', './helpers/data-helper', './helpers/guid-helper', './helpers/string-helper', './helpers/url-helper', './http/default-http-client', './infrastructure/dashboard-manager', './infrastructure/datasource-manager', './infrastructure/factory', './layout/dashboards/dashboard-base', './layout/widgets/widget', './layout/widgets/data-source-configurator', './layout/widgets/detailed-view', './layout/widgets/grid', './layout/widgets/chart', './layout/widgets/search-box', './navigator/navigation-history', './navigator/history-step', './navigator/dashboardbehavior/change-route-behavior', './navigator/dashboardbehavior/create-widget-behavior', './navigator/dashboardbehavior/dashboard-behavior', './navigator/dashboardbehavior/manage-navigation-stack-behavior', './navigator/dashboardbehavior/replace-widget-behavior', './navigator/dashboardbehavior/drill-down-handle-behavior', './navigator/events/widget-event-message', './navigator/events/widget-event', './navigator/widgetbehavior/widget-behavior', './navigator/widgetbehavior/listner-behavior', './navigator/widgetbehavior/broadcaster-behavior', './navigator/widgetbehavior/data-activated-behavior', './navigator/widgetbehavior/data-field-selected-behavior', './navigator/widgetbehavior/data-filter-changed-behavior', './navigator/widgetbehavior/data-filter-handle-behavior', './navigator/widgetbehavior/data-selected-behavior', './navigator/widgetbehavior/data-source-changed-behavior', './navigator/widgetbehavior/data-source-handle-behavior', './navigator/widgetbehavior/settings-handle-behavior', './navigator/widgetbehavior/drill-down-behavior', './state/state-discriminator', './state/state-url-parser', './state/storage', './state/user-state-storage', './serialization/dashboard-serializer', './serialization/periscope-object-configurator', './serialization/configurable', './infrastructure/periscope-factory'], function (_export, _context) {
+  var PeriscopeFactory, LayoutWidget, Datasource, JsonDataService, StaticJsonDataService, StaticSchemaProvider, SwaggerSchemaProvider, AstToJavascriptParser, DataActivatedBehavior, DataFieldSelectedBehavior, DataFilterChangedBehavior, DataFilterHandleBehavior, DataSelectedBehavior, DataSourceChangedBehavior, DataSourceHandleBehavior, SettingsHandleBehavior;
   return {
     setters: [function (_authorizationPermissionsCustomAttribute) {
       var _exportObj = {};
@@ -59,6 +60,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj7);
     }, function (_dataDataSource) {
+      Datasource = _dataDataSource.Datasource;
       var _exportObj8 = {};
 
       for (var _key8 in _dataDataSource) {
@@ -91,6 +93,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj11);
     }, function (_dataAstParsersAstToJavascriptParser) {
+      AstToJavascriptParser = _dataAstParsersAstToJavascriptParser.AstToJavascriptParser;
       var _exportObj12 = {};
 
       for (var _key12 in _dataAstParsersAstToJavascriptParser) {
@@ -115,6 +118,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj14);
     }, function (_dataSchemaProvidersStaticSchemaProvider) {
+      StaticSchemaProvider = _dataSchemaProvidersStaticSchemaProvider.StaticSchemaProvider;
       var _exportObj15 = {};
 
       for (var _key15 in _dataSchemaProvidersStaticSchemaProvider) {
@@ -123,6 +127,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj15);
     }, function (_dataSchemaProvidersSwaggerSchemaProvider) {
+      SwaggerSchemaProvider = _dataSchemaProvidersSwaggerSchemaProvider.SwaggerSchemaProvider;
       var _exportObj16 = {};
 
       for (var _key16 in _dataSchemaProvidersSwaggerSchemaProvider) {
@@ -139,6 +144,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj17);
     }, function (_dataServiceJsonDataService) {
+      JsonDataService = _dataServiceJsonDataService.JsonDataService;
       var _exportObj18 = {};
 
       for (var _key18 in _dataServiceJsonDataService) {
@@ -147,6 +153,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj18);
     }, function (_dataServiceStaticJsonDataService) {
+      StaticJsonDataService = _dataServiceStaticJsonDataService.StaticJsonDataService;
       var _exportObj19 = {};
 
       for (var _key19 in _dataServiceStaticJsonDataService) {
@@ -267,6 +274,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj33);
     }, function (_layoutDashboardsDashboardBase) {
+      LayoutWidget = _layoutDashboardsDashboardBase.LayoutWidget;
       var _exportObj34 = {};
 
       for (var _key34 in _layoutDashboardsDashboardBase) {
@@ -427,6 +435,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj53);
     }, function (_navigatorWidgetbehaviorDataActivatedBehavior) {
+      DataActivatedBehavior = _navigatorWidgetbehaviorDataActivatedBehavior.DataActivatedBehavior;
       var _exportObj54 = {};
 
       for (var _key54 in _navigatorWidgetbehaviorDataActivatedBehavior) {
@@ -435,6 +444,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj54);
     }, function (_navigatorWidgetbehaviorDataFieldSelectedBehavior) {
+      DataFieldSelectedBehavior = _navigatorWidgetbehaviorDataFieldSelectedBehavior.DataFieldSelectedBehavior;
       var _exportObj55 = {};
 
       for (var _key55 in _navigatorWidgetbehaviorDataFieldSelectedBehavior) {
@@ -443,6 +453,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj55);
     }, function (_navigatorWidgetbehaviorDataFilterChangedBehavior) {
+      DataFilterChangedBehavior = _navigatorWidgetbehaviorDataFilterChangedBehavior.DataFilterChangedBehavior;
       var _exportObj56 = {};
 
       for (var _key56 in _navigatorWidgetbehaviorDataFilterChangedBehavior) {
@@ -451,6 +462,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj56);
     }, function (_navigatorWidgetbehaviorDataFilterHandleBehavior) {
+      DataFilterHandleBehavior = _navigatorWidgetbehaviorDataFilterHandleBehavior.DataFilterHandleBehavior;
       var _exportObj57 = {};
 
       for (var _key57 in _navigatorWidgetbehaviorDataFilterHandleBehavior) {
@@ -459,6 +471,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj57);
     }, function (_navigatorWidgetbehaviorDataSelectedBehavior) {
+      DataSelectedBehavior = _navigatorWidgetbehaviorDataSelectedBehavior.DataSelectedBehavior;
       var _exportObj58 = {};
 
       for (var _key58 in _navigatorWidgetbehaviorDataSelectedBehavior) {
@@ -467,6 +480,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj58);
     }, function (_navigatorWidgetbehaviorDataSourceChangedBehavior) {
+      DataSourceChangedBehavior = _navigatorWidgetbehaviorDataSourceChangedBehavior.DataSourceChangedBehavior;
       var _exportObj59 = {};
 
       for (var _key59 in _navigatorWidgetbehaviorDataSourceChangedBehavior) {
@@ -475,6 +489,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj59);
     }, function (_navigatorWidgetbehaviorDataSourceHandleBehavior) {
+      DataSourceHandleBehavior = _navigatorWidgetbehaviorDataSourceHandleBehavior.DataSourceHandleBehavior;
       var _exportObj60 = {};
 
       for (var _key60 in _navigatorWidgetbehaviorDataSourceHandleBehavior) {
@@ -483,6 +498,7 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
 
       _export(_exportObj60);
     }, function (_navigatorWidgetbehaviorSettingsHandleBehavior) {
+      SettingsHandleBehavior = _navigatorWidgetbehaviorSettingsHandleBehavior.SettingsHandleBehavior;
       var _exportObj61 = {};
 
       for (var _key61 in _navigatorWidgetbehaviorSettingsHandleBehavior) {
@@ -554,9 +570,34 @@ System.register(['./authorization/permissions-custom-attribute', './authorizatio
       }
 
       _export(_exportObj69);
+    }, function (_infrastructurePeriscopeFactory) {
+      PeriscopeFactory = _infrastructurePeriscopeFactory.PeriscopeFactory;
+      var _exportObj70 = {};
+
+      for (var _key70 in _infrastructurePeriscopeFactory) {
+        if (_key70 !== "default") _exportObj70[_key70] = _infrastructurePeriscopeFactory[_key70];
+      }
+
+      _export(_exportObj70);
     }],
     execute: function () {
       function configure(aurelia) {
+        var pf = aurelia.container.get(PeriscopeFactory);
+        pf.addReference(LayoutWidget);
+        pf.addReference(Datasource);
+        pf.addReference(JsonDataService);
+        pf.addReference(StaticJsonDataService);
+        pf.addReference(StaticSchemaProvider);
+        pf.addReference(SwaggerSchemaProvider);
+        pf.addReference(AstToJavascriptParser);
+        pf.addReference(DataActivatedBehavior);
+        pf.addReference(DataFieldSelectedBehavior);
+        pf.addReference(DataFilterChangedBehavior);
+        pf.addReference(DataFilterHandleBehavior);
+        pf.addReference(DataSelectedBehavior);
+        pf.addReference(DataSourceChangedBehavior);
+        pf.addReference(DataSourceHandleBehavior);
+        pf.addReference(SettingsHandleBehavior);
         aurelia.globalResources("./helpers/converters/value-format", "./authorization/permissions-custom-attribute");
       }
 

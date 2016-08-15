@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['./broadcaster-behavior', '../events/widget-event-message'], function (_export, _context) {
-  var BroadcasterBehavior, WidgetEventMessage, DataFilterChangedBehavior;
+System.register(['./broadcaster-behavior', '../events/widget-event-message', 'aurelia-event-aggregator', 'aurelia-framework'], function (_export, _context) {
+  var BroadcasterBehavior, WidgetEventMessage, EventAggregator, inject, _dec, _class, DataFilterChangedBehavior;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -38,17 +38,20 @@ System.register(['./broadcaster-behavior', '../events/widget-event-message'], fu
       BroadcasterBehavior = _broadcasterBehavior.BroadcasterBehavior;
     }, function (_eventsWidgetEventMessage) {
       WidgetEventMessage = _eventsWidgetEventMessage.WidgetEventMessage;
+    }, function (_aureliaEventAggregator) {
+      EventAggregator = _aureliaEventAggregator.EventAggregator;
+    }, function (_aureliaFramework) {
+      inject = _aureliaFramework.inject;
     }],
     execute: function () {
-      _export('DataFilterChangedBehavior', DataFilterChangedBehavior = function (_BroadcasterBehavior) {
+      _export('DataFilterChangedBehavior', DataFilterChangedBehavior = (_dec = inject(EventAggregator), _dec(_class = function (_BroadcasterBehavior) {
         _inherits(DataFilterChangedBehavior, _BroadcasterBehavior);
 
-        function DataFilterChangedBehavior(channel, eventAggregator) {
+        function DataFilterChangedBehavior(eventAggregator) {
           _classCallCheck(this, DataFilterChangedBehavior);
 
           var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-          _this.channel = channel;
           _this.eventToAttach = "dataFilterChanged";
           _this._eventAggregator = eventAggregator;
           return _this;
@@ -68,8 +71,16 @@ System.register(['./broadcaster-behavior', '../events/widget-event-message'], fu
           _BroadcasterBehavior.prototype.detach.call(this, dashboard);
         };
 
+        DataFilterChangedBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          _BroadcasterBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        DataFilterChangedBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          _BroadcasterBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
+
         return DataFilterChangedBehavior;
-      }(BroadcasterBehavior));
+      }(BroadcasterBehavior)) || _class));
 
       _export('DataFilterChangedBehavior', DataFilterChangedBehavior);
     }

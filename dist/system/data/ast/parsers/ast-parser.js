@@ -1,7 +1,7 @@
 "use strict";
 
-System.register([], function (_export, _context) {
-  var _createClass, AstParser;
+System.register(["./../../../serialization/configurable"], function (_export, _context) {
+  var Configurable, _createClass, AstParser;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -10,7 +10,9 @@ System.register([], function (_export, _context) {
   }
 
   return {
-    setters: [],
+    setters: [function (_serializationConfigurable) {
+      Configurable = _serializationConfigurable.Configurable;
+    }],
     execute: function () {
       _createClass = function () {
         function defineProperties(target, props) {
@@ -41,6 +43,10 @@ System.register([], function (_export, _context) {
         AstParser.prototype.getFilter = function getFilter(astTree) {
           return {};
         };
+
+        AstParser.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {};
+
+        AstParser.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {};
 
         _createClass(AstParser, [{
           key: "type",

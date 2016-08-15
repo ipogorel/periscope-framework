@@ -1,4 +1,4 @@
-define(['exports', './listner-behavior', 'lodash'], function (exports, _listnerBehavior, _lodash) {
+define(['exports', './listner-behavior', 'lodash', 'aurelia-event-aggregator', 'aurelia-framework'], function (exports, _listnerBehavior, _lodash, _aureliaEventAggregator, _aureliaFramework) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -55,18 +55,18 @@ define(['exports', './listner-behavior', 'lodash'], function (exports, _listnerB
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var SettingsHandleBehavior = exports.SettingsHandleBehavior = function (_ListenerBehavior) {
+  var _dec, _class;
+
+  var SettingsHandleBehavior = exports.SettingsHandleBehavior = (_dec = (0, _aureliaFramework.inject)(_aureliaEventAggregator.EventAggregator), _dec(_class = function (_ListenerBehavior) {
     _inherits(SettingsHandleBehavior, _ListenerBehavior);
 
-    function SettingsHandleBehavior(channel, eventAggregator, messageMapper) {
+    function SettingsHandleBehavior(eventAggregator) {
       _classCallCheck(this, SettingsHandleBehavior);
 
       var _this = _possibleConstructorReturn(this, _ListenerBehavior.call(this));
 
-      _this.channel = channel;
       _this._eventAggregator = eventAggregator;
 
-      _this._messageMapper = messageMapper;
       return _this;
     }
 
@@ -88,6 +88,16 @@ define(['exports', './listner-behavior', 'lodash'], function (exports, _listnerB
       if (this.subscription) this.subscription.dispose();
     };
 
+    SettingsHandleBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      configurationInfo.addScript("messageMapper", this.messageMapper);
+      _ListenerBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    SettingsHandleBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      this.messageMapper = configurationInfo.getScript("messageMapper");
+      _ListenerBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+    };
+
     return SettingsHandleBehavior;
-  }(_listnerBehavior.ListenerBehavior);
+  }(_listnerBehavior.ListenerBehavior)) || _class);
 });

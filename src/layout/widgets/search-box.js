@@ -3,10 +3,9 @@ import {Widget} from './widget';
 import {WidgetEvent} from './../../navigator/events/widget-event';
 
 export class SearchBox extends Widget {
-  constructor(settings) {
-    super(settings);
+  constructor() {
+    super();
     this.stateType = "searchBoxState";
-    this.attachBehaviors();
   }
 
   _dataFilterChanged = new WidgetEvent();
@@ -32,4 +31,13 @@ export class SearchBox extends Widget {
     else
       this.searchString = "";
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("searchString", this.searchString);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.searchString = configurationInfo.getValue("searchString");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
 }

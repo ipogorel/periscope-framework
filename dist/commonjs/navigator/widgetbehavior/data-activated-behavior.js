@@ -5,9 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.DataActivatedBehavior = undefined;
 
+var _dec, _class;
+
 var _broadcasterBehavior = require('./broadcaster-behavior');
 
 var _widgetEventMessage = require('../events/widget-event-message');
+
+var _aureliaEventAggregator = require('aurelia-event-aggregator');
+
+var _aureliaFramework = require('aurelia-framework');
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -15,16 +21,16 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var DataActivatedBehavior = exports.DataActivatedBehavior = function (_BroadcasterBehavior) {
+var DataActivatedBehavior = exports.DataActivatedBehavior = (_dec = (0, _aureliaFramework.inject)(_aureliaEventAggregator.EventAggregator), _dec(_class = function (_BroadcasterBehavior) {
   _inherits(DataActivatedBehavior, _BroadcasterBehavior);
 
-  function DataActivatedBehavior(channel, eventAggregator) {
+  function DataActivatedBehavior(eventAggregator) {
     _classCallCheck(this, DataActivatedBehavior);
 
     var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-    _this.channel = channel;
     _this.eventToAttach = "dataActivated";
+
     _this._eventAggregator = eventAggregator;
     return _this;
   }
@@ -44,5 +50,13 @@ var DataActivatedBehavior = exports.DataActivatedBehavior = function (_Broadcast
     _BroadcasterBehavior.prototype.detach.call(this, dashboard);
   };
 
+  DataActivatedBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    _BroadcasterBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+  };
+
+  DataActivatedBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    _BroadcasterBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+  };
+
   return DataActivatedBehavior;
-}(_broadcasterBehavior.BroadcasterBehavior);
+}(_broadcasterBehavior.BroadcasterBehavior)) || _class);

@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-System.register(['./schema-provider'], function (_export, _context) {
+System.register(["./schema-provider"], function (_export, _context) {
   var SchemaProvider, StaticSchemaProvider;
 
   function _classCallCheck(instance, Constructor) {
@@ -38,30 +38,37 @@ System.register(['./schema-provider'], function (_export, _context) {
       SchemaProvider = _schemaProvider.SchemaProvider;
     }],
     execute: function () {
-      _export('StaticSchemaProvider', StaticSchemaProvider = function (_SchemaProvider) {
+      _export("StaticSchemaProvider", StaticSchemaProvider = function (_SchemaProvider) {
         _inherits(StaticSchemaProvider, _SchemaProvider);
 
-        function StaticSchemaProvider(schema) {
+        function StaticSchemaProvider() {
           _classCallCheck(this, StaticSchemaProvider);
 
-          var _this = _possibleConstructorReturn(this, _SchemaProvider.call(this));
-
-          _this._schema = schema;
-          return _this;
+          return _possibleConstructorReturn(this, _SchemaProvider.call(this));
         }
 
         StaticSchemaProvider.prototype.getSchema = function getSchema() {
           var _this2 = this;
 
           return new Promise(function (resolve, reject) {
-            resolve(_this2._schema);
+            resolve(_this2.schema);
           });
+        };
+
+        StaticSchemaProvider.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          configurationInfo.addValue("schema", this.schema);
+          _SchemaProvider.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        StaticSchemaProvider.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          this.schema = configurationInfo.getValue("schema");
+          _SchemaProvider.prototype.restoreConfigurationFrom.call(this, configurationInfo);
         };
 
         return StaticSchemaProvider;
       }(SchemaProvider));
 
-      _export('StaticSchemaProvider', StaticSchemaProvider);
+      _export("StaticSchemaProvider", StaticSchemaProvider);
     }
   };
 });

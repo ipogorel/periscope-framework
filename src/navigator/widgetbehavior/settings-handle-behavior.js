@@ -1,15 +1,18 @@
 import {ListenerBehavior} from './listner-behavior';
 import * as _ from 'lodash';
+import {EventAggregator} from 'aurelia-event-aggregator';
+import {inject} from 'aurelia-framework';
 
+@inject(EventAggregator)
 export class SettingsHandleBehavior extends ListenerBehavior
 {
-  constructor(channel, eventAggregator, messageMapper) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this._eventAggregator = eventAggregator;
 
-    this._messageMapper = messageMapper;
   }
+
+  messageMapper;
 
   attachToWidget(widget){
     super.attachToWidget(widget);
@@ -29,5 +32,14 @@ export class SettingsHandleBehavior extends ListenerBehavior
     super.detach(dashboard);
     if (this.subscription)
       this.subscription.dispose();
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addScript("messageMapper", this.messageMapper);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.messageMapper = configurationInfo.getScript("messageMapper");
+    super.restoreConfigurationFrom(configurationInfo);
   }
 }

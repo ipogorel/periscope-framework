@@ -3,18 +3,18 @@ import {Configurable} from './../../serialization/configurable';
 
 export class Widget extends Configurable{
 
-  constructor(settings) {
+  constructor() {
     super();
     // call method in child class
     //this._settings = settings;
     //this._behaviors = [];
-    _.forOwn(settings, (v, k)=> {
-      if (k=="behavior"){
+    /*_.forOwn(settings, (v, k)=> {
+      if (k=="behaviors"){
         this._unattachedBehaviors = v;
       }
       else
         this[k] = v;
-    });
+    });*/
   }
 
   type;
@@ -23,7 +23,7 @@ export class Widget extends Configurable{
   header;
   minHeight;
   resourceGroup;
-  behavior = [];
+  behaviors = [];
   stateType;
   showHeader;
   dataHolder;
@@ -113,7 +113,7 @@ export class Widget extends Configurable{
     configurationInfo.addValue("dataSource", this.dataSource);
     configurationInfo.addValue("dataFilter", this.dataFilter);
     configurationInfo.addScript("dataMapper", this.dataMapper);
-    configurationInfo.addValue("behavior", this.behavior);
+    configurationInfo.addValue("behaviors", this.behaviors);
 
 
     configurationInfo.addValue("stateStorage", this.stateStorage); // move to constructor
@@ -131,7 +131,7 @@ export class Widget extends Configurable{
     this.dataFilter = configurationInfo.getValue("dataFilter");
     this.dataMapper = configurationInfo.getScript("dataMapper");
 
-    let behaviors = configurationInfo.getScript("behavior");
+    let behaviors = configurationInfo.getValue("behaviors");
     _.forEach(behaviors, b=>{
       b.attachToWidget(this);
     })

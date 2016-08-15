@@ -66,34 +66,39 @@ define(['exports', './schema-provider', 'swagger-client', './../schema-object', 
   var SwaggerSchemaProvider = exports.SwaggerSchemaProvider = function (_SchemaProvider) {
     _inherits(SwaggerSchemaProvider, _SchemaProvider);
 
-    function SwaggerSchemaProvider(definitionUrl, apiName, methodName, modelName) {
+    function SwaggerSchemaProvider() {
       _classCallCheck(this, SwaggerSchemaProvider);
 
-      var _this = _possibleConstructorReturn(this, _SchemaProvider.call(this));
-
-      _this._modelName = modelName;
-      _this._methodName = methodName;
-      _this._apiName = apiName;
-      _this._definitionUrl = definitionUrl;
-      return _this;
+      return _possibleConstructorReturn(this, _SchemaProvider.call(this));
     }
 
     SwaggerSchemaProvider.prototype.getSchema = function getSchema() {
       var self = this;
       return new _swaggerClient2.default({
         url: this._definitionUrl,
-        usePromise: true }).then(function (client) {
+        usePromise: true
+      }).then(function (client) {
         var result = new _schemaObject.Schema();
-        _.forEach(client.apis[self._apiName].apis[self._methodName].parameters, function (p) {
+        _.forEach(client.apis[self.apiName].apis[self.methodName].parameters, function (p) {
           result.parameters.push(p);
         });
-        if (client.definitions[self._modelName]) {
-          _.forOwn(client.definitions[self._modelName].properties, function (value, key) {
+        if (client.definitions[self.modelName]) {
+          _.forOwn(client.definitions[self.modelName].properties, function (value, key) {
             result.fields.push({ field: key, type: value.type });
           });
         }
         return result;
       });
+    };
+
+    SwaggerSchemaProvider.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      configurationInfo.addValue("schema", this.schema);
+      _SchemaProvider.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    SwaggerSchemaProvider.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      this.schema = configurationInfo.getValue("schema");
+      _SchemaProvider.prototype.restoreConfigurationFrom.call(this, configurationInfo);
     };
 
     return SwaggerSchemaProvider;

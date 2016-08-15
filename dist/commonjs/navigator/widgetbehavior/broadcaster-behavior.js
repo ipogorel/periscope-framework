@@ -23,13 +23,21 @@ var BroadcasterBehavior = exports.BroadcasterBehavior = function (_WidgetBehavio
 
     var _this = _possibleConstructorReturn(this, _WidgetBehavior.call(this));
 
-    _this.type = _behaviorType.BehaviorType.broadcaster;
+    _this.behaviortype = _behaviorType.BehaviorType.broadcaster;
     return _this;
   }
 
   BroadcasterBehavior.prototype.attachToWidget = function attachToWidget(widget) {
     if (!widget[this.eventToAttach]) throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
     _WidgetBehavior.prototype.attachToWidget.call(this, widget);
+  };
+
+  BroadcasterBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("channel", this.channel);
+  };
+
+  BroadcasterBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    this.channel = configurationInfo.getValue("channel");
   };
 
   return BroadcasterBehavior;

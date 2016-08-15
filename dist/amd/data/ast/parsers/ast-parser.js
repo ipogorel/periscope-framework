@@ -1,9 +1,10 @@
-define(["exports"], function (exports) {
+define(["exports", "./../../../serialization/configurable"], function (exports, _configurable) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+  exports.AstParser = undefined;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -40,6 +41,10 @@ define(["exports"], function (exports) {
     AstParser.prototype.getFilter = function getFilter(astTree) {
       return {};
     };
+
+    AstParser.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {};
+
+    AstParser.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {};
 
     _createClass(AstParser, [{
       key: "type",

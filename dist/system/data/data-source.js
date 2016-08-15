@@ -1,7 +1,7 @@
 'use strict';
 
-System.register(['lodash', './data-holder'], function (_export, _context) {
-  var _, DataHolder, Datasource, DataSourceConfiguration;
+System.register(['lodash', './data-holder', './../serialization/configurable'], function (_export, _context) {
+  var _, DataHolder, Configurable, Datasource, DataSourceConfiguration;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -9,48 +9,75 @@ System.register(['lodash', './data-holder'], function (_export, _context) {
     }
   }
 
+  function _possibleConstructorReturn(self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  }
+
   return {
     setters: [function (_lodash) {
       _ = _lodash;
     }, function (_dataHolder) {
       DataHolder = _dataHolder.DataHolder;
+    }, function (_serializationConfigurable) {
+      Configurable = _serializationConfigurable.Configurable;
     }],
     execute: function () {
-      _export('Datasource', Datasource = function () {
-        function Datasource(datasourceConfiguration) {
+      _export('Datasource', Datasource = function (_Configurable) {
+        _inherits(Datasource, _Configurable);
+
+        function Datasource() {
           _classCallCheck(this, Datasource);
 
-          this._liveRequest = {};
+          var _this = _possibleConstructorReturn(this, _Configurable.call(this));
 
-          this.name = datasourceConfiguration.name;
-          this.transport = datasourceConfiguration.transport;
-          this.cache = datasourceConfiguration.cache;
+          _this._liveRequest = {};
+          return _this;
         }
 
         Datasource.prototype.getData = function getData(query) {
-          var _this = this;
+          var _this2 = this;
 
-          if (!this.transport && !this.transport.readService) throw "readService is not configured";
+          if (!this.readService) throw "readService is not configured";
 
-          var cacheKey = this.transport.readService.url + query.cacheKey();
+          var cacheKey = this.readService.url + query.cacheKey();
 
           if (!this.cache) {
             return this._doWebRequest(cacheKey, query);
           } else {
             if (this._liveRequest[cacheKey]) {
               this._liveRequest[cacheKey] = this._liveRequest[cacheKey].then(function (l) {
-                return _this._fromCache(cacheKey);
+                return _this2._fromCache(cacheKey);
               }).then(function (data) {
-                return _this._processData(cacheKey, query, data);
+                return _this2._processData(cacheKey, query, data);
               }, function (err) {
-                return _this._doWebRequest(cacheKey, query);
+                return _this2._doWebRequest(cacheKey, query);
               });
               return this._liveRequest[cacheKey];
             }
             try {
               var data = this._fromCache(cacheKey);
               return Promise.resolve(data).then(function (d) {
-                return _this._processData(cacheKey, query, d);
+                return _this2._processData(cacheKey, query, d);
               });
             } catch (ex) {}
             this._liveRequest[cacheKey] = this._doWebRequest(cacheKey, query);
@@ -59,24 +86,24 @@ System.register(['lodash', './data-holder'], function (_export, _context) {
         };
 
         Datasource.prototype.create = function create(entity) {
-          if (!this.transport && !this.transport.createService) throw "createService is not configured";
-          return this.transport.createService.create(entity);
+          if (!this.createService) throw "createService is not configured";
+          return this.createService.create(entity);
         };
 
         Datasource.prototype.update = function update(id, entity) {
-          if (!this.transport && !this.transport.updateService) throw "updateService is not configured";
-          return this.transport.updateService.update(id, entity);
+          if (!this.updateService) throw "updateService is not configured";
+          return this.updateService.update(id, entity);
         };
 
         Datasource.prototype.delete = function _delete(id, entity) {
-          if (!this.transport && !this.transport.deleteService) throw "deleteService is not configured";
-          return this.transport.updateService.delete(entity);
+          if (!this.deleteService) throw "deleteService is not configured";
+          return this.deleteService.delete(entity);
         };
 
         Datasource.prototype._doWebRequest = function _doWebRequest(cacheKey, query) {
-          var _this2 = this;
+          var _this3 = this;
 
-          return this.transport.readService.read({
+          return this.readService.read({
             fields: query.fields,
             filter: query.filter,
             take: query.take,
@@ -84,7 +111,7 @@ System.register(['lodash', './data-holder'], function (_export, _context) {
             sort: query.sort,
             sortDir: query.sortDir
           }).then(function (d) {
-            return _this2._processData(cacheKey, query, d);
+            return _this3._processData(cacheKey, query, d);
           });
         };
 
@@ -112,8 +139,26 @@ System.register(['lodash', './data-holder'], function (_export, _context) {
           }
         };
 
+        Datasource.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          configurationInfo.addValue("name", this.name);
+          configurationInfo.addValue("readService", this.readService);
+          configurationInfo.addValue("updateService", this.updateService);
+          configurationInfo.addValue("createService", this.createService);
+          configurationInfo.addValue("deleteService", this.deleteService);
+          _Configurable.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        Datasource.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          this.name = configurationInfo.getValue("name");
+          this.readService = configurationInfo.getValue("readService");
+          this.updateService = configurationInfo.getValue("updateService");
+          this.createService = configurationInfo.getValue("createService");
+          this.deleteService = configurationInfo.getValue("deleteService");
+          _Configurable.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
+
         return Datasource;
-      }());
+      }(Configurable));
 
       _export('Datasource', Datasource);
 

@@ -4,7 +4,7 @@ import {BehaviorType} from './../behavior-type';
 export class BroadcasterBehavior extends WidgetBehavior {
   constructor(){
     super();
-    this.type = BehaviorType.broadcaster;
+    this.behaviortype = BehaviorType.broadcaster;
   }
 
   eventToAttach;
@@ -13,5 +13,12 @@ export class BroadcasterBehavior extends WidgetBehavior {
     if (!widget[this.eventToAttach])
       throw "widget " + widget.name + " hasn't '" + this.eventToAttach + "' event";
     super.attachToWidget(widget);
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("channel", this.channel);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.channel = configurationInfo.getValue("channel");
   }
 }

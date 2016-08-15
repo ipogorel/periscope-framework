@@ -831,7 +831,35 @@ Object.keys(_configurable).forEach(function (key) {
     }
   });
 });
+
+var _periscopeFactory = require('./infrastructure/periscope-factory');
+
+Object.keys(_periscopeFactory).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _periscopeFactory[key];
+    }
+  });
+});
 exports.configure = configure;
 function configure(aurelia) {
+  var pf = aurelia.container.get(_periscopeFactory.PeriscopeFactory);
+  pf.addReference(_dashboardBase.LayoutWidget);
+  pf.addReference(_dataSource.Datasource);
+  pf.addReference(_jsonDataService.JsonDataService);
+  pf.addReference(_staticJsonDataService.StaticJsonDataService);
+  pf.addReference(_staticSchemaProvider.StaticSchemaProvider);
+  pf.addReference(_swaggerSchemaProvider.SwaggerSchemaProvider);
+  pf.addReference(_astToJavascriptParser.AstToJavascriptParser);
+  pf.addReference(_dataActivatedBehavior.DataActivatedBehavior);
+  pf.addReference(_dataFieldSelectedBehavior.DataFieldSelectedBehavior);
+  pf.addReference(_dataFilterChangedBehavior.DataFilterChangedBehavior);
+  pf.addReference(_dataFilterHandleBehavior.DataFilterHandleBehavior);
+  pf.addReference(_dataSelectedBehavior.DataSelectedBehavior);
+  pf.addReference(_dataSourceChangedBehavior.DataSourceChangedBehavior);
+  pf.addReference(_dataSourceHandleBehavior.DataSourceHandleBehavior);
+  pf.addReference(_settingsHandleBehavior.SettingsHandleBehavior);
   aurelia.globalResources("./helpers/converters/value-format", "./authorization/permissions-custom-attribute");
 }

@@ -65,6 +65,14 @@ var AstToJavascriptParser = exports.AstToJavascriptParser = function (_AstParser
     return result;
   };
 
+  AstToJavascriptParser.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    _AstParser.prototype.persistConfigurationTo.call(this, configurationInfo);
+  };
+
+  AstToJavascriptParser.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    _AstParser.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+  };
+
   _createClass(AstToJavascriptParser, [{
     key: "type",
     get: function get() {

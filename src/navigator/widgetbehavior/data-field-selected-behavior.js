@@ -1,10 +1,12 @@
 import {BroadcasterBehavior} from './broadcaster-behavior';
 import {WidgetEventMessage} from '../events/widget-event-message';
+import {EventAggregator} from 'aurelia-event-aggregator';
+import {inject} from 'aurelia-framework';
 
+@inject(EventAggregator)
 export class DataFieldSelectedBehavior extends BroadcasterBehavior {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataFieldSelected";
     this._eventAggregator = eventAggregator;
   }
@@ -24,6 +26,13 @@ export class DataFieldSelectedBehavior extends BroadcasterBehavior {
 
   detach(){
     super.detach(dashboard);
+  }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
   }
 }
 

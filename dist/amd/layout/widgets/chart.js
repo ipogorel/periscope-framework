@@ -39,15 +39,27 @@ define(['exports', 'aurelia-framework', './widget'], function (exports, _aurelia
   var Chart = exports.Chart = function (_Widget) {
     _inherits(Chart, _Widget);
 
-    function Chart(settings) {
+    function Chart() {
       _classCallCheck(this, Chart);
 
-      var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
+      var _this = _possibleConstructorReturn(this, _Widget.call(this));
 
       _this.stateType = "chartState";
       _this.attachBehaviors();
       return _this;
     }
+
+    Chart.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      configurationInfo.addValue("categoriesField", this.categoriesField);
+      configurationInfo.addValue("seriesDefaults", this.seriesDefaults);
+      _Widget.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    Chart.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      this.categoriesField = configurationInfo.getValue("categoriesField");
+      this.seriesDefaults = configurationInfo.getValue("seriesDefaults");
+      _Widget.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+    };
 
     return Chart;
   }(_widget.Widget);

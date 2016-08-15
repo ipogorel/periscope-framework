@@ -1,4 +1,4 @@
-define(['exports', './broadcaster-behavior', '../events/widget-event-message'], function (exports, _broadcasterBehavior, _widgetEventMessage) {
+define(['exports', './broadcaster-behavior', '../events/widget-event-message', 'aurelia-event-aggregator', 'aurelia-framework'], function (exports, _broadcasterBehavior, _widgetEventMessage, _aureliaEventAggregator, _aureliaFramework) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -36,15 +36,16 @@ define(['exports', './broadcaster-behavior', '../events/widget-event-message'], 
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = function (_BroadcasterBehavior) {
+  var _dec, _class;
+
+  var DataFieldSelectedBehavior = exports.DataFieldSelectedBehavior = (_dec = (0, _aureliaFramework.inject)(_aureliaEventAggregator.EventAggregator), _dec(_class = function (_BroadcasterBehavior) {
     _inherits(DataFieldSelectedBehavior, _BroadcasterBehavior);
 
-    function DataFieldSelectedBehavior(channel, eventAggregator) {
+    function DataFieldSelectedBehavior(eventAggregator) {
       _classCallCheck(this, DataFieldSelectedBehavior);
 
       var _this = _possibleConstructorReturn(this, _BroadcasterBehavior.call(this));
 
-      _this.channel = channel;
       _this.eventToAttach = "dataFieldSelected";
       _this._eventAggregator = eventAggregator;
       return _this;
@@ -66,6 +67,14 @@ define(['exports', './broadcaster-behavior', '../events/widget-event-message'], 
       _BroadcasterBehavior.prototype.detach.call(this, dashboard);
     };
 
+    DataFieldSelectedBehavior.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      _BroadcasterBehavior.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    DataFieldSelectedBehavior.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      _BroadcasterBehavior.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+    };
+
     return DataFieldSelectedBehavior;
-  }(_broadcasterBehavior.BroadcasterBehavior);
+  }(_broadcasterBehavior.BroadcasterBehavior)) || _class);
 });

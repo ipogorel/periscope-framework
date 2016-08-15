@@ -1,20 +1,18 @@
 import * as _ from 'lodash';
 import { DataHolder } from './data-holder';
+import { Configurable } from './../serialization/configurable';
 
-export let Datasource = class Datasource {
+export let Datasource = class Datasource extends Configurable {
 
-  constructor(datasourceConfiguration) {
+  constructor() {
+    super();
     this._liveRequest = {};
-
-    this.name = datasourceConfiguration.name;
-    this.transport = datasourceConfiguration.transport;
-    this.cache = datasourceConfiguration.cache;
   }
 
   getData(query) {
-    if (!this.transport && !this.transport.readService) throw "readService is not configured";
+    if (!this.readService) throw "readService is not configured";
 
-    let cacheKey = this.transport.readService.url + query.cacheKey();
+    let cacheKey = this.readService.url + query.cacheKey();
 
     if (!this.cache) {
       return this._doWebRequest(cacheKey, query);
@@ -33,22 +31,22 @@ export let Datasource = class Datasource {
   }
 
   create(entity) {
-    if (!this.transport && !this.transport.createService) throw "createService is not configured";
-    return this.transport.createService.create(entity);
+    if (!this.createService) throw "createService is not configured";
+    return this.createService.create(entity);
   }
 
   update(id, entity) {
-    if (!this.transport && !this.transport.updateService) throw "updateService is not configured";
-    return this.transport.updateService.update(id, entity);
+    if (!this.updateService) throw "updateService is not configured";
+    return this.updateService.update(id, entity);
   }
 
   delete(id, entity) {
-    if (!this.transport && !this.transport.deleteService) throw "deleteService is not configured";
-    return this.transport.updateService.delete(entity);
+    if (!this.deleteService) throw "deleteService is not configured";
+    return this.deleteService.delete(entity);
   }
 
   _doWebRequest(cacheKey, query) {
-    return this.transport.readService.read({
+    return this.readService.read({
       fields: query.fields,
       filter: query.filter,
       take: query.take,
@@ -83,6 +81,22 @@ export let Datasource = class Datasource {
     }
   }
 
+  persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("readService", this.readService);
+    configurationInfo.addValue("updateService", this.updateService);
+    configurationInfo.addValue("createService", this.createService);
+    configurationInfo.addValue("deleteService", this.deleteService);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo) {
+    this.name = configurationInfo.getValue("name");
+    this.readService = configurationInfo.getValue("readService");
+    this.updateService = configurationInfo.getValue("updateService");
+    this.createService = configurationInfo.getValue("createService");
+    this.deleteService = configurationInfo.getValue("deleteService");
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 };
 
 export let DataSourceConfiguration = class DataSourceConfiguration {};

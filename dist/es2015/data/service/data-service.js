@@ -1,17 +1,11 @@
 import { EmptySchemaProvider } from './../schema/providers/empty-schema-provider';
-export let DataService = class DataService {
+import { Configurable } from './../../serialization/configurable';
+
+export let DataService = class DataService extends Configurable {
   constructor() {
+    super();
     this.url = "";
     this.schemaProvider = new EmptySchemaProvider();
-  }
-
-  configure(configuration) {
-    this.url = configuration.url ? configuration.url : this.url;
-    this.schemaProvider = configuration.schemaProvider ? configuration.schemaProvider : this.schemaProvider;
-    this.filterParser = configuration.filterParser ? configuration.filterParser : this.filterParser;
-    this.totalMapper = configuration.totalMapper ? configuration.totalMapper : this.totalMapper;
-    this.dataMapper = configuration.dataMapper ? configuration.dataMapper : this.dataMapper;
-    this.httpClient = configuration.httpClient ? configuration.httpClient : this.httpClient;
   }
 
   getSchema() {
@@ -22,43 +16,26 @@ export let DataService = class DataService {
   update(id, entity) {}
   delete(id) {}
 
-};
+  persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("url", this.url);
+    configurationInfo.addValue("schemaProvider", this.schemaProvider);
+    configurationInfo.addValue("filterParser", this.filterParser);
+    configurationInfo.addScript("totalMapper", this.totalMapper);
+    configurationInfo.addScript("dataMapper", this.dataMapper);
 
-export let DataServiceConfiguration = class DataServiceConfiguration {
+    configurationInfo.addValue("httpClient", this.httpClient);
 
-  constructor(configuration) {
-    if (configuration) {
-      this._url = configuration.url;
-      this._schemaProvider = configuration.schemaProvider;
-      this._totalMapper = configuration.totalMapper;
-      this._filterParser = configuration.filterParser;
-      this._dataMapper = configuration.dataMapper;
-      this._httpClient = configuration.httpClient;
-    }
+    super.persistConfigurationTo(configurationInfo);
   }
+  restoreConfigurationFrom(configurationInfo) {
+    this.url = configurationInfo.getValue("url");
+    this.schemaProvider = configurationInfo.getValue("schemaProvider");
+    this.filterParser = configurationInfo.getValue("filterParser");
+    this.totalMapper = configurationInfo.getScript("totalMapper");
+    this.dataMapper = configurationInfo.getScript("dataMapper");
 
-  get url() {
-    return this._url;
+    this.httpClient = configurationInfo.getValue("httpClient");
+
+    super.restoreConfigurationFrom(configurationInfo);
   }
-
-  get httpClient() {
-    return this._httpClient;
-  }
-
-  get schemaProvider() {
-    return this._schemaProvider;
-  }
-
-  get totalMapper() {
-    return this._totalMapper;
-  }
-
-  get filterParser() {
-    return this._filterParser;
-  }
-
-  get dataMapper() {
-    return this._dataMapper;
-  }
-
 };

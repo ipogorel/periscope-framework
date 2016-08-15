@@ -41,6 +41,13 @@ export let DrillDownBehavior = class DrillDownBehavior extends BroadcasterBehavi
   detach() {
     super.detach(dashboard);
   }
+
+  persistConfigurationTo(configurationInfo) {
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo) {
+    super.restoreConfigurationFrom(configurationInfo);
+  }
 };
 
 export let DrillDownBehaviorConfiguration = class DrillDownBehaviorConfiguration {};

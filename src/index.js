@@ -84,6 +84,44 @@ export * from './serialization/dashboard-serializer';
 export * from './serialization/periscope-object-configurator';
 export * from './serialization/configurable';
 
+export * from './infrastructure/periscope-factory';
+
+import {PeriscopeFactory} from './infrastructure/periscope-factory';
+import {LayoutWidget} from './layout/dashboards/dashboard-base';
+import {Datasource} from './data/data-source';
+import {JsonDataService}  from './data/service/json-data-service';
+import {StaticJsonDataService}  from './data/service/static-json-data-service';
+import {StaticSchemaProvider}   from './data/schema/providers/static-schema-provider';
+import {SwaggerSchemaProvider}   from './data/schema/providers/swagger-schema-provider';
+import {AstToJavascriptParser}   from './data/ast/parsers/ast-to-javascript-parser';
+
+
+import {DataActivatedBehavior} from './navigator/widgetbehavior/data-activated-behavior';
+import {DataFieldSelectedBehavior} from './navigator/widgetbehavior/data-field-selected-behavior';
+import {DataFilterChangedBehavior} from './navigator/widgetbehavior/data-filter-changed-behavior';
+import {DataFilterHandleBehavior} from './navigator/widgetbehavior/data-filter-handle-behavior';
+import {DataSelectedBehavior} from './navigator/widgetbehavior/data-selected-behavior';
+import {DataSourceChangedBehavior} from './navigator/widgetbehavior/data-source-changed-behavior';
+import {DataSourceHandleBehavior} from './navigator/widgetbehavior/data-source-handle-behavior';
+import {SettingsHandleBehavior} from './navigator/widgetbehavior/settings-handle-behavior';
+
+
 export function configure(aurelia) {
+  let pf = aurelia.container.get(PeriscopeFactory);
+  pf.addReference(LayoutWidget);
+  pf.addReference(Datasource);
+  pf.addReference(JsonDataService);
+  pf.addReference(StaticJsonDataService);
+  pf.addReference(StaticSchemaProvider);
+  pf.addReference(SwaggerSchemaProvider);
+  pf.addReference(AstToJavascriptParser);
+  pf.addReference(DataActivatedBehavior);
+  pf.addReference(DataFieldSelectedBehavior);
+  pf.addReference(DataFilterChangedBehavior);
+  pf.addReference(DataFilterHandleBehavior);
+  pf.addReference(DataSelectedBehavior);
+  pf.addReference(DataSourceChangedBehavior);
+  pf.addReference(DataSourceHandleBehavior);
+  pf.addReference(SettingsHandleBehavior);
   aurelia.globalResources("./helpers/converters/value-format","./authorization/permissions-custom-attribute");
 }

@@ -18,15 +18,24 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var DetailedView = exports.DetailedView = function (_Widget) {
   _inherits(DetailedView, _Widget);
 
-  function DetailedView(settings) {
+  function DetailedView() {
     _classCallCheck(this, DetailedView);
 
-    var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
+    var _this = _possibleConstructorReturn(this, _Widget.call(this));
 
     _this.stateType = "detailedViewState";
-    _this.attachBehaviors();
     return _this;
   }
+
+  DetailedView.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("fields", this.fields);
+    _Widget.prototype.persistConfigurationTo.call(this, configurationInfo);
+  };
+
+  DetailedView.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    this.fields = configurationInfo.getValue("fields");
+    _Widget.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+  };
 
   return DetailedView;
 }(_widget.Widget);

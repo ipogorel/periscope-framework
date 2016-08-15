@@ -173,13 +173,22 @@ export let DashboardBase = class DashboardBase extends Configurable {
     configurationInfo.addValue("layout", this.layout);
     configurationInfo.addValue("behaviors", this.behaviors);
   }
+
   restoreConfigurationFrom(configurationInfo) {
     this.name = configurationInfo.getValue("name");
     this.resourceGroup = configurationInfo.getValue("resourceGroup");
     this.title = configurationInfo.getValue("title");
-
     this.route = configurationInfo.getValue("route");
-    this.layout = configurationInfo.getValue("layout");
+
+    let layout = configurationInfo.getValue("layout");
+    _.forEach(layout, lw => {
+      this.addWidget(lw.widget, {
+        sizeX: lw.sizeX,
+        sizeY: lw.sizeY,
+        col: lw.col,
+        row: lw.row
+      });
+    });
 
     let behaviors = configurationInfo.getValue("behaviors");
     _.forEach(behaviors, b => {
@@ -223,10 +232,10 @@ export let LayoutWidget = (_dec = computedFrom('navigationStack'), (_class2 = cl
   }
 
   restoreConfigurationFrom(configurationInfo) {
-    this.sizeX = configurationInfo.getInt("sizeX");
-    this.sizeY = configurationInfo.getInt("sizeY");
-    this.col = configurationInfo.getInt("col");
-    this.row = configurationInfo.getInt("row");
+    this.sizeX = configurationInfo.getValue("sizeX");
+    this.sizeY = configurationInfo.getValue("sizeY");
+    this.col = configurationInfo.getValue("col");
+    this.row = configurationInfo.getValue("row");
     this.widget = configurationInfo.getValue("widget");
   }
 }, (_applyDecoratedDescriptor(_class2.prototype, 'hasNavStack', [_dec], Object.getOwnPropertyDescriptor(_class2.prototype, 'hasNavStack'), _class2.prototype)), _class2));

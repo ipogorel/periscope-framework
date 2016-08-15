@@ -1,11 +1,13 @@
 import {BroadcasterBehavior} from './broadcaster-behavior';
 import {WidgetEventMessage} from '../events/widget-event-message';
+import {EventAggregator} from 'aurelia-event-aggregator';
+import {inject} from 'aurelia-framework';
 
+@inject(EventAggregator)
 export class DataSourceChangedBehavior extends BroadcasterBehavior
 {
-  constructor(channel, eventAggregator) {
+  constructor(eventAggregator) {
     super();
-    this.channel = channel;
     this.eventToAttach = "dataSourceChanged";
     this._eventAggregator = eventAggregator;
   }
@@ -23,5 +25,12 @@ export class DataSourceChangedBehavior extends BroadcasterBehavior
 
   detach(){
     super.detach(dashboard);
+  }
+
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
   }
 }

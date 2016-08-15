@@ -1,7 +1,7 @@
-"use strict";
+'use strict';
 
-System.register(["./../schema/providers/empty-schema-provider"], function (_export, _context) {
-  var EmptySchemaProvider, _createClass, DataService, DataServiceConfiguration;
+System.register(['./../schema/providers/empty-schema-provider', './../../serialization/configurable'], function (_export, _context) {
+  var EmptySchemaProvider, Configurable, DataService;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -9,45 +9,49 @@ System.register(["./../schema/providers/empty-schema-provider"], function (_expo
     }
   }
 
+  function _possibleConstructorReturn(self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  }
+
   return {
     setters: [function (_schemaProvidersEmptySchemaProvider) {
       EmptySchemaProvider = _schemaProvidersEmptySchemaProvider.EmptySchemaProvider;
+    }, function (_serializationConfigurable) {
+      Configurable = _serializationConfigurable.Configurable;
     }],
     execute: function () {
-      _createClass = function () {
-        function defineProperties(target, props) {
-          for (var i = 0; i < props.length; i++) {
-            var descriptor = props[i];
-            descriptor.enumerable = descriptor.enumerable || false;
-            descriptor.configurable = true;
-            if ("value" in descriptor) descriptor.writable = true;
-            Object.defineProperty(target, descriptor.key, descriptor);
-          }
-        }
+      _export('DataService', DataService = function (_Configurable) {
+        _inherits(DataService, _Configurable);
 
-        return function (Constructor, protoProps, staticProps) {
-          if (protoProps) defineProperties(Constructor.prototype, protoProps);
-          if (staticProps) defineProperties(Constructor, staticProps);
-          return Constructor;
-        };
-      }();
-
-      _export("DataService", DataService = function () {
         function DataService() {
           _classCallCheck(this, DataService);
 
-          this.url = "";
-          this.schemaProvider = new EmptySchemaProvider();
-        }
+          var _this = _possibleConstructorReturn(this, _Configurable.call(this));
 
-        DataService.prototype.configure = function configure(configuration) {
-          this.url = configuration.url ? configuration.url : this.url;
-          this.schemaProvider = configuration.schemaProvider ? configuration.schemaProvider : this.schemaProvider;
-          this.filterParser = configuration.filterParser ? configuration.filterParser : this.filterParser;
-          this.totalMapper = configuration.totalMapper ? configuration.totalMapper : this.totalMapper;
-          this.dataMapper = configuration.dataMapper ? configuration.dataMapper : this.dataMapper;
-          this.httpClient = configuration.httpClient ? configuration.httpClient : this.httpClient;
-        };
+          _this.url = "";
+          _this.schemaProvider = new EmptySchemaProvider();
+          return _this;
+        }
 
         DataService.prototype.getSchema = function getSchema() {
           return this.schemaProvider.getSchema();
@@ -61,61 +65,34 @@ System.register(["./../schema/providers/empty-schema-provider"], function (_expo
 
         DataService.prototype.delete = function _delete(id) {};
 
+        DataService.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+          configurationInfo.addValue("url", this.url);
+          configurationInfo.addValue("schemaProvider", this.schemaProvider);
+          configurationInfo.addValue("filterParser", this.filterParser);
+          configurationInfo.addScript("totalMapper", this.totalMapper);
+          configurationInfo.addScript("dataMapper", this.dataMapper);
+
+          configurationInfo.addValue("httpClient", this.httpClient);
+
+          _Configurable.prototype.persistConfigurationTo.call(this, configurationInfo);
+        };
+
+        DataService.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+          this.url = configurationInfo.getValue("url");
+          this.schemaProvider = configurationInfo.getValue("schemaProvider");
+          this.filterParser = configurationInfo.getValue("filterParser");
+          this.totalMapper = configurationInfo.getScript("totalMapper");
+          this.dataMapper = configurationInfo.getScript("dataMapper");
+
+          this.httpClient = configurationInfo.getValue("httpClient");
+
+          _Configurable.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+        };
+
         return DataService;
-      }());
+      }(Configurable));
 
-      _export("DataService", DataService);
-
-      _export("DataServiceConfiguration", DataServiceConfiguration = function () {
-        function DataServiceConfiguration(configuration) {
-          _classCallCheck(this, DataServiceConfiguration);
-
-          if (configuration) {
-            this._url = configuration.url;
-            this._schemaProvider = configuration.schemaProvider;
-            this._totalMapper = configuration.totalMapper;
-            this._filterParser = configuration.filterParser;
-            this._dataMapper = configuration.dataMapper;
-            this._httpClient = configuration.httpClient;
-          }
-        }
-
-        _createClass(DataServiceConfiguration, [{
-          key: "url",
-          get: function get() {
-            return this._url;
-          }
-        }, {
-          key: "httpClient",
-          get: function get() {
-            return this._httpClient;
-          }
-        }, {
-          key: "schemaProvider",
-          get: function get() {
-            return this._schemaProvider;
-          }
-        }, {
-          key: "totalMapper",
-          get: function get() {
-            return this._totalMapper;
-          }
-        }, {
-          key: "filterParser",
-          get: function get() {
-            return this._filterParser;
-          }
-        }, {
-          key: "dataMapper",
-          get: function get() {
-            return this._dataMapper;
-          }
-        }]);
-
-        return DataServiceConfiguration;
-      }());
-
-      _export("DataServiceConfiguration", DataServiceConfiguration);
+      _export('DataService', DataService);
     }
   };
 });

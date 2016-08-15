@@ -3,15 +3,9 @@ import { Configurable } from './../../serialization/configurable';
 
 export let Widget = class Widget extends Configurable {
 
-  constructor(settings) {
+  constructor() {
     super();
-    this.behavior = [];
-
-    _.forOwn(settings, (v, k) => {
-      if (k == "behavior") {
-        this._unattachedBehaviors = v;
-      } else this[k] = v;
-    });
+    this.behaviors = [];
   }
 
   get self() {
@@ -76,6 +70,7 @@ export let Widget = class Widget extends Configurable {
     configurationInfo.addValue("dataSource", this.dataSource);
     configurationInfo.addValue("dataFilter", this.dataFilter);
     configurationInfo.addScript("dataMapper", this.dataMapper);
+    configurationInfo.addValue("behaviors", this.behaviors);
 
     configurationInfo.addValue("stateStorage", this.stateStorage);
   }
@@ -91,6 +86,11 @@ export let Widget = class Widget extends Configurable {
     this.dataSource = configurationInfo.getValue("dataSource");
     this.dataFilter = configurationInfo.getValue("dataFilter");
     this.dataMapper = configurationInfo.getScript("dataMapper");
+
+    let behaviors = configurationInfo.getValue("behaviors");
+    _.forEach(behaviors, b => {
+      b.attachToWidget(this);
+    });
 
     this.stateStorage = configurationInfo.getValue("stateStorage");
   }

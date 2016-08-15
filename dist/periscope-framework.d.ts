@@ -21,6 +21,13 @@ declare module 'periscope-framework' {
   import {
     Router
   } from 'aurelia-router';
+  import {
+    Container,
+    NewInstance
+  } from 'aurelia-dependency-injection';
+  import {
+    EventAggregator
+  } from 'aurelia-event-aggregator';
   import Swagger from 'swagger-client';
   export class PermissionsCustomAttribute {
     constructor(element: any, permissionsManager: any);
@@ -75,27 +82,44 @@ declare module 'periscope-framework' {
   export class DashboardConfiguration {
     invoke(): any;
   }
+  export class IntellisenceManager {
+    constructor(parser: any, dataSource: any, availableFields: any);
+    populate(searchStr: any, lastWord: any): any;
+  }
+  export class ExpressionParser {
+    constructor(grammarText: any);
+    parse(searchString: any): any;
+    validate(searchString: any): any;
+  }
   export class DataHolder {
     constructor();
     data: any;
     total: any;
     query: any;
   }
-  export class Datasource {
-    constructor(datasourceConfiguration: any);
+  export class Datasource extends Configurable {
+    constructor();
     name: any;
-    transport: any;
-    cacheManager: any;
+    readService: any;
+    updateService: any;
+    createService: any;
+    deleteService: any;
+    cache: any;
     _liveRequest: any;
     getData(query: any): any;
     create(entity: any): any;
     update(id: any, entity: any): any;
     delete(id: any, entity: any): any;
+    persistConfigurationTo(configurationInfo: any): any;
+    restoreConfigurationFrom(configurationInfo: any): any;
   }
   export class DataSourceConfiguration {
     cache: any;
-    transport: any;
     name: any;
+    readService: any;
+    updateService: any;
+    createService: any;
+    deleteService: any;
   }
   export class QueryExpressionEvaluator {
     evaluate(data: any, searchExpression: any): any;
@@ -139,15 +163,6 @@ declare module 'periscope-framework' {
     static queryToObject(queryParam: any): any;
     static getParameterByName(name: any, url: any): any;
   }
-  export class IntellisenceManager {
-    constructor(parser: any, dataSource: any, availableFields: any);
-    populate(searchStr: any, lastWord: any): any;
-  }
-  export class ExpressionParser {
-    constructor(grammarText: any);
-    parse(searchString: any): any;
-    validate(searchString: any): any;
-  }
   export class DefaultHttpClient extends HttpClient {
     constructor();
   }
@@ -169,6 +184,11 @@ declare module 'periscope-framework' {
     constructor(Type: any);
     get(container: any): any;
     static of(Type: any): any;
+  }
+  export class PeriscopeFactory {
+    constructor();
+    addReference(type: any): any;
+    createObject(typeName: any): any;
   }
   export class BehaviorType {
     static listener: any;
@@ -240,31 +260,36 @@ declare module 'periscope-framework' {
     clearAll(): any;
     createKey(namespace: any, key: any): any;
   }
+  export class GrammarExpression extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class GrammarTree extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class Grammar {
+    text: any;
+    getGrammar(): any;
+  }
   export class Schema {
     constructor();
   }
-  export class DataService {
+  export class DataService extends Configurable {
+    constructor();
     url: any;
     schemaProvider: any;
     filterParser: any;
     totalMapper: any;
     dataMapper: any;
     httpClient: any;
-    configure(configuration: any): any;
     getSchema(): any;
     read(options: any): any;
     create(entity: any): any;
     update(id: any, entity: any): any;
     delete(id: any): any;
-  }
-  export class DataServiceConfiguration {
-    constructor(configuration: any);
-    url: any;
-    httpClient: any;
-    schemaProvider: any;
-    totalMapper: any;
-    filterParser: any;
-    dataMapper: any;
+    persistConfigurationTo(configurationInfo: any): any;
+    restoreConfigurationFrom(configurationInfo: any): any;
   }
   export class JsonDataService extends DataService {
     _cache: any;

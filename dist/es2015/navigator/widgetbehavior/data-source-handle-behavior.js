@@ -1,9 +1,12 @@
-import { ListenerBehavior } from './listner-behavior';
-export let DataSourceHandleBehavior = class DataSourceHandleBehavior extends ListenerBehavior {
-  constructor(channel, eventAggregator) {
-    super();
-    this.channel = channel;
+var _dec, _class;
 
+import { ListenerBehavior } from './listner-behavior';
+import { EventAggregator } from 'aurelia-event-aggregator';
+import { inject } from 'aurelia-framework';
+
+export let DataSourceHandleBehavior = (_dec = inject(EventAggregator), _dec(_class = class DataSourceHandleBehavior extends ListenerBehavior {
+  constructor(eventAggregator) {
+    super();
     this._eventAggregator = eventAggregator;
   }
 
@@ -20,4 +23,11 @@ export let DataSourceHandleBehavior = class DataSourceHandleBehavior extends Lis
     super.detach(dashboard);
     if (this.subscription) this.subscription.dispose();
   }
-};
+
+  persistConfigurationTo(configurationInfo) {
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo) {
+    super.restoreConfigurationFrom(configurationInfo);
+  }
+}) || _class);

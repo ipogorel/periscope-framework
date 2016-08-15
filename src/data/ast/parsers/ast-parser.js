@@ -1,4 +1,6 @@
-export class AstParser{
+import {Configurable} from './../../../serialization/configurable';
+
+export class AstParser {
   constructor(){
     this._clientSide = "clientSide";
     this._serverSide = "serverSide";
@@ -7,6 +9,8 @@ export class AstParser{
   getFilter(astTree){
     return {};
   }
+  persistConfigurationTo(configurationInfo){}
+  restoreConfigurationFrom(configurationInfo){}
 }
 
 

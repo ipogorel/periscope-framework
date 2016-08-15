@@ -57,15 +57,14 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
   var SearchBox = exports.SearchBox = function (_Widget) {
     _inherits(SearchBox, _Widget);
 
-    function SearchBox(settings) {
+    function SearchBox() {
       _classCallCheck(this, SearchBox);
 
-      var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
+      var _this = _possibleConstructorReturn(this, _Widget.call(this));
 
       _this._dataFilterChanged = new _widgetEvent.WidgetEvent();
 
       _this.stateType = "searchBoxState";
-      _this.attachBehaviors();
       return _this;
     }
 
@@ -76,6 +75,16 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
     SearchBox.prototype.restoreState = function restoreState() {
       var s = this.getState();
       if (s) this.searchString = s;else this.searchString = "";
+    };
+
+    SearchBox.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      configurationInfo.addValue("searchString", this.searchString);
+      _Widget.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    SearchBox.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      this.searchString = configurationInfo.getValue("searchString");
+      _Widget.prototype.restoreConfigurationFrom.call(this, configurationInfo);
     };
 
     _createClass(SearchBox, [{

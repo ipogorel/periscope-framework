@@ -28,7 +28,6 @@ var DataSourceConfigurator = exports.DataSourceConfigurator = function (_Widget)
     _this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
     _this.stateType = "dataSourceConfiguratorState";
     _this._dataSourceChanged = new _widgetEvent.WidgetEvent();
-    _this.attachBehaviors();
     return _this;
   }
 

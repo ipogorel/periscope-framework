@@ -69,7 +69,6 @@ System.register(['./widget', './../../navigator/events/widget-event'], function 
           _this.dataSourceToConfigurate = settings.dataSourceToConfigurate;
           _this.stateType = "dataSourceConfiguratorState";
           _this._dataSourceChanged = new WidgetEvent();
-          _this.attachBehaviors();
           return _this;
         }
 

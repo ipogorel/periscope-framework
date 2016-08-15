@@ -1,5 +1,6 @@
 import {resolver} from 'aurelia-framework';
 
+
 @resolver
 export class Factory{
   constructor(Type){

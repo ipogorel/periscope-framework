@@ -65,4 +65,11 @@ export class AstToJavascriptParser extends AstParser{
     return result;
   }
 
+  persistConfigurationTo(configurationInfo){
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    super.restoreConfigurationFrom(configurationInfo);
+  }
+
 }

@@ -3,10 +3,9 @@ import {Widget} from './widget';
 import {WidgetEvent} from './../../navigator/events/widget-event';
 
 export class Grid extends Widget {
-  constructor(settings) {
-    super(settings);
+  constructor() {
+    super();
     this.stateType = "gridState";
-    this.attachBehaviors();
   }
 
   _dataSelected = new WidgetEvent();
@@ -51,4 +50,21 @@ export class Grid extends Widget {
     if (s)
       this.columns = s.columns;
   }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("columns", this.columns);
+    configurationInfo.addValue("navigatable", this.navigatable);
+    configurationInfo.addValue("autoGenerateColumns", this.autoGenerateColumns);
+    configurationInfo.addValue("pageSize", this.pageSize);
+    configurationInfo.addValue("group", this.group);
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.columns = configurationInfo.getValue("columns");
+    this.navigatable = configurationInfo.getBool("navigatable");
+    this.autoGenerateColumns = configurationInfo.getBool("autoGenerateColumns");
+    this.pageSize = configurationInfo.getInt("pageSize");
+    this.group = configurationInfo.getValue("group");
+    super.restoreConfigurationFrom(configurationInfo);
+  };
 }

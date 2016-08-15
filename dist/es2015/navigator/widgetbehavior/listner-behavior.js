@@ -3,6 +3,13 @@ import { BehaviorType } from './../behavior-type';
 export let ListenerBehavior = class ListenerBehavior extends WidgetBehavior {
   constructor() {
     super();
-    this.type = BehaviorType.listener;
+    this.behaviortype = BehaviorType.listener;
+  }
+
+  persistConfigurationTo(configurationInfo) {
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo) {
+    super.restoreConfigurationFrom(configurationInfo);
   }
 };

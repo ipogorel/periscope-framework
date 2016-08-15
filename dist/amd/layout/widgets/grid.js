@@ -57,17 +57,16 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
   var Grid = exports.Grid = function (_Widget) {
     _inherits(Grid, _Widget);
 
-    function Grid(settings) {
+    function Grid() {
       _classCallCheck(this, Grid);
 
-      var _this = _possibleConstructorReturn(this, _Widget.call(this, settings));
+      var _this = _possibleConstructorReturn(this, _Widget.call(this));
 
       _this._dataSelected = new _widgetEvent.WidgetEvent();
       _this._dataActivated = new _widgetEvent.WidgetEvent();
       _this._dataFieldSelected = new _widgetEvent.WidgetEvent();
 
       _this.stateType = "gridState";
-      _this.attachBehaviors();
       return _this;
     }
 
@@ -78,6 +77,24 @@ define(['exports', 'aurelia-framework', './widget', './../../navigator/events/wi
     Grid.prototype.restoreState = function restoreState() {
       var s = this.getState();
       if (s) this.columns = s.columns;
+    };
+
+    Grid.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+      configurationInfo.addValue("columns", this.columns);
+      configurationInfo.addValue("navigatable", this.navigatable);
+      configurationInfo.addValue("autoGenerateColumns", this.autoGenerateColumns);
+      configurationInfo.addValue("pageSize", this.pageSize);
+      configurationInfo.addValue("group", this.group);
+      _Widget.prototype.persistConfigurationTo.call(this, configurationInfo);
+    };
+
+    Grid.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+      this.columns = configurationInfo.getValue("columns");
+      this.navigatable = configurationInfo.getBool("navigatable");
+      this.autoGenerateColumns = configurationInfo.getBool("autoGenerateColumns");
+      this.pageSize = configurationInfo.getInt("pageSize");
+      this.group = configurationInfo.getValue("group");
+      _Widget.prototype.restoreConfigurationFrom.call(this, configurationInfo);
     };
 
     _createClass(Grid, [{

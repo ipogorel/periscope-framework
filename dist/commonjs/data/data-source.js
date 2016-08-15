@@ -11,45 +11,52 @@ var _ = _interopRequireWildcard(_lodash);
 
 var _dataHolder = require('./data-holder');
 
+var _configurable = require('./../serialization/configurable');
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Datasource = exports.Datasource = function () {
-  function Datasource(datasourceConfiguration) {
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Datasource = exports.Datasource = function (_Configurable) {
+  _inherits(Datasource, _Configurable);
+
+  function Datasource() {
     _classCallCheck(this, Datasource);
 
-    this._liveRequest = {};
+    var _this = _possibleConstructorReturn(this, _Configurable.call(this));
 
-    this.name = datasourceConfiguration.name;
-    this.transport = datasourceConfiguration.transport;
-    this.cache = datasourceConfiguration.cache;
+    _this._liveRequest = {};
+    return _this;
   }
 
   Datasource.prototype.getData = function getData(query) {
-    var _this = this;
+    var _this2 = this;
 
-    if (!this.transport && !this.transport.readService) throw "readService is not configured";
+    if (!this.readService) throw "readService is not configured";
 
-    var cacheKey = this.transport.readService.url + query.cacheKey();
+    var cacheKey = this.readService.url + query.cacheKey();
 
     if (!this.cache) {
       return this._doWebRequest(cacheKey, query);
     } else {
       if (this._liveRequest[cacheKey]) {
         this._liveRequest[cacheKey] = this._liveRequest[cacheKey].then(function (l) {
-          return _this._fromCache(cacheKey);
+          return _this2._fromCache(cacheKey);
         }).then(function (data) {
-          return _this._processData(cacheKey, query, data);
+          return _this2._processData(cacheKey, query, data);
         }, function (err) {
-          return _this._doWebRequest(cacheKey, query);
+          return _this2._doWebRequest(cacheKey, query);
         });
         return this._liveRequest[cacheKey];
       }
       try {
         var data = this._fromCache(cacheKey);
         return Promise.resolve(data).then(function (d) {
-          return _this._processData(cacheKey, query, d);
+          return _this2._processData(cacheKey, query, d);
         });
       } catch (ex) {}
       this._liveRequest[cacheKey] = this._doWebRequest(cacheKey, query);
@@ -58,24 +65,24 @@ var Datasource = exports.Datasource = function () {
   };
 
   Datasource.prototype.create = function create(entity) {
-    if (!this.transport && !this.transport.createService) throw "createService is not configured";
-    return this.transport.createService.create(entity);
+    if (!this.createService) throw "createService is not configured";
+    return this.createService.create(entity);
   };
 
   Datasource.prototype.update = function update(id, entity) {
-    if (!this.transport && !this.transport.updateService) throw "updateService is not configured";
-    return this.transport.updateService.update(id, entity);
+    if (!this.updateService) throw "updateService is not configured";
+    return this.updateService.update(id, entity);
   };
 
   Datasource.prototype.delete = function _delete(id, entity) {
-    if (!this.transport && !this.transport.deleteService) throw "deleteService is not configured";
-    return this.transport.updateService.delete(entity);
+    if (!this.deleteService) throw "deleteService is not configured";
+    return this.deleteService.delete(entity);
   };
 
   Datasource.prototype._doWebRequest = function _doWebRequest(cacheKey, query) {
-    var _this2 = this;
+    var _this3 = this;
 
-    return this.transport.readService.read({
+    return this.readService.read({
       fields: query.fields,
       filter: query.filter,
       take: query.take,
@@ -83,7 +90,7 @@ var Datasource = exports.Datasource = function () {
       sort: query.sort,
       sortDir: query.sortDir
     }).then(function (d) {
-      return _this2._processData(cacheKey, query, d);
+      return _this3._processData(cacheKey, query, d);
     });
   };
 
@@ -111,8 +118,26 @@ var Datasource = exports.Datasource = function () {
     }
   };
 
+  Datasource.prototype.persistConfigurationTo = function persistConfigurationTo(configurationInfo) {
+    configurationInfo.addValue("name", this.name);
+    configurationInfo.addValue("readService", this.readService);
+    configurationInfo.addValue("updateService", this.updateService);
+    configurationInfo.addValue("createService", this.createService);
+    configurationInfo.addValue("deleteService", this.deleteService);
+    _Configurable.prototype.persistConfigurationTo.call(this, configurationInfo);
+  };
+
+  Datasource.prototype.restoreConfigurationFrom = function restoreConfigurationFrom(configurationInfo) {
+    this.name = configurationInfo.getValue("name");
+    this.readService = configurationInfo.getValue("readService");
+    this.updateService = configurationInfo.getValue("updateService");
+    this.createService = configurationInfo.getValue("createService");
+    this.deleteService = configurationInfo.getValue("deleteService");
+    _Configurable.prototype.restoreConfigurationFrom.call(this, configurationInfo);
+  };
+
   return Datasource;
-}();
+}(_configurable.Configurable);
 
 var DataSourceConfiguration = exports.DataSourceConfiguration = function DataSourceConfiguration() {
   _classCallCheck(this, DataSourceConfiguration);
