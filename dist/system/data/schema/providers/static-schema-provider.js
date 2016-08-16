@@ -1,6 +1,8 @@
 "use strict";
 
 System.register(["./schema-provider"], function (_export, _context) {
+  "use strict";
+
   var SchemaProvider, StaticSchemaProvider;
 
   function _classCallCheck(instance, Constructor) {

@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./../../serialization/configurable'], function (_export, _context) {
+  "use strict";
+
   var Configurable, _createClass, DashboardBehavior;
 
   function _classCallCheck(instance, Constructor) {

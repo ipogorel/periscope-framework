@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./../schema/providers/empty-schema-provider', './../../serialization/configurable'], function (_export, _context) {
+  "use strict";
+
   var EmptySchemaProvider, Configurable, DataService;
 
   function _classCallCheck(instance, Constructor) {

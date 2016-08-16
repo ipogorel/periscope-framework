@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['lodash', './../../serialization/configurable'], function (_export, _context) {
+  "use strict";
+
   var _, Configurable, _createClass, Widget;
 
   function _classCallCheck(instance, Constructor) {

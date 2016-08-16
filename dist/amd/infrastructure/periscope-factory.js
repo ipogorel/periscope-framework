@@ -1,4 +1,4 @@
-define(['exports', 'lodash', 'aurelia-dependency-injection'], function (exports, _lodash, _aureliaDependencyInjection) {
+define(['exports', 'lodash', './factory', 'aurelia-dependency-injection'], function (exports, _lodash, _factory, _aureliaDependencyInjection) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -47,7 +47,11 @@ define(['exports', 'lodash', 'aurelia-dependency-injection'], function (exports,
       var t = _.find(this.references, function (r) {
         return r.name === typeName;
       });
-      if (t) return this.container.get(t);
+      if (t) {
+        var f = this.container.get(_factory.Factory.of(t));
+        return f();
+      }
+
       throw "reference to object " + typeName + " not found";
     };
 

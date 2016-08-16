@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./configuration-info', 'lodash'], function (_export, _context) {
+  "use strict";
+
   var ConfigurationInfo, _, PeriscopeObjectConfigurator;
 
   function _classCallCheck(instance, Constructor) {

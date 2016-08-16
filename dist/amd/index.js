@@ -5,7 +5,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     value: true
   });
   Object.keys(_permissionsCustomAttribute).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -14,7 +14,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_permissionsManager).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -23,7 +23,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_cacheManager).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -32,7 +32,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_cacheStorage).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -41,7 +41,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_memoryCacheStorage).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -50,7 +50,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dashboardConfiguration).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -59,7 +59,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataHolder).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -68,7 +68,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataSource).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -77,7 +77,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_query).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -86,7 +86,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_queryExpressionEvaluator).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -95,7 +95,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_astParser).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -104,7 +104,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_astToJavascriptParser).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -113,7 +113,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_schemaObject).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -122,7 +122,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_schemaProvider).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -131,7 +131,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_staticSchemaProvider).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -140,7 +140,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_swaggerSchemaProvider).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -149,7 +149,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataService).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -158,7 +158,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_jsonDataService).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -167,7 +167,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_staticJsonDataService).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -176,7 +176,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_grammarExpression).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -185,7 +185,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_grammarTree).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -194,7 +194,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_grammar).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -203,7 +203,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_intellisenceManager).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -212,7 +212,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_parser).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -221,7 +221,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_valueFormat).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -230,7 +230,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataHelper).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -239,7 +239,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_guidHelper).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -248,7 +248,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_stringHelper).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -257,7 +257,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_urlHelper).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -266,7 +266,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_defaultHttpClient).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -275,7 +275,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dashboardManager).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -284,7 +284,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_datasourceManager).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -293,7 +293,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_factory).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -302,7 +302,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dashboardBase).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -311,7 +311,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_widget).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -320,7 +320,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataSourceConfigurator).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -329,7 +329,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_detailedView).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -338,7 +338,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_grid).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -347,7 +347,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_chart).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -356,7 +356,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_searchBox).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -365,7 +365,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_navigationHistory).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -374,7 +374,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_historyStep).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -383,7 +383,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_changeRouteBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -392,7 +392,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_createWidgetBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -401,7 +401,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dashboardBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -410,7 +410,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_manageNavigationStackBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -419,7 +419,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_replaceWidgetBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -428,7 +428,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_drillDownHandleBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -437,7 +437,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_widgetEventMessage).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -446,7 +446,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_widgetEvent).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -455,7 +455,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_widgetBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -464,7 +464,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_listnerBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -473,7 +473,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_broadcasterBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -482,7 +482,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataActivatedBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -491,7 +491,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataFieldSelectedBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -500,7 +500,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataFilterChangedBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -509,7 +509,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataFilterHandleBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -518,7 +518,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataSelectedBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -527,7 +527,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataSourceChangedBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -536,7 +536,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dataSourceHandleBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -545,7 +545,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_settingsHandleBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -554,7 +554,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_drillDownBehavior).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -563,7 +563,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_stateDiscriminator).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -572,7 +572,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_stateUrlParser).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -581,7 +581,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_storage).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -590,7 +590,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_userStateStorage).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -599,7 +599,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_dashboardSerializer).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -608,7 +608,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_periscopeObjectConfigurator).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -617,7 +617,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_configurable).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {
@@ -626,7 +626,7 @@ define(['exports', './authorization/permissions-custom-attribute', './authorizat
     });
   });
   Object.keys(_periscopeFactory).forEach(function (key) {
-    if (key === "default") return;
+    if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
       enumerable: true,
       get: function () {

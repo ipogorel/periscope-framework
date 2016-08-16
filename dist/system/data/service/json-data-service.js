@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./data-service', 'lodash', 'aurelia-framework'], function (_export, _context) {
+  "use strict";
+
   var DataService, _, inject, transient, _dec, _class, JsonDataService;
 
   function _classCallCheck(instance, Constructor) {

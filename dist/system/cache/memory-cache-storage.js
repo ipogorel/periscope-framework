@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./../cache/cache-storage', 'lodash'], function (_export, _context) {
+  "use strict";
+
   var CacheStorage, _, MemoryCacheStorage;
 
   function _classCallCheck(instance, Constructor) {

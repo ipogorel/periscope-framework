@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./listner-behavior', 'aurelia-event-aggregator', 'aurelia-framework'], function (_export, _context) {
+  "use strict";
+
   var ListenerBehavior, EventAggregator, inject, _dec, _class, DataSourceHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {

@@ -1,6 +1,8 @@
 "use strict";
 
 System.register(["./../../serialization/configurable"], function (_export, _context) {
+  "use strict";
+
   var Configurable, WidgetBehavior;
 
   function _classCallCheck(instance, Constructor) {

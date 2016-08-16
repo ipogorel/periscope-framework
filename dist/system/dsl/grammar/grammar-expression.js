@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./grammar', './../../helpers/data-helper'], function (_export, _context) {
+  "use strict";
+
   var Grammar, DataHelper, DSL_GRAMMAR_EXPRESSION, GrammarExpression;
 
   function _classCallCheck(instance, Constructor) {

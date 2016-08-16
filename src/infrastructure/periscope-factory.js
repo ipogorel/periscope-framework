@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import {Factory} from './factory';
 import {Container} from 'aurelia-dependency-injection';
 
 export class PeriscopeFactory{
@@ -13,8 +14,11 @@ export class PeriscopeFactory{
     let t = _.find(this.references, r=>{
       return r.name === typeName;
     })
-    if (t)
-      return this.container.get(t);
+    if (t){
+      let f = this.container.get(Factory.of(t))
+      return f();
+    }
+
     throw "reference to object " + typeName + " not found"
   }
 

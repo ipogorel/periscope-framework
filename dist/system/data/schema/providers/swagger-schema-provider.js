@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./schema-provider', 'swagger-client', './../schema-object', 'lodash'], function (_export, _context) {
+  "use strict";
+
   var SchemaProvider, Swagger, Schema, _, SwaggerSchemaProvider;
 
   function _classCallCheck(instance, Constructor) {

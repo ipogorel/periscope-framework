@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['aurelia-framework', 'lodash', './../../state/state-discriminator', './../../state/state-url-parser', './../../serialization/configurable'], function (_export, _context) {
+  "use strict";
+
   var computedFrom, _, StateDiscriminator, StateUrlParser, Configurable, _createClass, _dec, _desc, _value, _class2, DashboardBase, LayoutWidget;
 
   function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {

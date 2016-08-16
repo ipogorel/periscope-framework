@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./broadcaster-behavior', '../events/widget-event-message', 'aurelia-event-aggregator', 'aurelia-framework'], function (_export, _context) {
+  "use strict";
+
   var BroadcasterBehavior, WidgetEventMessage, EventAggregator, inject, _dec, _class, DataActivatedBehavior;
 
   function _classCallCheck(instance, Constructor) {

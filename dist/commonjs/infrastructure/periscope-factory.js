@@ -9,6 +9,8 @@ var _lodash = require('lodash');
 
 var _ = _interopRequireWildcard(_lodash);
 
+var _factory = require('./factory');
+
 var _aureliaDependencyInjection = require('aurelia-dependency-injection');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -31,7 +33,11 @@ var PeriscopeFactory = exports.PeriscopeFactory = function () {
     var t = _.find(this.references, function (r) {
       return r.name === typeName;
     });
-    if (t) return this.container.get(t);
+    if (t) {
+      var f = this.container.get(_factory.Factory.of(t));
+      return f();
+    }
+
     throw "reference to object " + typeName + " not found";
   };
 

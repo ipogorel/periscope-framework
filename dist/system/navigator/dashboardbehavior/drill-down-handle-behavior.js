@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./dashboard-behavior', './../../helpers/string-helper', 'lodash'], function (_export, _context) {
+  "use strict";
+
   var DashboardBehavior, StringHelper, _, DrillDownHandleBehavior;
 
   function _classCallCheck(instance, Constructor) {

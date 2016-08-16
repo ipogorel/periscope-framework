@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['lodash', 'aurelia-framework', 'aurelia-router', './../helpers/url-helper'], function (_export, _context) {
+  "use strict";
+
   var _, inject, Router, UrlHelper, _dec, _class, DashboardManager;
 
   function _classCallCheck(instance, Constructor) {

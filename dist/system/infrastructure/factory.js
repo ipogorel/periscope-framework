@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['aurelia-framework'], function (_export, _context) {
+  "use strict";
+
   var resolver, _class, Factory;
 
   function _classCallCheck(instance, Constructor) {

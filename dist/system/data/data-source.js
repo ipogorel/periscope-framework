@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['lodash', './data-holder', './../serialization/configurable'], function (_export, _context) {
+  "use strict";
+
   var _, DataHolder, Configurable, Datasource, DataSourceConfiguration;
 
   function _classCallCheck(instance, Constructor) {

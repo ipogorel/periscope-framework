@@ -1,6 +1,8 @@
 "use strict";
 
 System.register(["./ast-parser"], function (_export, _context) {
+  "use strict";
+
   var AstParser, _createClass, AstToJavascriptParser;
 
   function _classCallCheck(instance, Constructor) {

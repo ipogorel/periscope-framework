@@ -1,6 +1,8 @@
 "use strict";
 
 System.register(["./dashboard-behavior"], function (_export, _context) {
+  "use strict";
+
   var DashboardBehavior, CreateWidgetBehavior;
 
   function _classCallCheck(instance, Constructor) {

@@ -1,6 +1,8 @@
 'use strict';
 
 System.register(['./../helpers/url-helper', 'js-base64'], function (_export, _context) {
+  "use strict";
+
   var UrlHelper, base64, StateUrlParser;
 
   function _classCallCheck(instance, Constructor) {

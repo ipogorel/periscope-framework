@@ -38,7 +38,7 @@ export class ConfigurationInfo {
       if (_.isArray(this.config[key])) {
         let aVal = [];
         _.forEach(this.config[key],v=>{
-            aVal.push(this._getObject(v));
+          aVal.push(this._getObject(v));
         });
         return aVal;
       }
