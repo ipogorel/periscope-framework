@@ -3,7 +3,7 @@
 System.register(['./data-service', './../../helpers/data-helper', 'aurelia-framework', 'aurelia-fetch-client', './../query-expression-evaluator', 'lodash'], function (_export, _context) {
   "use strict";
 
-  var DataService, DataHelper, inject, transient, HttpClient, QueryExpressionEvaluator, _, _dec, _class, StaticJsonDataService;
+  var DataService, DataHelper, inject, transient, HttpClient, QueryExpressionEvaluator, _, _dec, _dec2, _class, StaticJsonDataService;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -51,13 +51,13 @@ System.register(['./data-service', './../../helpers/data-helper', 'aurelia-frame
       _ = _lodash;
     }],
     execute: function () {
-      _export('StaticJsonDataService', StaticJsonDataService = (_dec = transient(), _dec(_class = function (_DataService) {
+      _export('StaticJsonDataService', StaticJsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
         _inherits(StaticJsonDataService, _DataService);
 
-        function StaticJsonDataService() {
+        function StaticJsonDataService(httpClient) {
           _classCallCheck(this, StaticJsonDataService);
 
-          return _possibleConstructorReturn(this, _DataService.call(this));
+          return _possibleConstructorReturn(this, _DataService.call(this, httpClient));
         }
 
         StaticJsonDataService.prototype.read = function read(options) {
@@ -89,7 +89,7 @@ System.register(['./data-service', './../../helpers/data-helper', 'aurelia-frame
         };
 
         return StaticJsonDataService;
-      }(DataService)) || _class));
+      }(DataService)) || _class) || _class));
 
       _export('StaticJsonDataService', StaticJsonDataService);
     }

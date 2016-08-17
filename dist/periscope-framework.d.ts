@@ -262,20 +262,8 @@ declare module 'periscope-framework' {
   export class Schema {
     constructor();
   }
-  export class GrammarExpression extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class GrammarTree extends Grammar {
-    constructor(dataFields: any);
-    getGrammar(): any;
-  }
-  export class Grammar {
-    text: any;
-    getGrammar(): any;
-  }
   export class DataService extends Configurable {
-    constructor();
+    constructor(httpClient: any);
     url: any;
     schemaProvider: any;
     filterParser: any;
@@ -293,12 +281,24 @@ declare module 'periscope-framework' {
   export class JsonDataService extends DataService {
     _cache: any;
     _liveRequest: any;
-    constructor();
+    constructor(httpClient: any);
     read(options: any): any;
   }
   export class StaticJsonDataService extends DataService {
-    constructor();
+    constructor(httpClient: any);
     read(options: any): any;
+  }
+  export class GrammarExpression extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class GrammarTree extends Grammar {
+    constructor(dataFields: any);
+    getGrammar(): any;
+  }
+  export class Grammar {
+    text: any;
+    getGrammar(): any;
   }
   export class FormatValueConverter {
     static format(value: any, format: any): any;

@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.StaticJsonDataService = undefined;
 
-var _dec, _class;
+var _dec, _dec2, _class;
 
 var _dataService = require('./data-service');
 
@@ -29,13 +29,13 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec(_class = function (_DataService) {
+var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec2 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
   _inherits(StaticJsonDataService, _DataService);
 
-  function StaticJsonDataService() {
+  function StaticJsonDataService(httpClient) {
     _classCallCheck(this, StaticJsonDataService);
 
-    return _possibleConstructorReturn(this, _DataService.call(this));
+    return _possibleConstructorReturn(this, _DataService.call(this, httpClient));
   }
 
   StaticJsonDataService.prototype.read = function read(options) {
@@ -67,4 +67,4 @@ var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aurelia
   };
 
   return StaticJsonDataService;
-}(_dataService.DataService)) || _class);
+}(_dataService.DataService)) || _class) || _class);

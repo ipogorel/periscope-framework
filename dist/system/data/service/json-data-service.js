@@ -1,9 +1,9 @@
 'use strict';
 
-System.register(['./data-service', 'lodash', 'aurelia-framework'], function (_export, _context) {
+System.register(['./data-service', 'lodash', 'aurelia-framework', 'aurelia-fetch-client'], function (_export, _context) {
   "use strict";
 
-  var DataService, _, inject, transient, _dec, _class, JsonDataService;
+  var DataService, _, inject, transient, HttpClient, _dec, _dec2, _class, JsonDataService;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -43,15 +43,17 @@ System.register(['./data-service', 'lodash', 'aurelia-framework'], function (_ex
     }, function (_aureliaFramework) {
       inject = _aureliaFramework.inject;
       transient = _aureliaFramework.transient;
+    }, function (_aureliaFetchClient) {
+      HttpClient = _aureliaFetchClient.HttpClient;
     }],
     execute: function () {
-      _export('JsonDataService', JsonDataService = (_dec = transient(), _dec(_class = function (_DataService) {
+      _export('JsonDataService', JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
         _inherits(JsonDataService, _DataService);
 
-        function JsonDataService() {
+        function JsonDataService(httpClient) {
           _classCallCheck(this, JsonDataService);
 
-          var _this = _possibleConstructorReturn(this, _DataService.call(this));
+          var _this = _possibleConstructorReturn(this, _DataService.call(this, httpClient));
 
           _this._cache = {};
           return _this;
@@ -73,7 +75,7 @@ System.register(['./data-service', 'lodash', 'aurelia-framework'], function (_ex
         };
 
         return JsonDataService;
-      }(DataService)) || _class));
+      }(DataService)) || _class) || _class));
 
       _export('JsonDataService', JsonDataService);
     }

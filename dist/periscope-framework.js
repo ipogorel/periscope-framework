@@ -1064,6 +1064,8 @@ export class ConfigurationInfo {
 
   getBool(key){
     if (this.config[key]){
+      if (_.isBoolean(this.config[key]))
+        return this.config[key];
       return (this.config[key] === "true");
     }
     return null;
@@ -1282,6 +1284,172 @@ export class Schema {
     this.fields = [];
     this.parameters = [];
   }
+}
+
+export class DataService extends Configurable {
+  constructor(httpClient){
+    super();
+    this.httpClient = httpClient;
+    this.url = "";
+    this.schemaProvider = new EmptySchemaProvider();
+  }
+
+  url;
+  schemaProvider;
+  filterParser;
+  totalMapper;
+  dataMapper;
+  httpClient;
+
+
+
+  getSchema(){
+    return this.schemaProvider.getSchema();
+  }
+  read(options) {}
+  create(entity) {}
+  update(id, entity) {}
+  delete(id) {}
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("url", this.url);
+    configurationInfo.addValue("schemaProvider", this.schemaProvider);
+    configurationInfo.addValue("filterParser", this.filterParser);
+    configurationInfo.addScript("totalMapper", this.totalMapper);
+    configurationInfo.addScript("dataMapper", this.dataMapper);
+
+    //configurationInfo.addValue("httpClient", this.httpClient); // ????????????
+
+    super.persistConfigurationTo(configurationInfo);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.url = configurationInfo.getValue("url");
+    this.schemaProvider = configurationInfo.getValue("schemaProvider");
+    this.filterParser = configurationInfo.getValue("filterParser");
+    this.totalMapper = configurationInfo.getScript("totalMapper");
+    this.dataMapper = configurationInfo.getScript("dataMapper");
+
+    //this.httpClient = configurationInfo.getValue("httpClient"); // ????????????
+
+    super.restoreConfigurationFrom(configurationInfo);
+  };
+  
+}
+
+
+@transient()
+@inject(HttpClient)
+export class JsonDataService extends DataService {
+    _cache = {};
+    _liveRequest;
+
+    constructor(httpClient) {
+      super(httpClient);
+    }
+
+
+    read(options) { //options: fields,filter, take, skip, sort
+      let url = this.url
+      if (options.filter)
+        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : options.filter);
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return {
+            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+          }
+        });
+    }
+
+  /*read(options) { //options: fields,filter, take, skip, sort
+    let url = this.url
+    if (options.filter)
+      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
+
+    if (this._liveRequest) {
+      this._liveRequest = this._liveRequest
+        .then(l=>this._fromCache(url))
+        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
+      return this._liveRequest;
+    }
+    try{
+      let data = this._fromCache(url);
+      return Promise.resolve(data).then(d => this._processData(url, d));
+    }
+    catch (ex){}
+    this._liveRequest = this._doWebRequest(url);
+    return this._liveRequest;
+  }
+
+    _doWebRequest(url){
+      return this.httpClient
+        .fetch(url)
+        .then(response => {return response.json(); })
+        .then(jsonData => {
+          return this._processData(url,jsonData)
+        });
+    }
+
+    _processData(url, jsonData){
+      this._liveRequest = null;
+      this._cache[url] = jsonData;
+      return {
+        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
+        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
+      };
+    }
+
+
+    _fromCache(url){
+      if ((url in this._cache)&&(this._cache[url]))
+        return  this._cache[url];
+      throw "data not found: " + url;
+    }*/
+
+}
+
+@transient()
+@inject(HttpClient)
+export class StaticJsonDataService extends DataService {
+  constructor(httpClient) {
+    super(httpClient);
+  }
+  
+
+  read(options) {
+    return this.httpClient
+      .fetch(this.url)
+      .then(response => {
+        return response.json();
+      })
+      .then(jsonData => {
+        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
+        if (options.filter){
+          let f = options.filter;
+          if (this.filterParser && this.filterParser.type === "clientSide")
+            f = this.filterParser.getFilter(options.filter);
+          let evaluator = new QueryExpressionEvaluator();
+          d = evaluator.evaluate(d, f);
+        }
+        let total = d.length;
+        // sort
+        if (options.sort)
+          d = _.orderBy(d,[options.sort],[options.sortDir]);
+        var l = options.skip + options.take;
+        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
+        if (options.fields && options.fields.length>0)
+          d = _.map(d, item =>{
+            return _.pick(item, options.fields);
+          });
+        return {
+          data: DataHelper.deserializeDates(d),
+          total: (this.totalMapper? this.totalMapper(jsonData) : total)
+        }
+      });
+  }
+
 }
 
 const DSL_GRAMMAR_EXPRESSION = `
@@ -1647,169 +1815,6 @@ export class Grammar{
   
 }
 
-export class DataService extends Configurable {
-  constructor(){
-    super();
-    this.url = "";
-    this.schemaProvider = new EmptySchemaProvider();
-  }
-
-  url;
-  schemaProvider;
-  filterParser;
-  totalMapper;
-  dataMapper;
-  httpClient;
-
-
-
-  getSchema(){
-    return this.schemaProvider.getSchema();
-  }
-  read(options) {}
-  create(entity) {}
-  update(id, entity) {}
-  delete(id) {}
-
-  persistConfigurationTo(configurationInfo){
-    configurationInfo.addValue("url", this.url);
-    configurationInfo.addValue("schemaProvider", this.schemaProvider);
-    configurationInfo.addValue("filterParser", this.filterParser);
-    configurationInfo.addScript("totalMapper", this.totalMapper);
-    configurationInfo.addScript("dataMapper", this.dataMapper);
-
-    configurationInfo.addValue("httpClient", this.httpClient); // ????????????
-
-    super.persistConfigurationTo(configurationInfo);
-  }
-  restoreConfigurationFrom(configurationInfo){
-    this.url = configurationInfo.getValue("url");
-    this.schemaProvider = configurationInfo.getValue("schemaProvider");
-    this.filterParser = configurationInfo.getValue("filterParser");
-    this.totalMapper = configurationInfo.getScript("totalMapper");
-    this.dataMapper = configurationInfo.getScript("dataMapper");
-
-    this.httpClient = configurationInfo.getValue("httpClient"); // ????????????
-
-    super.restoreConfigurationFrom(configurationInfo);
-  };
-  
-}
-
-
-@transient()
-export class JsonDataService extends DataService {
-    _cache = {};
-    _liveRequest;
-
-    constructor() {
-      super();
-    }
-
-
-    read(options) { //options: fields,filter, take, skip, sort
-      let url = this.url
-      if (options.filter)
-        url+= (this.filterParser? this.filterParser.getFilter(options.filter) : options.filter);
-      return this.httpClient
-        .fetch(url)
-        .then(response => {return response.json(); })
-        .then(jsonData => {
-          return {
-            data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-            total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-          }
-        });
-    }
-
-  /*read(options) { //options: fields,filter, take, skip, sort
-    let url = this.url
-    if (options.filter)
-      url+= (this.filterParser? this.filterParser.getFilter(options.filter) : "");
-
-    if (this._liveRequest) {
-      this._liveRequest = this._liveRequest
-        .then(l=>this._fromCache(url))
-        .then(data =>_processData(url, data), err=> this._doWebRequest(url))
-      return this._liveRequest;
-    }
-    try{
-      let data = this._fromCache(url);
-      return Promise.resolve(data).then(d => this._processData(url, d));
-    }
-    catch (ex){}
-    this._liveRequest = this._doWebRequest(url);
-    return this._liveRequest;
-  }
-
-    _doWebRequest(url){
-      return this.httpClient
-        .fetch(url)
-        .then(response => {return response.json(); })
-        .then(jsonData => {
-          return this._processData(url,jsonData)
-        });
-    }
-
-    _processData(url, jsonData){
-      this._liveRequest = null;
-      this._cache[url] = jsonData;
-      return {
-        data: (this.dataMapper? this.dataMapper(jsonData) : jsonData),
-        total: (this.totalMapper? this.totalMapper(jsonData) : jsonData.length)
-      };
-    }
-
-
-    _fromCache(url){
-      if ((url in this._cache)&&(this._cache[url]))
-        return  this._cache[url];
-      throw "data not found: " + url;
-    }*/
-
-}
-
-@transient()
-export class StaticJsonDataService extends DataService {
-  constructor() {
-    super();
-  }
-  
-
-  read(options) {
-    return this.httpClient
-      .fetch(this.url)
-      .then(response => {
-        return response.json();
-      })
-      .then(jsonData => {
-        let d = this.dataMapper? this.dataMapper(jsonData) : jsonData;
-        if (options.filter){
-          let f = options.filter;
-          if (this.filterParser && this.filterParser.type === "clientSide")
-            f = this.filterParser.getFilter(options.filter);
-          let evaluator = new QueryExpressionEvaluator();
-          d = evaluator.evaluate(d, f);
-        }
-        let total = d.length;
-        // sort
-        if (options.sort)
-          d = _.orderBy(d,[options.sort],[options.sortDir]);
-        var l = options.skip + options.take;
-        d = l? _.slice(d, options.skip, (l>d.length?d.length:l)) : d;
-        if (options.fields && options.fields.length>0)
-          d = _.map(d, item =>{
-            return _.pick(item, options.fields);
-          });
-        return {
-          data: DataHelper.deserializeDates(d),
-          total: (this.totalMapper? this.totalMapper(jsonData) : total)
-        }
-      });
-  }
-
-}
-
 export class FormatValueConverter {
   static format(value, format){
     if (DataHelper.isDate(value))
@@ -2044,6 +2049,218 @@ export class LayoutWidget extends Configurable {
     this.col = configurationInfo.getValue("col");
     this.row = configurationInfo.getValue("row");
     this.widget = configurationInfo.getValue("widget");
+  }
+}
+
+export class ChangeRouteBehavior extends DashboardBehavior {
+  constructor(settings) {
+    super();
+    this.chanel = settings.chanel;
+    this.eventAggregator = settings.eventAggregator;
+    this.newRoute = settings.newRoute;
+    this.router = settings.router;
+    this.paramsMapper = settings.paramsMapper;
+  }
+
+  chanel;
+  eventAggregator;
+  newRoute;
+  router;
+  paramsMapper;
+
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this.eventAggregator.subscribe(this.chanel, message => {
+      var params = me.paramsMapper ? me.paramsMapper(message) : "";
+      if ((params!=="")&&(params.indexOf("?")!=0))
+        params="?" + params;
+      me.router.navigate(me.newRoute + (params!==""? params : ""));
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+
+  persistConfigurationTo(configurationInfo){
+    configurationInfo.addValue("chanel", this.chanel);
+    configurationInfo.addValue("newRoute", this.newRoute);
+    configurationInfo.addScript("paramsMapper", this.paramsMapper);
+  }
+  restoreConfigurationFrom(configurationInfo){
+    this.chanel = configurationInfo.getValue("chanel");
+    this.newRoute = configurationInfo.getValue("newRoute");
+    this.paramsMapper = configurationInfo.addScript("paramsMapper");
+  };
+}
+
+
+export class CreateWidgetBehavior extends DashboardBehavior {
+
+  constructor(settings) {
+    super();
+    this.eventAggregator = settings.eventAggregator;
+
+    this.chanel = settings.chanel;
+    this.widgetType = settings.widgetType;
+    this.widgetSettings = settings.widgetSettings;
+    this.widgetDimensions = settings.widgetDimensions;
+    this.filterMapper = settings.filterMapper;
+  }
+
+  eventAggregator
+
+  chanel;
+  widgetType;
+  widgetSettings;
+  widgetDimensions;
+  filterMapper;
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this.eventAggregator.subscribe(this.chanel, message => {
+      //make sure the widget exists
+      var w = dashboard.getWidgetByName(me.widgetSettings.name);
+      if(!w){ //widget not exist.
+        var w = new me.widgetType(me.widgetSettings);
+        dashboard.addWidget(w, this.widgetDimensions);
+      }
+      w.dataFilter =  me.filterMapper ? me.filterMapper(message) : "";
+      w.refresh();
+
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+
+
+}
+
+export class DashboardBehavior extends Configurable{
+
+  get dashboard() {
+    return this._dashboard;
+  }
+
+  attach(dashboard) {
+    this._dashboard = dashboard;
+    this._dashboard.behaviors.push(this);
+  }
+
+  detach(){
+    for (let i=0; i<this.dashboard.behaviors.length; i++) {
+      if(this.dashboard.behaviors[i] === this) {
+        this.dashboard.behaviors.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  persistConfigurationTo(configurationInfo){
+  }
+
+  restoreConfigurationFrom(configurationInfo){
+  }
+}
+
+export class DrillDownHandleBehavior extends DashboardBehavior  {
+
+  constructor(settings) {
+    super();
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      // create widget
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      // replace widget
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      w.dataFilter = message.params.dataFilter;
+      w.dataSource.transport.readService.configure({url:message.params.dataServiceUrl});
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+export class ManageNavigationStackBehavior extends DashboardBehavior {
+  constructor(eventAggregator) {
+    super();
+    
+    this._eventAggregator = eventAggregator;
+  }
+  attach(dashboard) {
+    super.attach(dashboard);
+    var me = this;
+
+    //this._eventAggregator.subscribe(BackButtonEvent, event => {
+    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
+      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
+      if (originatorWidget) {
+        var previousWidget = message.params.navigationStack.pop();
+        dashboard.replaceWidget(originatorWidget,previousWidget);
+      }
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
+  }
+}
+
+
+export class ReplaceWidgetBehavior extends DashboardBehavior  {
+
+  constructor(settings) {
+    super();
+    this._channel = settings.channel;
+    this._widgetType = settings.widgetType;
+    this._widgetSettings = settings.widgetSettings;
+    this._eventAggregator = settings.eventAggregator;
+    this._widgetToReplaceName = settings.widgetToReplaceName;
+    this._mapper = settings.mapper;
+    this._queryPattern = settings.queryPattern;
+  }
+
+  attach(dashboard){
+    super.attach(dashboard);
+    var me = this;
+    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
+      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
+      var w = new me._widgetType(me._widgetSettings);
+      dashboard.replaceWidget(originatorWidget, w);
+      w.dataFilter = me._mapper? me._mapper(message) : message.params.dataFilter;
+      w.refresh();
+    });
+  }
+
+  detach(){
+    super.detach(dashboard);
+    if (this.subscription)
+      this.subscription.dispose();
   }
 }
 
@@ -2367,218 +2584,6 @@ export class Widget extends Configurable{
 
 
 
-
-export class ChangeRouteBehavior extends DashboardBehavior {
-  constructor(settings) {
-    super();
-    this.chanel = settings.chanel;
-    this.eventAggregator = settings.eventAggregator;
-    this.newRoute = settings.newRoute;
-    this.router = settings.router;
-    this.paramsMapper = settings.paramsMapper;
-  }
-
-  chanel;
-  eventAggregator;
-  newRoute;
-  router;
-  paramsMapper;
-
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this.eventAggregator.subscribe(this.chanel, message => {
-      var params = me.paramsMapper ? me.paramsMapper(message) : "";
-      if ((params!=="")&&(params.indexOf("?")!=0))
-        params="?" + params;
-      me.router.navigate(me.newRoute + (params!==""? params : ""));
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-
-  persistConfigurationTo(configurationInfo){
-    configurationInfo.addValue("chanel", this.chanel);
-    configurationInfo.addValue("newRoute", this.newRoute);
-    configurationInfo.addScript("paramsMapper", this.paramsMapper);
-  }
-  restoreConfigurationFrom(configurationInfo){
-    this.chanel = configurationInfo.getValue("chanel");
-    this.newRoute = configurationInfo.getValue("newRoute");
-    this.paramsMapper = configurationInfo.addScript("paramsMapper");
-  };
-}
-
-
-export class CreateWidgetBehavior extends DashboardBehavior {
-
-  constructor(settings) {
-    super();
-    this.eventAggregator = settings.eventAggregator;
-
-    this.chanel = settings.chanel;
-    this.widgetType = settings.widgetType;
-    this.widgetSettings = settings.widgetSettings;
-    this.widgetDimensions = settings.widgetDimensions;
-    this.filterMapper = settings.filterMapper;
-  }
-
-  eventAggregator
-
-  chanel;
-  widgetType;
-  widgetSettings;
-  widgetDimensions;
-  filterMapper;
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this.eventAggregator.subscribe(this.chanel, message => {
-      //make sure the widget exists
-      var w = dashboard.getWidgetByName(me.widgetSettings.name);
-      if(!w){ //widget not exist.
-        var w = new me.widgetType(me.widgetSettings);
-        dashboard.addWidget(w, this.widgetDimensions);
-      }
-      w.dataFilter =  me.filterMapper ? me.filterMapper(message) : "";
-      w.refresh();
-
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-
-
-}
-
-export class DashboardBehavior extends Configurable{
-
-  get dashboard() {
-    return this._dashboard;
-  }
-
-  attach(dashboard) {
-    this._dashboard = dashboard;
-    this._dashboard.behaviors.push(this);
-  }
-
-  detach(){
-    for (let i=0; i<this.dashboard.behaviors.length; i++) {
-      if(this.dashboard.behaviors[i] === this) {
-        this.dashboard.behaviors.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-  persistConfigurationTo(configurationInfo){
-  }
-
-  restoreConfigurationFrom(configurationInfo){
-  }
-}
-
-export class DrillDownHandleBehavior extends DashboardBehavior  {
-
-  constructor(settings) {
-    super();
-    this._channel = settings.channel;
-    this._widgetType = settings.widgetType;
-    this._widgetSettings = settings.widgetSettings;
-    this._eventAggregator = settings.eventAggregator;
-    this._widgetToReplaceName = settings.widgetToReplaceName;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      // create widget
-      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
-      // replace widget
-      var w = new me._widgetType(me._widgetSettings);
-      dashboard.replaceWidget(originatorWidget, w);
-      w.dataFilter = message.params.dataFilter;
-      w.dataSource.transport.readService.configure({url:message.params.dataServiceUrl});
-      w.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-export class ManageNavigationStackBehavior extends DashboardBehavior {
-  constructor(eventAggregator) {
-    super();
-    
-    this._eventAggregator = eventAggregator;
-  }
-  attach(dashboard) {
-    super.attach(dashboard);
-    var me = this;
-
-    //this._eventAggregator.subscribe(BackButtonEvent, event => {
-    this.subscription = this._eventAggregator.subscribe("widget-back-button-channel", message => {
-      var originatorWidget = dashboard.getWidgetByName(message.originatorName);
-      if (originatorWidget) {
-        var previousWidget = message.params.navigationStack.pop();
-        dashboard.replaceWidget(originatorWidget,previousWidget);
-      }
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
-
-
-export class ReplaceWidgetBehavior extends DashboardBehavior  {
-
-  constructor(settings) {
-    super();
-    this._channel = settings.channel;
-    this._widgetType = settings.widgetType;
-    this._widgetSettings = settings.widgetSettings;
-    this._eventAggregator = settings.eventAggregator;
-    this._widgetToReplaceName = settings.widgetToReplaceName;
-    this._mapper = settings.mapper;
-    this._queryPattern = settings.queryPattern;
-  }
-
-  attach(dashboard){
-    super.attach(dashboard);
-    var me = this;
-    this.subscription = this._eventAggregator.subscribe(this._channel, message => {
-      var originatorWidget = dashboard.getWidgetByName(me._widgetToReplaceName);
-      var w = new me._widgetType(me._widgetSettings);
-      dashboard.replaceWidget(originatorWidget, w);
-      w.dataFilter = me._mapper? me._mapper(message) : message.params.dataFilter;
-      w.refresh();
-    });
-  }
-
-  detach(){
-    super.detach(dashboard);
-    if (this.subscription)
-      this.subscription.dispose();
-  }
-}
 
 export class WidgetEventMessage {
 
@@ -2962,7 +2967,7 @@ export class SettingsHandleBehavior extends ListenerBehavior
     super.attachToWidget(widget);
     var me = this;
     this.subscription = this._eventAggregator.subscribe(this.channel, message => {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
+      var settingsToApply = me.messageMapper ? me.messageMapper(message.params) : message.params;
       _.forOwn(settingsToApply, (v, k)=>{
         //me.widget.changeSettings(settingsToApply);
         me.widget[k] = v;

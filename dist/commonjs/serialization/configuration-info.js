@@ -87,6 +87,7 @@ var ConfigurationInfo = exports.ConfigurationInfo = function () {
 
   ConfigurationInfo.prototype.getBool = function getBool(key) {
     if (this.config[key]) {
+      if (_.isBoolean(this.config[key])) return this.config[key];
       return this.config[key] === "true";
     }
     return null;

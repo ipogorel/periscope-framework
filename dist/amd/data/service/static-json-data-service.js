@@ -55,15 +55,15 @@ define(['exports', './data-service', './../../helpers/data-helper', 'aurelia-fra
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  var _dec, _class;
+  var _dec, _dec2, _class;
 
-  var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec(_class = function (_DataService) {
+  var StaticJsonDataService = exports.StaticJsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec2 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
     _inherits(StaticJsonDataService, _DataService);
 
-    function StaticJsonDataService() {
+    function StaticJsonDataService(httpClient) {
       _classCallCheck(this, StaticJsonDataService);
 
-      return _possibleConstructorReturn(this, _DataService.call(this));
+      return _possibleConstructorReturn(this, _DataService.call(this, httpClient));
     }
 
     StaticJsonDataService.prototype.read = function read(options) {
@@ -95,5 +95,5 @@ define(['exports', './data-service', './../../helpers/data-helper', 'aurelia-fra
     };
 
     return StaticJsonDataService;
-  }(_dataService.DataService)) || _class);
+  }(_dataService.DataService)) || _class) || _class);
 });

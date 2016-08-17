@@ -45,11 +45,12 @@ System.register(['./../schema/providers/empty-schema-provider', './../../seriali
       _export('DataService', DataService = function (_Configurable) {
         _inherits(DataService, _Configurable);
 
-        function DataService() {
+        function DataService(httpClient) {
           _classCallCheck(this, DataService);
 
           var _this = _possibleConstructorReturn(this, _Configurable.call(this));
 
+          _this.httpClient = httpClient;
           _this.url = "";
           _this.schemaProvider = new EmptySchemaProvider();
           return _this;
@@ -74,8 +75,6 @@ System.register(['./../schema/providers/empty-schema-provider', './../../seriali
           configurationInfo.addScript("totalMapper", this.totalMapper);
           configurationInfo.addScript("dataMapper", this.dataMapper);
 
-          configurationInfo.addValue("httpClient", this.httpClient);
-
           _Configurable.prototype.persistConfigurationTo.call(this, configurationInfo);
         };
 
@@ -85,8 +84,6 @@ System.register(['./../schema/providers/empty-schema-provider', './../../seriali
           this.filterParser = configurationInfo.getValue("filterParser");
           this.totalMapper = configurationInfo.getScript("totalMapper");
           this.dataMapper = configurationInfo.getScript("dataMapper");
-
-          this.httpClient = configurationInfo.getValue("httpClient");
 
           _Configurable.prototype.restoreConfigurationFrom.call(this, configurationInfo);
         };

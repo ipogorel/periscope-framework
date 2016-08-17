@@ -6,9 +6,10 @@ import {QueryExpressionEvaluator} from './../query-expression-evaluator';
 import * as _ from 'lodash';
 
 @transient()
+@inject(HttpClient)
 export class StaticJsonDataService extends DataService {
-  constructor() {
-    super();
+  constructor(httpClient) {
+    super(httpClient);
   }
   
 

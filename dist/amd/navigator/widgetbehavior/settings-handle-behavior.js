@@ -74,7 +74,7 @@ define(['exports', './listner-behavior', 'lodash', 'aurelia-event-aggregator', '
       _ListenerBehavior.prototype.attachToWidget.call(this, widget);
       var me = this;
       this.subscription = this._eventAggregator.subscribe(this.channel, function (message) {
-        var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
+        var settingsToApply = me.messageMapper ? me.messageMapper(message.params) : message.params;
         _.forOwn(settingsToApply, function (v, k) {
           me.widget[k] = v;
         });

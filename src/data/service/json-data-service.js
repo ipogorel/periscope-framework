@@ -1,14 +1,16 @@
 ﻿import {DataService} from './data-service';
 import * as _ from 'lodash';
 import {inject, transient} from 'aurelia-framework';
+import {HttpClient} from 'aurelia-fetch-client';
 
 @transient()
+@inject(HttpClient)
 export class JsonDataService extends DataService {
     _cache = {};
     _liveRequest;
 
-    constructor() {
-      super();
+    constructor(httpClient) {
+      super(httpClient);
     }
 
 

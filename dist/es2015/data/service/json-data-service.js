@@ -1,13 +1,14 @@
-var _dec, _class;
+var _dec, _dec2, _class;
 
 import { DataService } from './data-service';
 import * as _ from 'lodash';
 import { inject, transient } from 'aurelia-framework';
+import { HttpClient } from 'aurelia-fetch-client';
 
-export let JsonDataService = (_dec = transient(), _dec(_class = class JsonDataService extends DataService {
+export let JsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = class JsonDataService extends DataService {
 
-  constructor() {
-    super();
+  constructor(httpClient) {
+    super(httpClient);
     this._cache = {};
   }
 
@@ -24,4 +25,4 @@ export let JsonDataService = (_dec = transient(), _dec(_class = class JsonDataSe
     });
   }
 
-}) || _class);
+}) || _class) || _class);

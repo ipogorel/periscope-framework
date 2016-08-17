@@ -18,11 +18,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var DataService = exports.DataService = function (_Configurable) {
   _inherits(DataService, _Configurable);
 
-  function DataService() {
+  function DataService(httpClient) {
     _classCallCheck(this, DataService);
 
     var _this = _possibleConstructorReturn(this, _Configurable.call(this));
 
+    _this.httpClient = httpClient;
     _this.url = "";
     _this.schemaProvider = new _emptySchemaProvider.EmptySchemaProvider();
     return _this;
@@ -47,8 +48,6 @@ var DataService = exports.DataService = function (_Configurable) {
     configurationInfo.addScript("totalMapper", this.totalMapper);
     configurationInfo.addScript("dataMapper", this.dataMapper);
 
-    configurationInfo.addValue("httpClient", this.httpClient);
-
     _Configurable.prototype.persistConfigurationTo.call(this, configurationInfo);
   };
 
@@ -58,8 +57,6 @@ var DataService = exports.DataService = function (_Configurable) {
     this.filterParser = configurationInfo.getValue("filterParser");
     this.totalMapper = configurationInfo.getScript("totalMapper");
     this.dataMapper = configurationInfo.getScript("dataMapper");
-
-    this.httpClient = configurationInfo.getValue("httpClient");
 
     _Configurable.prototype.restoreConfigurationFrom.call(this, configurationInfo);
   };

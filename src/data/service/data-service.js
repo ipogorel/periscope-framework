@@ -2,8 +2,9 @@
 import {Configurable} from './../../serialization/configurable';
 
 export class DataService extends Configurable {
-  constructor(){
+  constructor(httpClient){
     super();
+    this.httpClient = httpClient;
     this.url = "";
     this.schemaProvider = new EmptySchemaProvider();
   }
@@ -32,7 +33,7 @@ export class DataService extends Configurable {
     configurationInfo.addScript("totalMapper", this.totalMapper);
     configurationInfo.addScript("dataMapper", this.dataMapper);
 
-    configurationInfo.addValue("httpClient", this.httpClient); // ????????????
+    //configurationInfo.addValue("httpClient", this.httpClient); // ????????????
 
     super.persistConfigurationTo(configurationInfo);
   }
@@ -43,7 +44,7 @@ export class DataService extends Configurable {
     this.totalMapper = configurationInfo.getScript("totalMapper");
     this.dataMapper = configurationInfo.getScript("dataMapper");
 
-    this.httpClient = configurationInfo.getValue("httpClient"); // ????????????
+    //this.httpClient = configurationInfo.getValue("httpClient"); // ????????????
 
     super.restoreConfigurationFrom(configurationInfo);
   };

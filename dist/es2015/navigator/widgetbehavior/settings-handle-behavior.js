@@ -15,7 +15,7 @@ export let SettingsHandleBehavior = (_dec = inject(EventAggregator), _dec(_class
     super.attachToWidget(widget);
     var me = this;
     this.subscription = this._eventAggregator.subscribe(this.channel, message => {
-      var settingsToApply = me._messageMapper ? me._messageMapper(message.params) : message.params;
+      var settingsToApply = me.messageMapper ? me.messageMapper(message.params) : message.params;
       _.forOwn(settingsToApply, (v, k) => {
         me.widget[k] = v;
       });

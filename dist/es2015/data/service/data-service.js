@@ -2,8 +2,9 @@ import { EmptySchemaProvider } from './../schema/providers/empty-schema-provider
 import { Configurable } from './../../serialization/configurable';
 
 export let DataService = class DataService extends Configurable {
-  constructor() {
+  constructor(httpClient) {
     super();
+    this.httpClient = httpClient;
     this.url = "";
     this.schemaProvider = new EmptySchemaProvider();
   }
@@ -23,8 +24,6 @@ export let DataService = class DataService extends Configurable {
     configurationInfo.addScript("totalMapper", this.totalMapper);
     configurationInfo.addScript("dataMapper", this.dataMapper);
 
-    configurationInfo.addValue("httpClient", this.httpClient);
-
     super.persistConfigurationTo(configurationInfo);
   }
   restoreConfigurationFrom(configurationInfo) {
@@ -33,8 +32,6 @@ export let DataService = class DataService extends Configurable {
     this.filterParser = configurationInfo.getValue("filterParser");
     this.totalMapper = configurationInfo.getScript("totalMapper");
     this.dataMapper = configurationInfo.getScript("dataMapper");
-
-    this.httpClient = configurationInfo.getValue("httpClient");
 
     super.restoreConfigurationFrom(configurationInfo);
   }

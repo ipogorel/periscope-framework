@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.JsonDataService = undefined;
 
-var _dec, _class;
+var _dec, _dec2, _class;
 
 var _dataService = require('./data-service');
 
@@ -15,6 +15,8 @@ var _ = _interopRequireWildcard(_lodash);
 
 var _aureliaFramework = require('aurelia-framework');
 
+var _aureliaFetchClient = require('aurelia-fetch-client');
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -23,13 +25,13 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec(_class = function (_DataService) {
+var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.transient)(), _dec2 = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class = _dec2(_class = function (_DataService) {
   _inherits(JsonDataService, _DataService);
 
-  function JsonDataService() {
+  function JsonDataService(httpClient) {
     _classCallCheck(this, JsonDataService);
 
-    var _this = _possibleConstructorReturn(this, _DataService.call(this));
+    var _this = _possibleConstructorReturn(this, _DataService.call(this, httpClient));
 
     _this._cache = {};
     return _this;
@@ -51,4 +53,4 @@ var JsonDataService = exports.JsonDataService = (_dec = (0, _aureliaFramework.tr
   };
 
   return JsonDataService;
-}(_dataService.DataService)) || _class);
+}(_dataService.DataService)) || _class) || _class);

@@ -1,4 +1,4 @@
-var _dec, _class;
+var _dec, _dec2, _class;
 
 import { DataService } from './data-service';
 import { DataHelper } from './../../helpers/data-helper';
@@ -7,9 +7,9 @@ import { HttpClient } from 'aurelia-fetch-client';
 import { QueryExpressionEvaluator } from './../query-expression-evaluator';
 import * as _ from 'lodash';
 
-export let StaticJsonDataService = (_dec = transient(), _dec(_class = class StaticJsonDataService extends DataService {
-  constructor() {
-    super();
+export let StaticJsonDataService = (_dec = transient(), _dec2 = inject(HttpClient), _dec(_class = _dec2(_class = class StaticJsonDataService extends DataService {
+  constructor(httpClient) {
+    super(httpClient);
   }
 
   read(options) {
@@ -38,4 +38,4 @@ export let StaticJsonDataService = (_dec = transient(), _dec(_class = class Stat
     });
   }
 
-}) || _class);
+}) || _class) || _class);
